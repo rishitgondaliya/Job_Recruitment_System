@@ -1,0 +1,23 @@
+# Ignore node_modules folder
+node_modules/
+
+# Ignore environment files
+.env
+
+# Ignore log files
+logs/
+*.log
+
+# Ignore compiled files
+*.exe
+*.class
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore package-lock.json (optional)
+package-lock.json
+
+data
+
+uploads/
