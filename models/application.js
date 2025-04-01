@@ -21,24 +21,24 @@ const applicationSchema = new Schema(
         ref: "Listing",
         required: true,
       },
-      title: {
-        type: String,
-        required: true,
-        trim: true,
-      },
       recruiterId: {
         type: Schema.Types.ObjectId,
         ref: "User",
         required: true,
       },
+      jobTitle: {
+        type: String,
+        required: true,
+        trim: true,
+      },
     },
     resumeLink: {
       type: String,
-      required: true,
+      required: [true, 'Please add resume']
     },
-    status: {
+    applicationStatus: {
       type: String,
-      enum: ["pending", "accepted", "rejected", "shortlisted"],
+      enum: ["applied", "accepted", "rejected", "shortlisted"],
     },
   },
   { timestamps: true }
