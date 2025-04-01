@@ -3,13 +3,14 @@ const { Schema } = mongoose;
 
 const profileSchema = new Schema(
   {
+    // general fields
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
+      unique: [true, "User profile exists!"],
     },
-    role: {
+    profileType: {
       type: String,
       enum: ["jobSeeker", "recruiter"],
       required: true,
@@ -18,42 +19,132 @@ const profileSchema = new Schema(
     // Job Seeker Fields
     about: {
       type: String,
+      trim: true,
+      match: [
+        /^[A-Za-z\s'-0-9]+$/,
+        "About can only contain alphabets, spaces, hyphens, numbers and apostrophes",
+      ],
       maxlength: 500,
     },
     education: {
-      college: { type: String, trim: true },
-      degree: String,
-      branch: String,
-      grade: Number,
-      yearOfPassing: Number,
+      college: {
+        type: String,
+        trim: true,
+        // required: [true, "College is required"],
+      },
+      degree: {
+        type: String,
+        trim: true,
+        // required: [true, "Degree is required"],
+      },
+      branch: {
+        type: String,
+        trim: true,
+        // required: [true, "Branch is required"],
+      },
+      grade: { type: Number, trim: true },
+      yearOfPassing: {
+        type: Number,
+        trim: true,
+        // required: [true, "Passing year is required"],
+      },
     },
     resume: String,
-    skills: [String],
-    experience: [
-      {
-        company: String,
-        position: String,
-        startDate: Date,
-        endDate: Date,
-        description: String,
-      },
-    ],
-    savedJobs: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "Listing",
+    skills: {
+      type: [String],
       default: undefined,
+    },
+    savedJobs: {
+      type: [
+        {
+          jobId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "savedJobs",
+            required: true,
+          },
+          jobTitle: {
+            type: String,
+            trim: true,
+            // required: [true, "Title is required"],
+          },
+        },
+        { _id: false },
+      ],
+      default: undefined, // If empty, the field will be absent
+      validate: {
+        validator: function (jobs) {
+          const jobIds = jobs.map((job) => job.jobId.toString());
+          return new Set(jobIds).size === jobIds.length;
+        },
+        message: "Job is saved already!",
+      },
     },
 
     // Recruiter Fields
-    companyName: String,
-    companyWebsite: String,
-    industryType: String,
-    position: String,
+    companyName: {
+      type: String,
+      trim: true,
+      // required: [true, "Company name is required"],
+    },
+    companyWebsite: { type: String, trim: true },
+    industryType: {
+      type: String,
+      trim: true,
+      // required: [true, "Industry is required"],
+    },
+    position: {
+      type: String,
+      trim: true,
+      // required: [true, "Position is required"],
+    },
     jobListing: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "Listing",
       default: undefined,
     },
+
+    // other general fileds
+    experience: [
+      {
+        company: {
+          type: String,
+          trim: true,
+          // required: [true, "Company is required"],
+        },
+        position: {
+          type: String,
+          trim: true,
+          // required: [true, "Position is required"],
+        },
+        startDate: {
+          type: Date,
+          validate: {
+            validator: function (value) {
+              return !value || value < this.endDate;
+            },
+            message: "Start date must be before the end date.",
+          },
+        },
+        endDate: {
+          type: Date,
+          validate: {
+            validator: function (value) {
+              return !value || value > this.startDate;
+            },
+            message: "End date must be after the start date.",
+          },
+        },
+        description: {
+          type: String,
+          trim: true,
+          maxlength: 300,
+          match: [
+            /^[A-Za-z\s'-0-9]+$/,
+            "Description can only contain alphabets, spaces, hyphens, and apostrophes",
+          ],
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

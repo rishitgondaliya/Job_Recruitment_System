@@ -55,15 +55,15 @@ const userSchema = new Schema(
     },
     password: {
       type: String,
-      validate: {
-        validator: function (v) {
-          return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#])[A-Za-z\d@$!%*?&^#]{8,}$/.test(
-            v
-          );
-        },
-        message:
-          "Password must have at least 8 characters long, including an uppercase letter, a lowercase letter, a number, and a special character.",
-      },
+      // validate: {
+      //   validator: function (v) {
+      //     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#])[A-Za-z\d@$!%*?&^#]{8,}$/.test(
+      //       v
+      //     );
+      //   },
+      //   message:
+      //     "Password must have at least 8 characters long, including an uppercase letter, a lowercase letter, a number, and a special character.",
+      // },
       required: [true, "User password is required"],
     },
     profileImage: String,

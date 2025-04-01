@@ -14,43 +14,53 @@ const listingSchema = new Schema(
       required: true,
     },
     jobDetail: {
-      title: {
+      jobTitle: {
         type: String,
-        required: true,
         trim: true,
+        match: [
+          /^[A-Za-z\s'-1-9]+$/,
+          "Title can only contain alphabets, spaces, hyphens, numbers and apostrophes",
+        ],
+        required: [true, "Title is required"],
       },
       description: {
         type: String,
-        required: true,
         trim: true,
         maxlength: 300,
+        match: [
+          /^[A-Za-z\s'-1-9]+$/,
+          "Description can only contain alphabets, spaces, hyphens, numbers and apostrophes",
+        ],
+        required: [true, "Description is required"],
       },
       requirements: {
         type: Array,
-        default: [],
-        required: true,
+        required: [true, "Requirements are required"],
       },
       isFeatured: {
         type: Boolean,
         default: false,
       },
-      location: String,
+      location: {
+        type: String,
+        trim: true,
+      },
       locationType: {
         type: String,
         enum: ["On-site", "Remote", "Hybrid"],
-        required: true,
+        required: [true, "Location type is required"],
       },
       vacancy: {
         type: Number,
-        required: true,
+        required: [true, "Vacancy count is required"],
       },
       salary: {
         type: Number,
-        required: true,
+        required: [true, "Salary is required"],
       },
       experience: {
         type: Number,
-        required: true,
+        required: [true, "Experience is required"],
       },
       avgRating: {
         type: Number,

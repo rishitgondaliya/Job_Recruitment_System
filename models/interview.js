@@ -27,13 +27,13 @@ const interviewSchema = new Schema(
     },
     interviewDate: {
       type: Date,
-      required: true,
       validate: {
         validator: function (value) {
           return value > new Date();
         },
         message: "Interview date must be future date",
       },
+      required: [true, 'Date is required'],
     },
     status: {
       type: String,

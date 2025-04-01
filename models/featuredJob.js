@@ -22,7 +22,6 @@ const featuredJobSchema = new Schema(
     },
     startDate: {
       type: Date,
-      required: true,
       default: Date.now(),
       validate: {
         validator: function (value) {
@@ -30,16 +29,17 @@ const featuredJobSchema = new Schema(
         },
         message: "Start date must be future date",
       },
+      required: [true, "Start date is required"],
     },
     endDate: {
       type: Date,
-      required: true,
       validate: {
         validator: function (value) {
-          return value > new Date();
+          return value > this.startDate;
         },
-        message: "End date must be future date",
+        message: "End date must be after start date",
       },
+      required: [true, "End date is required"],
     },
   },
   { timestamps: true }

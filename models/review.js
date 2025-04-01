@@ -15,12 +15,16 @@ const reviewSchema = new Schema(
     },
     rating: {
       type: Number,
-      required: true,
       default: 0,
+      required: [true, "Rating value is required"],
     },
-    reviewText: {
+    description: {
       type: String,
       required: false,
+      match: [
+        /^[A-Za-z\s'-0-9]+$/,
+        "Description can only contain alphabets, spaces, hyphens, numbers and apostrophes",
+      ],
       maxlength: 400,
     },
   },
