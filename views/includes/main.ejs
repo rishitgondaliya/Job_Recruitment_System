@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="assets/job-portal.png" />
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/main.css" />
+  </head>
+  <body>
+    <header class="main-header">
+      <nav class="navbar">
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="/">Home</a>
+            </li>
+            <li class="nav-item">
+                <a href="/">Jobs</a>
+            </li>
+        </ul>
+        <ul class="nav-list">
+          <% if(!isAuthenticated){ %>
+            <li class="nav-item">
+              <a href="/auth/register">Register</a>
+            </li>
+            <li class="nav-item">
+              <a href="/auth/login">Login</a>
+            </li>
+          <% } else { %>
+            <li class="nav-item">
+              <!-- <a href="/auth/logout" class="auth-btn">Logout</a> -->
+               <form action="/auth/logout" method="POST" >
+                <button type="submit" class="logout-btn">Logout</button>
+               </form>
+            </li>
+          <% } %>
+        </ul>
+      </nav>
+    </header>
