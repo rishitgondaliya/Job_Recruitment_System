@@ -1,0 +1,127 @@
+body {
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    padding: 1rem;
+    background-color: aliceblue;
+}
+
+/* main-header */
+.main-header {
+    background-color: #005eb5;
+    padding: .75rem;
+}
+.navbar {
+    display: flex;
+    justify-content: space-between;
+}
+
+.navbar .nav-list {
+    list-style: none;
+    padding-left: 0.5rem;
+}
+
+.nav-list .nav-item {
+    display: inline-block;
+    margin-right: 1rem;
+}
+
+.nav-list .nav-item a {
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+    font-size: 1.35rem;
+}
+
+/* form control */
+
+.form-control {
+    width: 25rem;
+    max-width: 90%;
+    padding: 2rem;
+    margin: 4rem auto;
+    box-shadow: 0px 2px 8px rgb(122, 122, 122);
+    background-color: rgb(255, 255, 255);
+    border: apx solid black;
+    border-radius: 0.5rem;
+}
+
+.form-control h2 {
+    margin-top: 0;
+    margin-bottom: 2rem;
+}
+
+.form-input {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.form-input input,
+.form-input select {
+    margin-left: 0.5rem;
+    width: 90%;
+    padding: .25rem .5rem;
+    font-size: 1rem;
+    border-radius: 4px;
+    border: 1px solid black;
+    cursor: pointer;
+}
+
+.form-input select {
+    min-width: 10rem;
+}
+
+.form-input label {
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+}
+
+.form-control .input-group {
+    display: flex;
+}
+
+/* button */
+
+.btn {
+    background-color: rgb(255, 255, 255);
+    border: 1px solid rgb(0, 195, 255);
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: 1rem 0 0; 
+    color: rgb(0, 0, 0);
+    font-size: 1.25rem;
+}
+
+.btn:hover, .btn:active {
+    background-color: rgb(0, 195, 255);
+    color: white;
+}
+
+.center {
+    text-align: center;
+    /* margin: 0px auto; */
+}
+
+.input-error {
+    color: red;
+    margin: 0.5rem 0 0 .5rem;
+    font-size: 14px;
+}
+
+.logout-btn:hover,
+.logout-btn:active {
+    /* color: yellow; */
+    background-color: inherit;
+}
+
+.logout-btn {
+    margin-top: 0;
+    padding: 0;
+    font-family: inherit;
+    font-weight: 400;
+    font-size: 1.35rem;
+    outline: none;
+    border: none;
+    background: none;
+    color: white;
+    cursor: pointer;
+  }
+  
