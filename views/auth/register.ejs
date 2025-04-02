@@ -1,0 +1,69 @@
+<%- include('../includes/main.ejs') %>
+
+    <div class="form-control">
+        <h2 class="center">Register</h2>
+
+        
+        <form action="/auth/register" method="POST" novalidate>
+            <div class="input-group">
+                <div class="form-input">
+                    <label for="fname">First Name:</label>
+                    <input type="text" name="firstName" id="fName" value="<%= formData ? formData.firstName : '' %>">
+                    <% if (errors && errors.firstName) { %>
+                        <p class="input-error"><%= errors.firstName %></p>
+                    <% } %>
+                </div>
+                
+                <div class="form-input" style="margin-left: 2rem;">
+                    <label for="lname">Last Name:</label>
+                    <input type="text" id="lname" name="lastName" value="<%= formData ? formData.lastName : '' %>">
+                    <% if (errors && errors.lastName) { %>
+                        <p class="input-error"><%= errors.lastName %></p>
+                    <% } %>
+                </div>
+            </div>
+            
+            <div class="form-input">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="<%= formData ? formData.email : '' %>">
+                <% if (errors && errors.email) { %>
+                    <p class="input-error"><%= errors.email %></p>
+                <% } %>
+            </div>
+    
+            <div class="form-input">
+                <label for="pass">Password:</label>
+                <input type="password" id="pass" name="password">
+                <% if (errors && errors.password) { %>
+                    <p class="input-error"><%= errors.password %></p>
+                <% } %>
+            </div>
+
+            <div class="input-group">
+                <div class="form-input">
+                    <label for="phone">Phone:</label>
+                    <input type="tel" id="phone" name="phone" value="<%= formData ? formData.phone : '' %>">
+                    <% if (errors && errors.phone) { %>
+                        <p class="input-error"><%= errors.phone %></p>
+                    <% } %>
+                </div>
+
+                <div class="form-input" style="margin-left: 2rem;">
+                    <label >Role:</label>
+                    <select name="role" id="roleSelect" >
+                        <option>Select role</option>
+                        <option value="jobSeeker">Job Seeker</option>
+                        <option value="recruiter">Recruiter</option>
+                    </select>
+                    <% if (errors && errors.role) { %>
+                        <p class="input-error"><%= errors.role %></p>
+                    <% } %>
+                </div>
+            </div>
+            <div class="center">
+                <button class="btn" type="submit">Register</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
