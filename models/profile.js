@@ -76,7 +76,7 @@ const profileSchema = new Schema(
           const jobIds = jobs.map((job) => job.jobId.toString());
           return new Set(jobIds).size === jobIds.length;
         },
-        message: "Job is saved already!",
+        message: "Job is already saved!",
       },
     },
 
@@ -104,47 +104,50 @@ const profileSchema = new Schema(
     },
 
     // other general fileds
-    experience: [
-      {
-        company: {
-          type: String,
-          trim: true,
-          // required: [true, "Company is required"],
-        },
-        position: {
-          type: String,
-          trim: true,
-          // required: [true, "Position is required"],
-        },
-        startDate: {
-          type: Date,
-          validate: {
-            validator: function (value) {
-              return !value || value < this.endDate;
+    experience: {
+      type: [
+        {
+          company: {
+            type: String,
+            trim: true,
+            // required: [true, "Company is required"],
+          },
+          position: {
+            type: String,
+            trim: true,
+            // required: [true, "Position is required"],
+          },
+          startDate: {
+            type: Date,
+            validate: {
+              validator: function (value) {
+                return !value || value < this.endDate;
+              },
+              message: "Start date must be before the end date.",
             },
-            message: "Start date must be before the end date.",
+          },
+          endDate: {
+            type: Date,
+            validate: {
+              validator: function (value) {
+                return !value || value > this.startDate;
+              },
+              message: "End date must be after the start date.",
+            },
+          },
+          description: {
+            type: String,
+            trim: true,
+            maxlength: 300,
+            match: [
+              /^[A-Za-z\s'-0-9]+$/,
+              "Description can only contain alphabets, spaces, hyphens, and apostrophes",
+            ],
           },
         },
-        endDate: {
-          type: Date,
-          validate: {
-            validator: function (value) {
-              return !value || value > this.startDate;
-            },
-            message: "End date must be after the start date.",
-          },
-        },
-        description: {
-          type: String,
-          trim: true,
-          maxlength: 300,
-          match: [
-            /^[A-Za-z\s'-0-9]+$/,
-            "Description can only contain alphabets, spaces, hyphens, and apostrophes",
-          ],
-        },
-      },
-    ],
+      ],
+      default: undefined,
+    },
   },
   { timestamps: true }
 );
