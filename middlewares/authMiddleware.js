@@ -19,4 +19,12 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
+const isAuthenticated = (req, res, next) => {
+  if (!req.session.isLoggedIn) {
+    return res.redirect("/auth/login");
+  }
+  next();
+};
+
 module.exports = authenticateJWT;
+module.exports = isAuthenticated
