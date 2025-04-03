@@ -1,0 +1,48 @@
+<%- include('./main.ejs') %>
+<link rel="stylesheet" href="/css/navigation.css">
+
+</head>
+<body>
+  <header class="main-header">
+    <nav class="navbar">
+      <ul class="nav-list">
+          <% if(userRole === 'admin'){ %>
+            <li class="nav-item">
+              <a href="/admin/users">Users</a>
+            </li>
+            <li class="nav-item">
+              <a href="/admin/jobCategories">Job Categories</a>
+            </li>
+          <% } else if(userRole === 'jobSeeker'){ %>
+            <li class="nav-item">
+              <a href="/jobSeeker/home">Home</a>
+            </li>
+          <% } else if(userRole === 'recruiter'){ %>
+            <li class="nav-item">
+              <a href="/recruiter/home">Home</a>
+            </li>
+          <% } else{ %>
+            <li class="nav-item">
+              <a href="/">Home</a>
+            </li>
+          <% } %>
+      </ul>
+      <ul class="nav-list">
+        <% if(!isAuthenticated){ %>
+          <li class="nav-item">
+            <a href="/auth/register">Register</a>
+          </li>
+          <li class="nav-item">
+            <a href="/auth/login">Login</a>
+          </li>
+        <% } else { %>
+          <li class="nav-item">
+            <!-- <a href="/auth/logout" class="auth-btn">Logout</a> -->
+             <form action="/auth/logout" method="POST" >
+              <button type="submit" class="logout-btn">Logout</button>
+             </form>
+          </li>
+        <% } %>
+      </ul>
+    </nav>
+  </header>

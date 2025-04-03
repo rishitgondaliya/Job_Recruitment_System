@@ -1,0 +1,16 @@
+<script>
+    setTimeout(() => {
+        const successAlert = document.getElementById("success-alert");
+        const errorAlert = document.getElementById("error-alert");
+    
+        if (successAlert) {
+          successAlert.style.opacity = "0";
+          setTimeout(() => { successAlert.style.display = "none"; }, 500);
+        }
+    
+        if (errorAlert) {
+          errorAlert.style.opacity = "0";
+          setTimeout(() => { errorAlert.style.display = "none"; }, 500);
+        }
+      }, 3000);
+</script>

@@ -1,0 +1,12 @@
+
+<% if (successMessage.length) { %>
+    <div id="success-alert" class="alert alert-success">
+      <%= successMessage %>
+    </div>
+<% } %>
+  
+<% if (errorMessage) { %>
+    <div id="error-alert" class="alert alert-danger">
+      <%= errorMessage %>
+    </div>
+<% } %>
