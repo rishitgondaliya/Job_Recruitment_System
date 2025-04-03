@@ -69,16 +69,6 @@ const userSchema = new Schema(
       validate: [
         {
           validator: function (v) {
-            // if (!v) return false;
-            return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#])[A-Za-z\d@$!%*?&^#]{8,}$/.test(
-              v
-            );
-          },
-          message:
-            "Password must have at least 8 characters long, including an uppercase letter, a lowercase letter, a number and a special character.",
-        },
-        {
-          validator: function (v) {
             return v !== this.email;
           },
           message: "Email & Password can not be the same",
