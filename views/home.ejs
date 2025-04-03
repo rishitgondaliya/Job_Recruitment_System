@@ -1,5 +1,29 @@
 <%- include('includes/main.ejs') %>
+<link rel="stylesheet" href="/css/home.css">
+<%- include('./includes/header.ejs') %>
 
-        <h1>Welcome to Job Recruitment System</h1>
+        <div class="container">
+            <%- include('./includes/flash.ejs') %>
+            <div class="section">
+                <div class="img">
+                    <img src="<%= '/assets/job.svg' %>" alt="Job Seeker Illustration">
+                </div>
+                <div class="detail">
+                    <p>Find your dream job with us. Explore job listings, apply for positions, and connect with top companies.</p>
+                    <a href="/jobSeeker/home" class="btn">Explore Jobs</a>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="detail">
+                    <p>Hire the best talent for your company. Post job listings, manage applications, and find the perfect candidate.</p>
+                    <a href="/recruiter/home" class="btn">Post a Job</a>
+                </div>
+                <div class="img">
+                    <img src="<%= '/assets/recruiter.svg' %>" alt="Recruiter Illustration">
+                </div>
+            </div>
+        </div>
     </body>
+    <%- include('./includes/flashScript.ejs') %>
 </html>
