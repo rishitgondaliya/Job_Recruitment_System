@@ -6,10 +6,13 @@ const path = require("path");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
+const flash = require('connect-flash')
 
 const User = require("./models/user");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const jobSeekerRoutes = require("./routes/jobSeekerRoutes");
+const recruiterRoutes = require("./routes/recruiterRoutes");
 
 const app = express();
 dotenv.config();
@@ -34,18 +37,19 @@ app.use(
     cookie: { maxAge: 1000 * 60 * 60 },
   })
 );
+app.use(flash())
 
 app.use((req, res, next) => {
   // console.log("session", req.session)
   if (!req.session.user) {
-    req.session.isLoggedIn = false;
-    req.user = null;
+    // req.session.isLoggedIn = false;
+    // req.user = null;
     return next();
   }
   User.findById(req.session.user._id)
     .then((user) => {
       // console.log(user);
-      console.log("isLoggedIn", req.session.isLoggedIn);
+      // console.log("isLoggedIn", req.session.isLoggedIn);
       if (!user) {
         return next();
       }
@@ -58,14 +62,19 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  res.locals.isAuthenticated = req.session.isLoggedIn;
-  console.log("isAuth =", res.locals.isAuthenticated);
+  res.locals.isAuthenticated = req.session.isLoggedIn || 'false';
+  res.locals.userRole = req.session.user ? req.session.user.role : "";
+  res.locals.successMessage = req.flash("success")[0] || "";
+  res.locals.errorMessage = req.flash("error")[0] || "";
+  console.log("isAuthenticated =", res.locals.isAuthenticated);
   next();
 });
 
 // Routes
-app.use("/auth", authRoutes);
+app.use(authRoutes);
 app.use("/admin", adminRoutes);
+app.use("/jobSeeker", jobSeekerRoutes);
+app.use("/recruiter", recruiterRoutes);
 app.get("/", (req, res) => {
   res.render("home", { pageTitle: "Home" });
 });
