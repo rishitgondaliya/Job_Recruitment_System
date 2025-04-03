@@ -6,15 +6,15 @@ const User = require('../models/user')
 
 const router = express.Router();
 
-router.get("/register", authController.getRegister);
+router.get("/auth/register", authController.getRegister);
 
-router.post("/register", authController.postRegister);
+router.post("/auth/register", authController.postRegister);
 
-router.get("/login", authController.getLogin);
+router.get("/auth/login", authController.getLogin);
 
 router.post("/login", authController.postLogin);
 
-router.get("/profile", authenticateJWT, async (req, res) => {
+router.get("/auth/profile", authenticateJWT, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password"); // Exclude password
     if (!user) {
@@ -27,6 +27,6 @@ router.get("/profile", authenticateJWT, async (req, res) => {
   }
 });
 
-router.post('/logout', authController.logout)
+router.post('/auth/logout', authController.logout)
 
 module.exports = router;

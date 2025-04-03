@@ -1,5 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+// const flash = require("connect-flash");
+// const session = require("express-session");
 
 const User = require("../models/user");
 const Profile = require("../models/profile");
@@ -30,8 +32,17 @@ exports.postRegister = async (req, res, next) => {
         formData: req.body,
       });
     } else {
+      const passwordRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#])[A-Za-z\d@$!%*?&^#]{8,}$/;
+
       if (!password) {
         errors.password = "Password is required";
+      } else if (!passwordRegex.test(password)) {
+        errors.password =
+          "Password must be at least 8 characters long, including an uppercase letter, a lowercase letter, a number, and a special character.";
+      }
+
+      if (Object.keys(errors).length > 0) {
         return res.status(422).render("auth/register", {
           pageTitle: "Register",
           errors,
@@ -85,8 +96,8 @@ exports.postRegister = async (req, res, next) => {
       } else {
         profileData = {
           ...profileData,
-          experience: undefined
-        }
+          experience: undefined,
+        };
       }
 
       const emptyProfile = new Profile(profileData);
@@ -95,7 +106,7 @@ exports.postRegister = async (req, res, next) => {
       newUser.profileId = emptyProfile._id;
       await newUser.save();
 
-      console.log("User registered successfully");
+      req.flash("success", "User registered successfully");
       res.redirect("/auth/login");
     }
   } catch (err) {
@@ -157,6 +168,15 @@ exports.postLogin = async (req, res, next) => {
         });
       }
 
+      if (!user.isActive) {
+        errors.email =
+          "You can not login right now beacuse admin has deactivated you!";
+        return res.status(401).render("auth/login", {
+          pageTitle: "Login",
+          errors,
+          formData: req.body,
+        });
+      }
       const isMatched = await bcrypt.compare(password, user.password);
       if (!isMatched) {
         errors.password = "Incorrect password!";
@@ -183,21 +203,41 @@ exports.postLogin = async (req, res, next) => {
 
       // console.log("Session after login:", req.session)
 
-      console.log("Logged in successfully", "User", req.session.user.firstName);
-      res.redirect("/");
+      req.flash("success", "Logged in successfully");
+
+      req.session.save(() => {
+        const userRole = req.session.user.role;
+        if (userRole === "jobSeeker") {
+          return res.redirect("/jobSeeker/home");
+        } else if (userRole === "recruiter") {
+          return res.redirect("/recruiter/home");
+        } else if (userRole === "admin") {
+          return res.redirect("/admin/home");
+        } else {
+          return res.status(401).render("auth/login", {
+            pageTitle: "Login",
+            errors,
+            formData: req.body,
+          });
+        }
+      });
     }
   } catch (error) {
-    console.error("Error while logging in user:", error);
-    next({ message: "Error while logging in user" });
+    console.error("Error while logging in:", error);
+    req.flash("error", "An error occurred while logging in. Please try again.");
+    req.session.save(() => res.redirect("/auth/login"));
   }
 };
 
 exports.logout = (req, res, next) => {
+  req.flash("success", "Logged out successfully");
+  // console.log("Flash messages before session destroy:", req.flash());
   req.session.destroy((error) => {
+    // console.log("flash:", req.flash())
     if (error) {
-      console.error("Error while logging out user:", error);
+      console.log("error", "Error while logging out user:");
       next({ message: "Error while logging out user" });
     }
     res.redirect("/");
-  })
-}
+  });
+};
