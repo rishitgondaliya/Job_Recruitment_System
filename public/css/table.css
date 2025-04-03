@@ -1,0 +1,121 @@
+/* Container Styling */
+.container {
+    max-width: fit-content;
+    margin: 30px auto;
+    font-family: "Arial", sans-serif;
+}
+
+/* Page Title */
+.page-title {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Section Title */
+.section-title {
+    font-size: 22px;
+    margin-bottom: 15px;
+    color: #222;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+}
+
+/* Table Styling */
+.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Table Header */
+.custom-table thead {
+    background-color: #007bff;
+    color: white;
+    text-align: left;
+}
+
+/* Column Widths */
+.custom-table th:nth-child(1), .custom-table td:nth-child(1) { 
+    text-align: center;
+}
+
+.custom-table .actions {
+    display: flex;
+    align-items: baseline;
+}
+
+.custom-table .actions .btn {
+    margin: 0 0.5rem 0 0;
+}
+
+/* Table Cell Styling */
+.custom-table th, .custom-table td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+.custom-table td .btn {
+    font-size: 1rem;
+    border: 1px solid red;
+}
+
+.custom-table td .deactive-btn {
+    color: orange;
+    border: 1px solid orange
+}
+
+.custom-table td .deactive-btn:hover {
+    background-color: #ffbf00;
+    color: white;
+}
+
+.custom-table td .delete-btn {
+    color: red;
+    border: 1px solid red
+}
+
+.custom-table td .delete-btn:hover {
+    background-color: red;
+    color: white;
+}
+
+/* Alternate Row Colors */
+.custom-table tbody tr:nth-child(odd) {
+    background-color: #f8f9fa;
+}
+
+/* Hover Effect */
+.custom-table tbody tr:hover {
+    background-color: #e9ecef;
+    transition: 0.3s;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .custom-table th, .custom-table td {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    /* Adjust Column Widths for Small Screens */
+    .custom-table th:nth-child(1), .custom-table td:nth-child(1) { 
+        width: 15%;
+    }
+
+    .custom-table th:nth-child(2), .custom-table td:nth-child(2) { 
+        width: 40%;
+    }
+
+    .custom-table th:nth-child(3), .custom-table td:nth-child(3) { 
+        width: 45%;
+    }
+
+    .custom-table th:nth-child(4), .custom-table td:nth-child(4) { 
+        display: none;  /* Hide last column on small screens */
+    }
+}
