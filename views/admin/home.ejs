@@ -1,8 +1,19 @@
 <%- include('../includes/main.ejs') %>
+    <style>
+        .input-group {
+            width: 100%;
+            margin-top: 2rem;
+        }
+    </style>
 <%- include('../includes/navigation.ejs') %>
 <%- include('../includes/flash.ejs') %>
 
-        <h1>Admin home page</h1>
+        <h2>Admin home page.</h2>
+
+        <div class="input-group">
+            <a href="/admin/users" class="btn">Manage users</a>
+            <a href="/admin/addCategory" class="btn">Add Job Category</a>
+        </div>
     </body>
     <%- include('../includes/flashScript.ejs') %>
 </html>

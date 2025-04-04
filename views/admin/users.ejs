@@ -1,0 +1,98 @@
+<%- include('../includes/main.ejs') %>
+<link rel="stylesheet" href="/css/table.css">
+<%- include('../includes/navigation.ejs') %>
+
+    <div class="container">
+        <h1 class="page-title">Users</h1>
+
+        <%- include('../includes/flash.ejs') %>
+
+        <!-- Job Seekers Table -->
+        <h2 class="section-title">Job Seekers</h2>
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Sr. No.</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% let jobSeekerCount = 1; %>
+                <% users.forEach(user => { %>
+                    <% if (user.role === "jobSeeker") { %>
+                        <tr>
+                            <td><%= jobSeekerCount++ %></td>
+                            <td><%= user.firstName %> <%= user.lastName %></td>
+                            <td><%= user.email %></td>
+                            <td><%= user.phone %></td>
+                            <td><%= user.isActive ? 'Active' : 'Inactive' %></td>
+                            <td class="actions">
+                                <% if(user.isActive){ %>
+                                    <form action="/admin/deactivate" method="POST">
+                                        <input type="hidden" name="userId" value="<%= user._id %>">
+                                        <button type="submit" class="deactive-btn btn">Deactivate</button>
+                                    </form>
+                                <% } else{ %>
+                                    <form action="/admin/activate" method="POST">
+                                        <input type="hidden" name="userId" value="<%= user._id %>">
+                                        <button type="submit" class="deactive-btn btn">Activate</button>
+                                    </form>
+                                <% } %>
+                                <form action="/admin/delete" method="POST">
+                                    <input type="hidden" name="userId" value="<%= user._id %>">
+                                    <button type="submit" class="delete-btn btn">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% } %>
+                <% }); %>
+            </tbody>
+        </table>
+        <br>
+
+        <!-- Recruiters Table -->
+        <h2 class="section-title">Recruiters</h2>
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Sr. No.</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Company</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% let recruiterCount = 1; %>
+                <% users.forEach(user => { %>
+                    <% if (user.role === "recruiter") { %>
+                        <tr>
+                            <td><%= recruiterCount++ %></td>
+                            <td><%= user.firstName %> <%= user.lastName %></td>
+                            <td><%= user.email %></td>
+                            <td><%= user.company || "N/A" %></td>
+                            <td><%= user.isActive ? 'Active' : 'Inactive' %></td>
+                            <td class="actions">
+                                <form action="/admin/deactive" method="POST">
+                                    <input type="hidden" name="userId" value="<%= user._id %>">
+                                    <button type="submit" class="deactive-btn btn">Deactivate</button>
+                                </form>
+                                <form action="/admin/delete" method="POST">
+                                    <input type="hidden" name="userId" value="<%= user._id %>">
+                                    <button type="submit" class="delete-btn btn">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% } %>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+    <%- include('../includes/flashScript.ejs') %>
+</html>
