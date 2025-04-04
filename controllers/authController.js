@@ -21,7 +21,8 @@ exports.getRegister = async (req, res) => {
 exports.postRegister = async (req, res, next) => {
   let errors = {};
   try {
-    const { firstName, lastName, email, phone, password, role } = req.body;
+    const { firstName, lastName, email, phone, password, role, company } =
+      req.body;
 
     const existingUser = await User.findOne({ email: email });
     if (existingUser) {
@@ -58,6 +59,7 @@ exports.postRegister = async (req, res, next) => {
         phone,
         password: hashedPassword,
         role,
+        company: company ? company : undefined,
       });
 
       await newUser.save();
@@ -87,7 +89,7 @@ exports.postRegister = async (req, res, next) => {
         profileData = {
           ...profileData,
           experience: [],
-          companyName: "",
+          companyName: company,
           companyWebsite: "",
           industryType: "",
           position: "",
@@ -118,7 +120,7 @@ exports.postRegister = async (req, res, next) => {
       }
     }
 
-    res.status(422).render("auth/register", {
+    return res.status(422).render("auth/register", {
       pageTitle: "Register",
       errors: errors,
       formData: req.body,
@@ -188,7 +190,7 @@ exports.postLogin = async (req, res, next) => {
       }
 
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "1h",
+        expiresIn: "15m",
       });
 
       res.cookie("token", token, {
@@ -230,14 +232,10 @@ exports.postLogin = async (req, res, next) => {
 };
 
 exports.logout = (req, res, next) => {
-  req.flash("success", "Logged out successfully");
-  // console.log("Flash messages before session destroy:", req.flash());
   req.session.destroy((error) => {
-    // console.log("flash:", req.flash())
-    if (error) {
-      console.log("error", "Error while logging out user:");
-      next({ message: "Error while logging out user" });
-    }
+    res.clearCookie("connect.sid", { path: "/" }); // Clear session cookie
+    res.clearCookie('token')
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
     res.redirect("/");
   });
 };
