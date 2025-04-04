@@ -34,7 +34,7 @@ app.use(
     secret: process.env.JWT_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 },
+    cookie: { maxAge: 1000 * 60 * 15 },
   })
 );
 app.use(flash())
@@ -67,6 +67,13 @@ app.use((req, res, next) => {
   res.locals.successMessage = req.flash("success")[0] || "";
   res.locals.errorMessage = req.flash("error")[0] || "";
   console.log("isAuthenticated =", res.locals.isAuthenticated);
+  next();
+});
+
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  // res.set("Pragma", "no-cache");
+  // res.set("Expires", "-1");
   next();
 });
 
