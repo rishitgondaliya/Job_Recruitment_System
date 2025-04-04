@@ -56,7 +56,7 @@ const userSchema = new Schema(
       type: String,
       validate: {
         validator: function (v) {
-          return /^\+?[1-9]\d{9,14}$/.test(v);
+          return /^\+?[1-9]\d{9}$/.test(v);
         },
         message: (props) => `${props.value} is not a valid phone number!`,
       },
@@ -84,6 +84,10 @@ const userSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
     },
+    company: {
+      type: String,
+      default: undefined,
+    },
     // jwt: {
     //   type: String,
     //   required: true,
@@ -92,5 +96,22 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
+
+userSchema.pre("save", function (next) {
+  if (this.firstName) {
+    this.firstName = this.firstName
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
+  if (this.lastName) {
+    this.lastName = this.lastName
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+  next();
+});
 
 module.exports = mongoose.model("User", userSchema);
