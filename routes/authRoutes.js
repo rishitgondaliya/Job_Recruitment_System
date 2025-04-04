@@ -2,6 +2,7 @@ const express = require("express");
 
 const authController = require("../controllers/authController");
 const authenticateJWT = require("../middlewares/authMiddleware");
+// const preventBack = require('../middlewares/authMiddleware')
 const User = require('../models/user')
 
 const router = express.Router();
@@ -27,6 +28,6 @@ router.get("/auth/profile", authenticateJWT, async (req, res) => {
   }
 });
 
-router.post('/auth/logout', authController.logout)
+router.post('/auth/logout', authenticateJWT, authController.logout)
 
 module.exports = router;
