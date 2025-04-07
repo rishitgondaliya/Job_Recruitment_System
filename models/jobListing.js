@@ -13,6 +13,10 @@ const listingSchema = new Schema(
       ref: "Category",
       required: true,
     },
+    category: {
+      type: String,
+      required: [true, "Please select category"],
+    },
     jobDetail: {
       jobTitle: {
         type: String,
@@ -41,14 +45,21 @@ const listingSchema = new Schema(
         type: Boolean,
         default: false,
       },
+      locationType: {
+        type: String,
+        enum: {
+          values: ["Remote", "On-site", "Hybrid"],
+          message: "Invalid location type",
+        },
+        required: [true, "Location type is required"],
+      },
       location: {
         type: String,
         trim: true,
       },
-      locationType: {
-        type: String,
-        enum: ["On-site", "Remote", "Hybrid"],
-        required: [true, "Location type is required"],
+      experience: {
+        type: Number,
+        required: [true, "Experience is required"],
       },
       vacancy: {
         type: Number,
@@ -57,10 +68,6 @@ const listingSchema = new Schema(
       salary: {
         type: Number,
         required: [true, "Salary is required"],
-      },
-      experience: {
-        type: Number,
-        required: [true, "Experience is required"],
       },
       avgRating: {
         type: Number,
