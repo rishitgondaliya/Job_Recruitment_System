@@ -2,7 +2,7 @@
 <%- include('../includes/navigation.ejs') %>
 
 <div class="form-control">
-    <h2 class="center">Add Job Category</h2>
+    <h2 class="center"><%= isEditing ? "Edit" : "Add" %> Job Category</h2>
 
     <%- include('../includes/flash.ejs') %>
 
@@ -24,4 +24,5 @@
 </div>
 </body>
 <%- include('../includes/flashScript.ejs') %>
+<script src="/js/preventBack.js"></script>
 </html>
