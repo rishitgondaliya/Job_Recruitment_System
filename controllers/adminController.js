@@ -3,27 +3,44 @@ const Profile = require("../models/profile");
 const Category = require("../models/jobCategory");
 
 exports.getAdminHome = (req, res, next) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).render("500", {
+      pageTitle: "Unauthorized",
+      path: '/500',
+      errorMessage: "Access denied ! You are not authorized to view this page.",
+    });
+  }
+
   return res.render("admin/home", {
     pageTitle: "Home | Admin",
+    path: '/home'
   });
 };
 
 exports.getUsers = async (req, res) => {
   try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).render("500", {
+        pageTitle: "Unauthorized",
+        path: '/500',
+        errorMessage: "Access  ! You are not authorized to view this page.",
+      });
+    }
+
     const users = await User.find({ role: { $ne: "admin" } });
-    req.flash("success", "Fetched users successfully");
-    let successMessage = req.flash("success")[0];
+    let successMessage = "Fetched users successfully";
     return res.render("admin/users", {
       pageTitle: "Users",
+      path: '/users',
       users,
       successMessage,
     });
   } catch (err) {
     console.error("Error fetching users:", err);
-    req.flash("error", "can not fetched users");
-    let errorMessage = req.flash("success")[0];
+    let errorMessage = "can not fetched users, please try again";
     return res.render("admin/users", {
       pageTitle: "Users",
+      path: '/users',
       errorMessage,
     });
   }
@@ -31,27 +48,44 @@ exports.getUsers = async (req, res) => {
 
 exports.getAddCategory = async (req, res) => {
   try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).render("500", {
+        pageTitle: "Unauthorized",
+        path: '/500',
+        errorMessage: "Access  ! You are not authorized to view this page.",
+      });
+    }
+
     return res.render("admin/addCategory", {
       pageTitle: "Add Category",
+      path: '/addCategory',
       errors: {},
       isEditing: false,
       oldInput: {},
     });
   } catch (err) {
-    console.error("Error while adding job category:", err);
-    next({ message: "Error while adding job category" });
+    console.log(err);
+    next({ message: "something went wrong, please try again" });
   }
 };
 
 exports.postAddCategory = async (req, res) => {
   let errors = {};
   try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).render("500", {
+        pageTitle: "Unauthorized",
+        path: '/500',
+        errorMessage: "Access  ! You are not authorized to view this page.",
+      });
+    }
+
     const category = new Category({ name: req.body.name });
     await category.save();
-    req.flash("success", "Job category added successfully.");
-    let successMessage = req.flash("success")[0];
+    let successMessage = "Job category added successfully";
     return res.render("admin/addCategory", {
       pageTitle: "Add Category",
+      path: '/addCategory',
       errors,
       successMessage,
       isEditing: false,
@@ -80,32 +114,57 @@ exports.postAddCategory = async (req, res) => {
 
 exports.getJobCategories = async (req, res) => {
   try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).render("500", {
+        pageTitle: "Unauthorized",
+        path: '/500',
+        errorMessage:
+          "Access denied ! You are not authorized to view this page.",
+      });
+    }
+
     const categories = await Category.find();
-    // console.log("categories:", categories);
-    req.flash("success", "Job categories fetched successfully.");
-    let successMessage = req.flash("success")[0];
+    let successMessage = "Job categories fetched successfully";
     res.render("admin/jobCategories", {
       pageTitle: "Job Categories",
+      path: '/jobCategories',
       categories,
       successMessage,
     });
   } catch (err) {
     console.error("Error fetching categories:", err);
-    req.flash("error", "error fetching job categories.");
-    res.status(500).send("Internal Server Error");
+    res.status(500).render("admin/jobCategories", {
+      pageTitle: "Job Categories",
+      path: '/jobCategories',
+      errorMessage: "Error while fetching job categories",
+    });
   }
 };
 
 exports.getEditCategory = async (req, res, next) => {
   try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).render("500", {
+        pageTitle: "Unauthorized",
+        path: '/500',
+        errorMessage:
+          "Access denied ! You are not authorized to view this page.",
+      });
+    }
+
     const category = await Category.findById(req.params.categoryId);
-    console.log("id", req.params.categoryId);
+    // console.log("id", req.params.categoryId);
     if (!category) {
-      req.flash("error", "Category not found.");
-      return res.redirect("/admin/jobCategories");
+      return res.status(404).render("admin/jobCategories", {
+        pageTitle: "Job Categories",
+        path: '/jobCategories',
+        errorMessage: "Category not found",
+        oldInput: {},
+      });
     }
     return res.render("admin/addCategory", {
       pageTitle: "Edit Category",
+      path: '/addCategory',
       category,
       errors: {},
       isEditing: true,
@@ -113,35 +172,47 @@ exports.getEditCategory = async (req, res, next) => {
     });
   } catch (err) {
     console.error("Error fetching category:", err);
-    req.flash("error", "Error fetching category.");
-    res.status(500).send("Internal Server Error");
+    next({ message: "Internal Server Error" });
   }
 };
 
 exports.postEditCategory = async (req, res, next) => {
   try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).render("500", {
+        pageTitle: "Unauthorized",
+        path: '/500',
+        errorMessage:
+          "Access denied ! You are not authorized to view this page.",
+      });
+    }
+
     const categoryId = req.params.categoryId;
     // console.log(categoryId, "categoryId");
     const category = await Category.findById(categoryId);
     if (!category) {
-      req.flash("error", "Category not found.");
-      return res.redirect("/admin/jobCategories");
+      return res.status(404).render("admin/jobCategories", {
+        pageTitle: "Job Categories",
+        path: '/jobCategories',
+        errorMessage: "Category not found",
+        oldInput: {},
+      });
     }
     category.name = req.body.name;
     await category.save();
-    req.flash("success", "Category updated successfully.");
+
     return res.render("admin/jobCategories", {
       pageTitle: "Job Categories",
+      path: '/jobCategories',
       categories: await Category.find(),
-      successMessage: req.flash("success")[0],
+      successMessage: "Category updated successfully",
     });
-    // return res.redirect('/admin/jobCategories')
   } catch (err) {
     console.error("Error updating category:", err);
-    req.flash("error", "Error updating category.");
+
     return res.render("admin/addCategory", {
       pageTitle: "Edit Category",
-      errorMessage: req.flash("error")[0],
+      errorMessage: "Error updating category",
       errors: {},
       isEditing: true,
       oldInput: {},
@@ -151,131 +222,159 @@ exports.postEditCategory = async (req, res, next) => {
 
 exports.deleteCategory = async (req, res, next) => {
   try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).render("500", {
+        pageTitle: "Unauthorized",
+        path: '/500',
+        errorMessage:
+          "Access denied ! You are not authorized to view this page.",
+      });
+    }
+
     const categoryId = req.body.categoryId;
     await Category.findByIdAndDelete(categoryId);
-    req.flash("success", "Job Category deleted successfully");
-    let successMessage = req.flash("success")[0];
+
     res.render("admin/jobCategories", {
       pageTitle: "Job categories",
+      path: '/jobCategories',
       categories: await Category.find(),
-      successMessage,
+      successMessage: "Job Category deleted successfully",
     });
   } catch (err) {
     console.error("Error deleting category:", err);
-    req.flash("error", "Error deleting job category");
-    let errorMessage = req.flash("error")[0];
+
     res.render("admin/jobCategories", {
       pageTitle: "Job categories",
+      path: '/jobCategories',
       categories: await Category.find(),
-      errorMessage,
+      errorMessage: "Error deleting job category",
     });
   }
 };
 
 exports.deactivateUser = async (req, res, next) => {
   try {
-    const userId = req.body.userId;
-    console.log(userId);
-    const user = await User.findByIdAndUpdate(userId, { isActive: false });
-
-    if (!user) {
-      //   console.log("user not found");
-      req.flash("error", "User not found");
-      let errorMessage = req.flash("error")[0];
-      return res.render("admin/users", {
-        pageTitle: "Users",
-        users: await User.find(),
-        errorMessage,
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).render("500", {
+        pageTitle: "Unauthorized",
+        path: '/500',
+        errorMessage:
+          "Access denied ! You are not authorized to view this page.",
       });
     }
 
-    req.flash("success", "User deactivated successfully!");
-    let successMessage = req.flash("success")[0];
+    const userId = req.body.userId;
+    // console.log(userId);
+    const user = await User.findByIdAndUpdate(userId, { isActive: false });
+
+    if (!user) {
+      return res.render("admin/users", {
+        pageTitle: "Users",
+        path: '/users',
+        users: await User.find(),
+        errorMessage: "User not found",
+      });
+    }
+
     return res.render("admin/users", {
       pageTitle: "Users",
+      path: '/users',
       users: await User.find(),
-      successMessage,
+      successMessage: "User deactivated successfully!",
     });
   } catch (err) {
-    // console.error("Error deactivating user:", err);
-    req.flash("error", "An error occurred while deactivating the user.");
-    let errorMessage = req.flash("error")[0];
+    console.error("Error deactivating user:", err);
+
     return res.render("admin/users", {
       pageTitle: "Users",
+      path: '/users',
       users: await User.find(),
-      errorMessage,
+      errorMessage: "An error occurred while deactivating the user.",
     });
   }
 };
 
 exports.activateUser = async (req, res, next) => {
   try {
-    const userId = req.body.userId;
-    console.log(userId);
-    const user = await User.findByIdAndUpdate(userId, { isActive: true });
-
-    if (!user) {
-      //   console.log("user not found");
-      req.flash("error", "User not found.");
-      let errorMessage = req.flash("error")[0];
-      return res.render("admin/users", {
-        pageTitle: "Users",
-        users: await User.find(),
-        errorMessage,
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).render("500", {
+        pageTitle: "Unauthorized",
+        path: '/500',
+        errorMessage:
+          "Access denied ! You are not authorized to view this page.",
       });
     }
 
-    req.flash("success", "User activated successfully!");
-    let successMessage = req.flash("success")[0];
+    const userId = req.body.userId;
+    // console.log(userId);
+    const user = await User.findByIdAndUpdate(userId, { isActive: true });
+
+    if (!user) {
+      return res.render("admin/users", {
+        pageTitle: "Users",
+        path: '/users',
+        users: await User.find(),
+        errorMessage: "User not found",
+      });
+    }
+
     return res.render("admin/users", {
       pageTitle: "Users",
+      path: '/users',
       users: await User.find(),
-      successMessage,
+      successMessage: "User activated successfully!",
     });
   } catch (err) {
-    // console.error("Error deactivating user:", err);
-    req.flash("error", "An error occurred while deactivating the user.");
-    let errorMessage = req.flash("error")[0];
+    console.error("Error activating user:", err);
+
     return res.render("admin/users", {
       pageTitle: "Users",
+      path: '/users',
       users: await User.find(),
-      errorMessage,
+      errorMessage: "An error occurred while activating the user.",
     });
   }
 };
 
 exports.deleteUser = async (req, res, next) => {
   try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).render("500", {
+        pageTitle: "Unauthorized",
+        path: '/500',
+        errorMessage:
+          "Access denied ! You are not authorized to view this page.",
+      });
+    }
+
     const userId = req.body.userId;
     const user = await User.findByIdAndDelete(userId);
 
     await Profile.findOneAndDelete({ userId: userId });
 
     if (!user) {
-      req.flash("error", "User not found!");
-      let errorMessage = req.flash("error")[0];
       return res.render("admin/users", {
         pageTitle: "Users",
+        path: '/users',
         users: await User.find(),
-        errorMessage,
+        errorMessage: "User not found",
       });
     }
 
-    req.flash("success", "User deleted successfully!");
-    let successMessage = req.flash("success")[0];
     return res.render("admin/users", {
       pageTitle: "Users",
+      path: '/users',
       users: await User.find(),
-      successMessage,
+      successMessage: "User deleted successfully!",
     });
   } catch (err) {
     console.error("Error deleting user:", err);
-    req.flash("error", "An error occurred while deleting the user.");
-    let errorMessage = req.flash("error")[0];
+
     return res.render("admin/users", {
       pageTitle: "Users",
+      path: '/users',
       users: await User.find(),
-      errorMessage,
+      errorMessage: "An error occurred while deleting the user.",
     });
   }
 };
