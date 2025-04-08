@@ -1,7 +1,5 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-// const flash = require("connect-flash");
-// const session = require("express-session");
 
 const User = require("../models/user");
 const Profile = require("../models/profile");
@@ -10,6 +8,7 @@ exports.getRegister = async (req, res) => {
   try {
     res.status(422).render("auth/register", {
       pageTitle: "Register",
+      path: '/register',
       errors: {},
       formData: {},
     });
@@ -29,6 +28,7 @@ exports.postRegister = async (req, res, next) => {
       errors["email"] = "User with same email already exists";
       return res.status(422).render("auth/register", {
         pageTitle: "Register",
+        path: '/register',
         errors,
         formData: req.body,
       });
@@ -46,6 +46,7 @@ exports.postRegister = async (req, res, next) => {
       if (Object.keys(errors).length > 0) {
         return res.status(422).render("auth/register", {
           pageTitle: "Register",
+          path: '/register',
           errors,
           formData: req.body,
         });
@@ -108,7 +109,10 @@ exports.postRegister = async (req, res, next) => {
       newUser.profileId = emptyProfile._id;
       await newUser.save();
 
-      req.flash("success", "User registered successfully");
+      res.cookie("successMessage", "User registered successfully", {
+        maxAge: 3000,
+        httpOnly: true,
+      });
       res.redirect("/auth/login");
     }
   } catch (err) {
@@ -122,6 +126,7 @@ exports.postRegister = async (req, res, next) => {
 
     return res.status(422).render("auth/register", {
       pageTitle: "Register",
+      path: '/register',
       errors: errors,
       formData: req.body,
     });
@@ -130,112 +135,173 @@ exports.postRegister = async (req, res, next) => {
 
 exports.getLogin = async (req, res) => {
   try {
-    res.status(422).render("auth/login", {
+    // If user is already logged in
+    if (req.user) {
+      const userRole = req.user.role;
+      console.log("Logged-in user role:", userRole);
+
+      // Redirect based on role
+      if (userRole === "jobSeeker") {
+        return res.redirect("/jobSeeker/home");
+      } else if (userRole === "recruiter") {
+        return res.redirect("/recruiter/home");
+      } else if (userRole === "admin") {
+        return res.redirect("/admin/home");
+      } else {
+        return res.redirect("/auth/login"); 
+      }
+    }
+
+    // If not logged in, show login page
+    return res.status(200).render("auth/login", {
       pageTitle: "Login",
+      path: '/login',
       errors: {},
       formData: {},
     });
   } catch (err) {
     console.error(err);
+    return res.status(500).send("Internal Server Error");
   }
 };
 
 exports.postLogin = async (req, res, next) => {
   let errors = {};
+
   try {
     const { email, password } = req.body;
+
+    // Step 1: Basic manual checks
     if (!email) {
       errors.email = "Email is required";
-      return res.status(401).render("auth/login", {
-        pageTitle: "Login",
-        errors,
-        formData: req.body,
-      });
-    } else if (!password) {
+    }
+    if (!password) {
       errors.password = "Password is required";
+    }
+
+    // Step 2: If basic checks fail, stop early
+    if (Object.keys(errors).length > 0) {
       return res.status(401).render("auth/login", {
         pageTitle: "Login",
+        path: '/login',
         errors,
         formData: req.body,
       });
+    }
+
+    // Step 3: Create a temporary user instance to validate schema rules
+    const tempUser = new User({ email, password });
+
+    try {
+      // Validate only email and password (without saving)
+      await tempUser.validate(["email", "password"]);
+    } catch (validationErr) {
+      for (const field in validationErr.errors) {
+        errors[field] = validationErr.errors[field].message;
+      }
+      return res.status(400).render("auth/login", {
+        pageTitle: "Login",
+        path: '/login',
+        errors,
+        formData: req.body,
+      });
+    }
+
+    // Step 4: Proceed with login logic
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      errors.email = "User not found!";
+      return res.status(401).render("auth/login", {
+        pageTitle: "Login",
+        path: '/login',
+        errors,
+        formData: req.body,
+      });
+    }
+
+    if (!user.isActive) {
+      errors.email =
+        "You cannot login right now because admin has deactivated you!";
+      return res.status(401).render("auth/login", {
+        pageTitle: "Login",
+        path: '/login',
+        errors,
+        formData: req.body,
+      });
+    }
+
+    const isMatched = await bcrypt.compare(password, user.password);
+    if (!isMatched) {
+      errors.password = "Incorrect password!";
+      return res.status(401).render("auth/login", {
+        pageTitle: "Login",
+        path: '/login',
+        errors,
+        formData: req.body,
+      });
+    }
+
+    // Step 5: Set token and success message
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "15m",
+    });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "Lax",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie("successMessage", "Logged in successfully", {
+      maxAge: 3000,
+      httpOnly: false,
+    });
+
+    const userRole = user.role;
+    if (userRole === "jobSeeker") {
+      return res.redirect("/jobSeeker/home");
+    } else if (userRole === "recruiter") {
+      return res.redirect("/recruiter/home");
+    } else if (userRole === "admin") {
+      return res.redirect("/admin/home");
     } else {
-      const user = await User.findOne({ email });
-
-      if (!user) {
-        errors.email = "User not found!";
-        return res.status(401).render("auth/login", {
-          pageTitle: "Login",
-          errors,
-          formData: req.body,
-        });
-      }
-
-      if (!user.isActive) {
-        errors.email =
-          "You can not login right now beacuse admin has deactivated you!";
-        return res.status(401).render("auth/login", {
-          pageTitle: "Login",
-          errors,
-          formData: req.body,
-        });
-      }
-      const isMatched = await bcrypt.compare(password, user.password);
-      if (!isMatched) {
-        errors.password = "Incorrect password!";
-        return res.status(401).render("auth/login", {
-          pageTitle: "Login",
-          errors,
-          formData: req.body,
-        });
-      }
-
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "15m",
-      });
-
-      res.cookie("token", token, {
-        httpOnly: true, // The cookie cannot be accessed via JavaScript, only server can access
-        // secure: true, // The cookie will only be sent over HTTPS connections
-        sameSite: "Strict", // The cookie will not be sent along with requests from external sites, reducing CSRF (Cross-Site Request Forgery) risks.
-      });
-
-      // Set authentication status
-      req.session.isLoggedIn = true;
-      req.session.user = user;
-
-      // console.log("Session after login:", req.session)
-
-      req.flash("success", "Logged in successfully");
-
-      req.session.save(() => {
-        const userRole = req.session.user.role;
-        if (userRole === "jobSeeker") {
-          return res.redirect("/jobSeeker/home");
-        } else if (userRole === "recruiter") {
-          return res.redirect("/recruiter/home");
-        } else if (userRole === "admin") {
-          return res.redirect("/admin/home");
-        } else {
-          return res.status(401).render("auth/login", {
-            pageTitle: "Login",
-            errors,
-            formData: req.body,
-          });
-        }
+      errors.email = "User role is invalid";
+      return res.status(401).render("auth/login", {
+        pageTitle: "Login",
+        path: '/login',
+        errors,
+        formData: req.body,
       });
     }
   } catch (error) {
     console.error("Error while logging in:", error);
-    req.flash("error", "An error occurred while logging in. Please try again.");
-    req.session.save(() => res.redirect("/auth/login"));
+    res.cookie("errorMessage", "Error while logging in", {
+      maxAge: 3000,
+      httpOnly: false,
+    });
+    res.redirect("/auth/login");
   }
 };
 
 exports.logout = (req, res, next) => {
-  req.session.destroy((error) => {
-    res.clearCookie("connect.sid", { path: "/" }); // Clear session cookie
-    res.clearCookie('token')
-    res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
-    res.redirect("/");
-  });
+  try {
+    res.clearCookie("token", {
+      path: "/", // it's the same path where you set the cookie
+      httpOnly: true,
+      secure: false,
+      sameSite: "Lax",
+    });
+
+    res.cookie("successMessage", "Logged out successfully", {
+      maxAge: 3000,
+      httpOnly: false,
+    })
+
+    res.redirect("/auth/login");
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).send("Error while logging out");
+  }
 };
