@@ -1,26 +1,37 @@
 /* main-header */
 .main-header {
-    background-color: #007bff;
-    padding: .75rem;
-    border-radius: 8px;
+  background-color: #007bff;
+  padding: 0.75rem;
+  border-radius: 8px;
 }
 .navbar {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .navbar .nav-list {
-    list-style: none;
-    padding-left: 0.5rem;
+  list-style: none;
+  padding-left: 0.5rem;
 }
 
 .nav-list .nav-item {
-    display: inline-block;
-    margin-right: 1rem;
+  display: inline-block;
+  margin-right: 1rem;
 }
 
 .nav-list .nav-item a {
-    text-decoration: none;
-    color: rgb(255, 255, 255);
-    font-size: 1.35rem;
+  text-decoration: none;
+  color: rgb(255, 255, 255);
+  font-size: 1.35rem;
+}
+
+.nav-list .nav-item a:hover {
+    color: rgb(0, 0, 0);
+}
+
+.nav-list .nav-item a.active {
+  color: rgb(0, 0, 0);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
