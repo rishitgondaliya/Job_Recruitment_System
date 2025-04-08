@@ -8,24 +8,24 @@
       <ul class="nav-list">
           <% if(userRole === 'admin'){ %>
             <li class="nav-item">
-              <a href="/admin/users">Users</a>
+              <a href="/admin/users" class="<%= path === '/users' ? 'active' : '' %>">Users</a>
             </li>
             <li class="nav-item">
-              <a href="/admin/addCategory">Add category</a>
+              <a href="/admin/addCategory" class="<%= path === '/addCategory' ? 'active' : '' %>">Add category</a>
             </li>
             <li class="nav-item">
-              <a href="/admin/jobCategories">Job Categories</a>
+              <a href="/admin/jobCategories" class="<%= path === '/jobCategories' ? 'active' : '' %>">Job Categories</a>
             </li>
           <% } else if(userRole === 'jobSeeker'){ %>
             <li class="nav-item">
-              <a href="/jobSeeker/home">Home</a>
+              <a href="/jobSeeker/home" class="<%= path === '/home' ? 'active' : '' %>">Home</a>
             </li>
           <% } else if(userRole === 'recruiter'){ %>
             <li class="nav-item">
-              <a href="/recruiter/home">Home</a>
+              <a href="/recruiter/jobPosts" class="<%= path === '/jobPosts' ? 'active' : '' %>">Job Posts</a>
             </li>
             <li class="nav-item">
-              <a href="/recruiter/jobListing">Add Job</a>
+              <a href="/recruiter/addNewJob" class="<%= path === '/addNewJob' ? 'active' : '' %>">Add Job</a>
             </li>
           <% } else{ %>
             <li class="nav-item">
@@ -36,10 +36,10 @@
       <ul class="nav-list">
         <% if(!isAuthenticated){ %>
           <li class="nav-item">
-            <a href="/auth/register">Register</a>
+            <a href="/auth/register" class="<%= path === '/register' ? 'active' : '' %>">Register</a>
           </li>
           <li class="nav-item">
-            <a href="/auth/login">Login</a>
+            <a href="/auth/login" class="<%= path === '/login' ? 'active' : '' %>">Login</a>
           </li>
         <% } else { %>
           <li class="nav-item">
