@@ -1,16 +1,25 @@
 const express = require("express");
 
-const isAuthenticated = require('../middlewares/authMiddleware')
-const recruiterController = require('../controllers/recruiterController')
+const isAuthenticated = require("../middlewares/authMiddleware");
+const recruiterController = require("../controllers/recruiterController");
 
 const router = express.Router();
 
 router.get("/home", isAuthenticated, (req, res, next) => {
-  res.render("recruiter/home", { pageTitle: "Home | Recruiter" });
+  res.render("recruiter/home", {
+    pageTitle: "Home | Recruiter",
+    path: "/home",
+  });
 });
 
-router.get('/jobListing', isAuthenticated, recruiterController.getJobListing)
+router.get("/addNewJob", isAuthenticated, recruiterController.getAddNewJob);
 
-router.post('/addJobListing', isAuthenticated, recruiterController.postAddJobListing)
+router.post("/addNewJob", isAuthenticated, recruiterController.postAddNewJob);
+
+router.get("/jobPosts", isAuthenticated, recruiterController.getJobPosts);
+
+router.post('/deleteJobPost', isAuthenticated, recruiterController.deleteJobPost)
+
+router.get("/editJobPost/:jobPostId", isAuthenticated, recruiterController.getEditJobPost);
 
 module.exports = router;
