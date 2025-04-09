@@ -263,9 +263,9 @@ exports.postLogin = async (req, res, next) => {
     if (userRole === "jobSeeker") {
       return res.redirect("/jobSeeker/home");
     } else if (userRole === "recruiter") {
-      return res.redirect("/recruiter/home");
+      return res.redirect("/recruiter/jobPosts");
     } else if (userRole === "admin") {
-      return res.redirect("/admin/home");
+      return res.redirect("/admin/users");
     } else {
       errors.email = "User role is invalid";
       return res.status(401).render("auth/login", {
