@@ -5,7 +5,6 @@
     <div class="container">
         <%- include('../includes/flash.ejs') %>
 
-        <!-- Job Seekers Table -->
         <h2 class="section-title">Jobs Posted by you</h2>
         <% if(jobListings.length == 0){ %>
             <h4>No job listings found.</h4>
@@ -34,7 +33,7 @@
                                 <td><%= jobPost.jobDetail.vacancy %></td>
                                 <td class="actions">
                                     <form action="/recruiter/editJobPost/<%= jobPost._id %>" method="GET">
-                                        <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
+                                        <!-- <input type="hidden" name="jobPostId" value="<%= jobPost._id %>"> -->
                                         <button type="submit" class="edit-btn btn">Edit</button>
                                     </form>
                                     <form action="/recruiter/deleteJobPost" method="POST">

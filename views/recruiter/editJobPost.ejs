@@ -1,0 +1,86 @@
+<%- include('../includes/main.ejs') %>
+<%- include('../includes/navigation.ejs') %>
+
+<div class="form-control">
+  <h2 class="center">Edit Job Post</h2>
+
+  <%- include('../includes/flash.ejs') %>
+
+  <form action="/recruiter/editJobPost" method="POST" novalidate>
+    <div class="input-group">
+      <div class="form-input" style="width: 45%;">
+        <label for="jName">Job Title:</label>
+        <input type="text" id="jName" name="jobTitle" value="<%= jobPost?.jobDetail?.jobTitle || '' %>">
+        <% if (errors["jobDetail.jobTitle"]) { %><p class="input-error"><%= errors["jobDetail.jobTitle"] %></p><% } %>
+      </div>
+      <div class="form-input" style="width: 45%;">
+        <label for="cName">Category:</label>
+        <select name="categoryName" id="cName">
+          <option disabled>Select Category</option>
+          <% categories.forEach(cat => { %>
+            <option value="<%= cat.name %>" <%= jobPost?.category === cat.name ? 'selected' : '' %>><%= cat.name %></option>
+            <% }) %>
+          </select>
+        <% if (errors.categoryName) { %><p class="input-error"><%= errors.categoryName %></p><% } %>
+      </div>
+    </div>
+
+    <div class="form-input">
+      <label for="desc">Description:</label>
+      <input type="text" id="desc" name="description" value="<%= jobPost?.jobDetail?.description || '' %>">
+      <% if (errors["jobDetail.description"]) { %><p class="input-error"><%= errors["jobDetail.description"] %></p><% } %>
+    </div>
+
+    <div class="form-input">
+      <label for="req">Requirements:</label>
+      <input type="text" id="req" name="requirements" value="<%= jobPost?.jobDetail?.requirements || '' %>">
+      <% if (errors["jobDetail.requirements"]) { %><p class="input-error"><%= errors["jobDetail.requirements"] %></p><% } %>
+    </div>
+
+    <div class="input-group">
+      <div class="form-input" style="width: 45%;">
+        <label for="locType">Location Type:</label>
+        <select name="locType" id="locType">
+          <option value="">Location Type</option>
+          <option value="Remote" <%= jobPost?.jobDetail?.locationType === "Remote" ? "selected" : "" %>>Remote</option>
+          <option value="On-Site" <%= jobPost?.jobDetail?.locationType === "On-Site" ? "selected" : "" %>>On-Site</option>
+          <option value="Hybrid" <%= jobPost?.jobDetail?.locationType === "Hybrid" ? "selected" : "" %>>Hybrid</option>
+        </select>
+        <% if (errors["jobDetail.locationType"]) { %><p class="input-error"><%= errors["jobDetail.locationType"] %></p><% } %>
+      </div>
+
+      <div class="form-input" style="width: 45%;">
+        <label for="loc">Location:</label>
+        <input type="text" name="location" id="loc" value="<%= jobPost?.jobDetail?.location || '' %>">
+      </div>
+    </div>
+
+    <div class="input-group">
+      <div class="form-input" style="width: 45%;">
+        <label for="experience">Experience:</label>
+        <input type="number" name="experience" id="experience" step="1" value="<%= jobPost?.jobDetail?.experience || '' %>">
+        <% if (errors["jobDetail.experience"]) { %><p class="input-error"><%= errors["jobDetail.experience"] %></p><% } %>
+      </div>
+      <div class="form-input" style="width: 45%;">
+        <label for="vacancy">Vacancy:</label>
+        <input type="number" name="vacancy" id="vacancy" value="<%= jobPost?.jobDetail?.vacancy || '' %>">
+        <% if (errors["jobDetail.vacancy"]) { %><p class="input-error"><%= errors["jobDetail.vacancy"] %></p><% } %>
+      </div>
+    </div>
+
+    <div class="form-input" style="width: 50%;">
+      <label for="salary">Salary:</label>
+      <input type="number" name="salary" id="salary" step="1000" value="<%= jobPost?.jobDetail?.salary || '' %>">
+      <% if (errors["jobDetail.salary"]) { %><p class="input-error"><%= errors["jobDetail.salary"] %></p><% } %>
+    </div>
+
+    <div class="center">
+      <input type="hidden" name="jobPostId" value="<%= jobPost?._id %>">
+      <button class="btn" type="submit">Update job</button>
+    </div>
+  </form>
+</div>
+
+<%- include('../includes/flashScript.ejs') %>
+<script src="/js/preventBack.js"></script>
+</html>

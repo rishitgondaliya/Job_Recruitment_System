@@ -39,7 +39,7 @@
         
                 <div class="form-input">
                     <label for="req">Requirements:</label>
-                    <input type="text" id="req" name="requirements">
+                    <input type="text" id="req" name="requirements" value="<% formData ? formData.requirements : '' %>">
                     <% if (errors && errors["jobDetail.requirements"]) { %>
                         <p class="input-error"><%= errors["jobDetail.requirements"] %></p>
                     <% } %>
@@ -50,9 +50,9 @@
                         <label for="loc">Location Type:</label>
                         <select name="locType" id="locType">
                             <option>Location Type</option>
-                            <option value="Remote">Remote</option>
-                            <option value="On-Site">On-Site</option>
-                            <option value="Hybrid">Hybrid</option>
+                            <option value="Remote" <%= formData.locType === 'Remote' ? 'selected' : '' %>>Remote</option>
+                            <option value="On-Site" <%= formData.locType === 'On-site' ? 'selected' : '' %>>On-Site</option>
+                            <option value="Hybrid" <%= formData.locType === 'Hybrid' ? 'selected' : '' %>>Hybrid</option>
                         </select>
                         <% if (errors && errors["jobDetail.locType"]) { %>
                             <p class="input-error"><%= errors["jobDetail.locType"] %></p>
