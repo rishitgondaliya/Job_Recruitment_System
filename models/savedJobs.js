@@ -15,21 +15,22 @@ const savedJobSchema = new Schema(
         trim: true,
       },
     },
-    jobs: [
-      {
-        jobId: {
-          type: Schema.Types.ObjectId,
-          ref: "Listing",
-          required: true,
-        },
-        jobTitle: {
-          type: String,
-          required: true,
-          trim: true,
-        },
+    jobDetail: {
+      jobId: {
+        type: Schema.Types.ObjectId,
+        ref: "Listing",
+        required: true,
       },
-      { _id: false },
-    ],
+      jobTitle: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      company: {
+        type: String,
+        // required: true
+      }
+    },
   },
   { timestamps: true }
 );

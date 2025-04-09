@@ -17,6 +17,7 @@ const listingSchema = new Schema(
       type: String,
       required: [true, "Please select category"],
     },
+    company: String,
     jobDetail: {
       jobTitle: {
         type: String,
