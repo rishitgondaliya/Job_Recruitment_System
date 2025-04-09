@@ -11,14 +11,17 @@
               <a href="/admin/users" class="<%= path === '/users' ? 'active' : '' %>">Users</a>
             </li>
             <li class="nav-item">
-              <a href="/admin/addCategory" class="<%= path === '/addCategory' ? 'active' : '' %>">Add category</a>
-            </li>
-            <li class="nav-item">
               <a href="/admin/jobCategories" class="<%= path === '/jobCategories' ? 'active' : '' %>">Job Categories</a>
             </li>
           <% } else if(userRole === 'jobSeeker'){ %>
             <li class="nav-item">
               <a href="/jobSeeker/home" class="<%= path === '/home' ? 'active' : '' %>">Home</a>
+            </li>
+            <li class="nav-item">
+              <a href="/jobSeeker/jobCategories" class="<%= path === '/jobCategories' ? 'active' : '' %>">Job Categories</a>
+            </li>
+            <li class="nav-item">
+              <a href="/jobSeeker/allJobs" class="<%= path === '/allJobs' ? 'active' : '' %>">All Jobs</a>
             </li>
           <% } else if(userRole === 'recruiter'){ %>
             <li class="nav-item">
