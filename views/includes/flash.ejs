@@ -1,4 +1,10 @@
 
+<% if (editSuccess) { %>
+  <div id="success-alert" class="alert alert-success">
+    <%= editSuccess %>
+  </div>
+<% } %>
+
 <% if (successMessage) { %>
     <div id="success-alert" class="alert alert-success">
       <%= successMessage %>

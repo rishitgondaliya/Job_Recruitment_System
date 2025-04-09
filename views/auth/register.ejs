@@ -54,8 +54,8 @@
                         <label >Role:</label>
                         <select name="role" id="roleSelect" >
                             <option>Select role</option>
-                            <option value="jobSeeker">Job Seeker</option>
-                            <option value="recruiter">Recruiter</option>
+                            <option value="jobSeeker" <%= formData.role === 'jobSeeker' ? 'selected' : '' %>>Job Seeker</option>
+                            <option value="recruiter" <%= formData.role === 'recruiter' ? 'selected' : '' %>>Recruiter</option>
                         </select>
                         <% if (errors && errors.role) { %>
                             <p class="input-error"><%= errors.role %></p>

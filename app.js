@@ -162,6 +162,7 @@ app.use((req, res, next) => {
   res.locals.isAuthenticated = !!req.user;
   res.locals.userRole = req.user ? req.user.role : "";
   res.locals.successMessage = req.cookies.successMessage || "";
+  res.locals.editSuccess = req.cookies.editSuccess || "";
   res.locals.errorMessage = req.cookies.errorMessage || "";
 
   res.clearCookie("successMessage");
