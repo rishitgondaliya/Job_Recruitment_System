@@ -32,6 +32,4 @@
 .nav-list .nav-item a.active {
   color: rgb(0, 0, 0);
   font-weight: 500;
-  text-decoration: underline;
-  text-underline-offset: 4px;
 }

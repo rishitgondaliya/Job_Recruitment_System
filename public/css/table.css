@@ -25,6 +25,7 @@
 /* Table Styling */
 .custom-table {
     width: 100%;
+    min-width: 30rem;
     border-collapse: collapse;
     background-color: #fff;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
@@ -40,7 +41,7 @@
 }
 
 /* Column Widths */
-.custom-table th:nth-child(1), .custom-table td:nth-child(1) { 
+.custom-table th:nth-child(1), .custom-table td:nth-child(1){ 
     text-align: center;
 }
 
