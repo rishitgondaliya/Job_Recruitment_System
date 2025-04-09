@@ -10,6 +10,6 @@
   history.pushState(null, null, location.href);
   window.onpopstate = function () {
     // console.log(history)
-    history.go(0); // Forces the user to stay on the current page
+    history.go(1); // Forces the user to stay on the current page
   };
 })();
