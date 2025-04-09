@@ -22,4 +22,6 @@ router.post('/deleteJobPost', isAuthenticated, recruiterController.deleteJobPost
 
 router.get("/editJobPost/:jobPostId", isAuthenticated, recruiterController.getEditJobPost);
 
+router.post("/editJobPost", isAuthenticated, recruiterController.postEditJobPost);
+
 module.exports = router;
