@@ -6,14 +6,14 @@ exports.getAdminHome = (req, res, next) => {
   if (!req.user || req.user.role !== "admin") {
     return res.status(403).render("500", {
       pageTitle: "Unauthorized",
-      path: '/500',
+      path: "/500",
       errorMessage: "Access denied ! You are not authorized to view this page.",
     });
   }
 
   return res.render("admin/home", {
     pageTitle: "Home | Admin",
-    path: '/home'
+    path: "/home",
   });
 };
 
@@ -22,7 +22,7 @@ exports.getUsers = async (req, res) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
         pageTitle: "Unauthorized",
-        path: '/500',
+        path: "/500",
         errorMessage: "Access  ! You are not authorized to view this page.",
       });
     }
@@ -31,7 +31,7 @@ exports.getUsers = async (req, res) => {
     let successMessage = "Fetched users successfully";
     return res.render("admin/users", {
       pageTitle: "Users",
-      path: '/users',
+      path: "/users",
       users,
       successMessage,
     });
@@ -40,7 +40,7 @@ exports.getUsers = async (req, res) => {
     let errorMessage = "can not fetched users, please try again";
     return res.render("admin/users", {
       pageTitle: "Users",
-      path: '/users',
+      path: "/users",
       errorMessage,
     });
   }
@@ -51,14 +51,14 @@ exports.getAddCategory = async (req, res) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
         pageTitle: "Unauthorized",
-        path: '/500',
+        path: "/500",
         errorMessage: "Access  ! You are not authorized to view this page.",
       });
     }
 
-    return res.render("admin/addCategory", {
+    return res.render("admin/jobCategories", {
       pageTitle: "Add Category",
-      path: '/addCategory',
+      path: "/jobCategories",
       errors: {},
       isEditing: false,
       oldInput: {},
@@ -75,7 +75,7 @@ exports.postAddCategory = async (req, res) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
         pageTitle: "Unauthorized",
-        path: '/500',
+        path: "/500",
         errorMessage: "Access  ! You are not authorized to view this page.",
       });
     }
@@ -83,10 +83,13 @@ exports.postAddCategory = async (req, res) => {
     const category = new Category({ name: req.body.name });
     await category.save();
     let successMessage = "Job category added successfully";
-    return res.render("admin/addCategory", {
-      pageTitle: "Add Category",
-      path: '/addCategory',
-      errors,
+    return res.render("admin/jobCategories", {
+      pageTitle: "Job Categories",
+      path: "/jobCategories",
+      categories: await Category.find().select('name'),
+      isEditing: false,
+      oldInput: {},
+      errors: {},
       successMessage,
       isEditing: false,
       oldInput: {},
@@ -103,8 +106,10 @@ exports.postAddCategory = async (req, res) => {
     }
 
     console.error("Formatted error:", errors);
-    return res.render("admin/addCategory", {
+    return res.render("admin/jobCategories", {
       pageTitle: "Add Category",
+      path: '/jobCategories',
+      categories: await Category.find().select('name'),
       errors: errors,
       isEditing: false,
       oldInput: {},
@@ -117,26 +122,38 @@ exports.getJobCategories = async (req, res) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
         pageTitle: "Unauthorized",
-        path: '/500',
+        path: "/500",
         errorMessage:
           "Access denied ! You are not authorized to view this page.",
       });
     }
 
-    const categories = await Category.find();
-    let successMessage = "Job categories fetched successfully";
+    const categories = await Category.find().select('name');
+    // res.cookie("successMessage", "Job categories fetched successfully", {
+    //   maxAge: 3000,
+    //   httpOnly: false
+    // })
     res.render("admin/jobCategories", {
       pageTitle: "Job Categories",
-      path: '/jobCategories',
+      path: "/jobCategories",
+      isEditing: false,
+      oldInput: {},
+      errors: {},
       categories,
-      successMessage,
+      // successMessage: "Job categories fetched successfully",
     });
   } catch (err) {
     console.error("Error fetching categories:", err);
+    res.cookie("errorMessage", "Error while fetching job categories", {
+      maxAge: 3000,
+      httpOnly: false
+    })
     res.status(500).render("admin/jobCategories", {
       pageTitle: "Job Categories",
-      path: '/jobCategories',
-      errorMessage: "Error while fetching job categories",
+      path: "/jobCategories",
+      isEditing: false,
+      oldInput: {},
+      errors: {},
     });
   }
 };
@@ -146,7 +163,7 @@ exports.getEditCategory = async (req, res, next) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
         pageTitle: "Unauthorized",
-        path: '/500',
+        path: "/500",
         errorMessage:
           "Access denied ! You are not authorized to view this page.",
       });
@@ -157,15 +174,19 @@ exports.getEditCategory = async (req, res, next) => {
     if (!category) {
       return res.status(404).render("admin/jobCategories", {
         pageTitle: "Job Categories",
-        path: '/jobCategories',
+        path: "/jobCategories",
+        categories: await Category.find().select('name'),
         errorMessage: "Category not found",
-        oldInput: {},
+        isEditing: true,
+      oldInput: {},
+      errors: {},
       });
     }
-    return res.render("admin/addCategory", {
+    return res.render("admin/jobCategories", {
       pageTitle: "Edit Category",
-      path: '/addCategory',
+      path: "/jobCategories",
       category,
+      categories: await Category.find().select('name'),
       errors: {},
       isEditing: true,
       oldInput: { name: category.name },
@@ -181,7 +202,7 @@ exports.postEditCategory = async (req, res, next) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
         pageTitle: "Unauthorized",
-        path: '/500',
+        path: "/500",
         errorMessage:
           "Access denied ! You are not authorized to view this page.",
       });
@@ -193,25 +214,28 @@ exports.postEditCategory = async (req, res, next) => {
     if (!category) {
       return res.status(404).render("admin/jobCategories", {
         pageTitle: "Job Categories",
-        path: '/jobCategories',
+        path: "/jobCategories",
+        // categories: await Category.find().select('name'),
         errorMessage: "Category not found",
-        oldInput: {},
+        isEditing: false,
+      oldInput: {},
+      errors: {},
       });
     }
     category.name = req.body.name;
     await category.save();
 
-    return res.render("admin/jobCategories", {
-      pageTitle: "Job Categories",
-      path: '/jobCategories',
-      categories: await Category.find(),
-      successMessage: "Category updated successfully",
+    res.cookie("editSuccess", "Job Category updated successfully", {
+      maxAge: 3000,
+      httpOnly: false,
     });
+    return res.redirect("/admin/jobCategories");
   } catch (err) {
     console.error("Error updating category:", err);
 
-    return res.render("admin/addCategory", {
+    return res.render("admin/jobCategories", {
       pageTitle: "Edit Category",
+      path: '/jobCategories',
       errorMessage: "Error updating category",
       errors: {},
       isEditing: true,
@@ -225,7 +249,7 @@ exports.deleteCategory = async (req, res, next) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
         pageTitle: "Unauthorized",
-        path: '/500',
+        path: "/500",
         errorMessage:
           "Access denied ! You are not authorized to view this page.",
       });
@@ -236,18 +260,24 @@ exports.deleteCategory = async (req, res, next) => {
 
     res.render("admin/jobCategories", {
       pageTitle: "Job categories",
-      path: '/jobCategories',
+      path: "/jobCategories",
       categories: await Category.find(),
       successMessage: "Job Category deleted successfully",
+      isEditing: false,
+      oldInput: {},
+      errors: {},
     });
   } catch (err) {
     console.error("Error deleting category:", err);
 
     res.render("admin/jobCategories", {
       pageTitle: "Job categories",
-      path: '/jobCategories',
+      path: "/jobCategories",
       categories: await Category.find(),
       errorMessage: "Error deleting job category",
+      isEditing: false,
+      oldInput: {},
+      errors: {},
     });
   }
 };
@@ -257,7 +287,7 @@ exports.deactivateUser = async (req, res, next) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
         pageTitle: "Unauthorized",
-        path: '/500',
+        path: "/500",
         errorMessage:
           "Access denied ! You are not authorized to view this page.",
       });
@@ -270,7 +300,7 @@ exports.deactivateUser = async (req, res, next) => {
     if (!user) {
       return res.render("admin/users", {
         pageTitle: "Users",
-        path: '/users',
+        path: "/users",
         users: await User.find(),
         errorMessage: "User not found",
       });
@@ -278,7 +308,7 @@ exports.deactivateUser = async (req, res, next) => {
 
     return res.render("admin/users", {
       pageTitle: "Users",
-      path: '/users',
+      path: "/users",
       users: await User.find(),
       successMessage: "User deactivated successfully!",
     });
@@ -287,7 +317,7 @@ exports.deactivateUser = async (req, res, next) => {
 
     return res.render("admin/users", {
       pageTitle: "Users",
-      path: '/users',
+      path: "/users",
       users: await User.find(),
       errorMessage: "An error occurred while deactivating the user.",
     });
@@ -299,7 +329,7 @@ exports.activateUser = async (req, res, next) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
         pageTitle: "Unauthorized",
-        path: '/500',
+        path: "/500",
         errorMessage:
           "Access denied ! You are not authorized to view this page.",
       });
@@ -312,7 +342,7 @@ exports.activateUser = async (req, res, next) => {
     if (!user) {
       return res.render("admin/users", {
         pageTitle: "Users",
-        path: '/users',
+        path: "/users",
         users: await User.find(),
         errorMessage: "User not found",
       });
@@ -320,7 +350,7 @@ exports.activateUser = async (req, res, next) => {
 
     return res.render("admin/users", {
       pageTitle: "Users",
-      path: '/users',
+      path: "/users",
       users: await User.find(),
       successMessage: "User activated successfully!",
     });
@@ -329,7 +359,7 @@ exports.activateUser = async (req, res, next) => {
 
     return res.render("admin/users", {
       pageTitle: "Users",
-      path: '/users',
+      path: "/users",
       users: await User.find(),
       errorMessage: "An error occurred while activating the user.",
     });
@@ -341,7 +371,7 @@ exports.deleteUser = async (req, res, next) => {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
         pageTitle: "Unauthorized",
-        path: '/500',
+        path: "/500",
         errorMessage:
           "Access denied ! You are not authorized to view this page.",
       });
@@ -355,7 +385,7 @@ exports.deleteUser = async (req, res, next) => {
     if (!user) {
       return res.render("admin/users", {
         pageTitle: "Users",
-        path: '/users',
+        path: "/users",
         users: await User.find(),
         errorMessage: "User not found",
       });
@@ -363,7 +393,7 @@ exports.deleteUser = async (req, res, next) => {
 
     return res.render("admin/users", {
       pageTitle: "Users",
-      path: '/users',
+      path: "/users",
       users: await User.find(),
       successMessage: "User deleted successfully!",
     });
@@ -372,7 +402,7 @@ exports.deleteUser = async (req, res, next) => {
 
     return res.render("admin/users", {
       pageTitle: "Users",
-      path: '/users',
+      path: "/users",
       users: await User.find(),
       errorMessage: "An error occurred while deleting the user.",
     });
