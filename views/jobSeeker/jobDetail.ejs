@@ -1,0 +1,82 @@
+<%- include('../includes/main.ejs') %>
+<link rel="stylesheet" href="/css/table.css">
+<style>
+    .custom-table th:nth-child(1) {
+        text-align: left;
+        background-color: #f9f9f9;
+    }
+    .custom-table td {
+        padding: 0.75rem;
+    }
+    td .btn {
+        margin-top: 0;
+    }
+</style>
+<%- include('../includes/navigation.ejs') %>
+
+<div class="container">
+    <%- include('../includes/flash.ejs') %>
+
+    <h2 class="section-title"><%= jobPost.jobDetail.jobTitle %> - Details</h2>
+
+    <table class="custom-table">
+        <tbody>
+            <tr>
+                <th>Title</th>
+                <td><%= jobPost.jobDetail.jobTitle %></td>
+            </tr>
+            <tr>
+                <th>Category</th>
+                <td><%= jobPost.category %></td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td><%= jobPost.jobDetail.description %></td>
+            </tr>
+            <tr>
+                <th>Requirements</th>
+                <td><%= jobPost.jobDetail.requirements %></td>
+            </tr>
+            <tr>
+                <th>Location</th>
+                <td>
+                    <% if (jobPost.jobDetail.locationType === 'onsite' || jobPost.jobDetail.locationType === 'hybrid') { %>
+                        <%= jobPost.jobDetail.location %> (<%= jobPost.jobDetail.locationType %>)
+                    <% } else { %>
+                        <%= jobPost.jobDetail.locationType %>
+                    <% } %>
+                </td>
+            </tr>            
+            <tr>
+                <th>Company</th>
+                <td><%= jobPost.company %></td>
+            </tr>
+            <tr>
+                <th>Experience</th>
+                <td><%= jobPost.jobDetail.experience %></td>
+            </tr>
+            <tr>
+                <th>Salary</th>
+                <td><%= jobPost.jobDetail.salary %></td>
+            </tr>
+            <tr>
+                <th>Vacancy</th>
+                <td><%= jobPost.jobDetail.vacancy %></td>
+            </tr>
+            <tr>
+                <th>Actions</th>
+                <td>
+                    <form action="/jobSeeker/saveJobPost" method="POST">
+                        <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
+                        <button type="submit" class="edit-btn btn">Save</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+<%- include('../includes/flashScript.ejs') %>
+<script src="/js/preventBack.js"></script>
+</html>

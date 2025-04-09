@@ -1,0 +1,81 @@
+<%- include('../includes/main.ejs') %>
+<link rel="stylesheet" href="/css/table.css">
+<style>
+    .custom-table th:nth-child(4), .custom-table td:nth-child(4),
+    .custom-table th:nth-child(6), .custom-table td:nth-child(6) { 
+    text-align: center;
+}
+</style>
+<%- include('../includes/navigation.ejs') %>
+
+<form action="/jobSeeker/allPosts" method="GET" class="filter-form">
+    <div>
+      <label for="category">Category:</label>
+      <select name="category" id="category">
+        <option value="">All</option>
+        <% categories.forEach(cat => { %>
+          <option value="<%= cat.name %>" <%= selectedCategory === cat.name ? "selected" : "" %>><%= cat.name %></option>
+        <% }) %>
+      </select>
+    </div>
+  
+    <div>
+      <label for="locationType">Location Type:</label>
+      <select name="locationType" id="locationType">
+        <option value="">All</option>
+        <option value="onsite" <%= selectedLocationType === 'onsite' ? 'selected' : '' %>>Onsite</option>
+        <option value="hybrid" <%= selectedLocationType === 'hybrid' ? 'selected' : '' %>>Hybrid</option>
+        <option value="remote" <%= selectedLocationType === 'remote' ? 'selected' : '' %>>Remote</option>
+      </select>
+    </div>
+  
+    <div>
+      <label for="experience">Experience (years):</label>
+      <input type="number" name="experience" id="experience" min="0" value="<%= selectedExperience || '' %>">
+    </div>
+  
+    <button type="submit" class="btn">Apply Filters</button>
+  </form>
+  
+    <div class="container">
+        <%- include('../includes/flash.ejs') %>
+
+        <h2 class="section-title">All Jobs</h2>
+        <% if(jobPosts.length == 0){ %>
+            <h4>No job listings found.</h4>
+        <% } else { %>
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Sr. No.</th>
+                        <th>Job Title</th>
+                        <th>Company</th>
+                        <th>Vacancy</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% let jobPostCount = 1; %>
+                    <% jobPosts.forEach(jobPost => { %>
+                            <tr>
+                                <td><%= jobPostCount++ %></td>
+                                <td><%= jobPost.jobDetail.jobTitle %></td>
+                                <td><%= jobPost.company %></td>
+                                <td><%= jobPost.jobDetail.vacancy %></td>
+                                <td class="actions">
+                                    <a href="/jobSeeker/allJobs/<%= jobPost._id %>" class="edit-btn btn">Details</a>
+                                    <form action="/jobSeeker/saveJobPost" method="POST">
+                                        <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
+                                        <button type="submit" class="edit-btn btn">Save</button>
+                                    </form>
+                                </td>
+                            </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } %>
+    </div>
+</body>
+    <%- include('../includes/flashScript.ejs') %>
+    <script src="/js/preventBack.js"></script>
+</html>

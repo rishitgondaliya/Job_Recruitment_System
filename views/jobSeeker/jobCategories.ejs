@@ -1,0 +1,36 @@
+<%- include('../includes/main.ejs') %>
+<link rel="stylesheet" href="/css/table.css">
+<style>
+    .custom-table{
+        width: max-content;
+    }
+</style>
+<%- include('../includes/navigation.ejs') %>
+
+    <div class="container">
+        <h1 class="page-title">Job Categories</h1>
+
+        <%- include('../includes/flash.ejs') %>
+
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Sr. No.</th>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% let index = 1; %>
+                <% categories.forEach(category => { %>
+                    <tr>
+                        <td><%= index++ %></td>
+                        <td><%= category.name %> </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+    <%- include('../includes/flashScript.ejs') %>
+    <script src="/js/preventBack.js"></script>
+</html>
