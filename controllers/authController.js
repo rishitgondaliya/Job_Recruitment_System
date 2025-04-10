@@ -8,12 +8,13 @@ exports.getRegister = async (req, res) => {
   try {
     res.status(422).render("auth/register", {
       pageTitle: "Register",
-      path: '/register',
+      path: "/register",
       errors: {},
       formData: {},
     });
   } catch (err) {
     console.error(err);
+    next({ message: "Internal Server Error" });
   }
 };
 
@@ -28,7 +29,7 @@ exports.postRegister = async (req, res, next) => {
       errors["email"] = "User with same email already exists";
       return res.status(422).render("auth/register", {
         pageTitle: "Register",
-        path: '/register',
+        path: "/register",
         errors,
         formData: req.body,
       });
@@ -46,7 +47,7 @@ exports.postRegister = async (req, res, next) => {
       if (Object.keys(errors).length > 0) {
         return res.status(422).render("auth/register", {
           pageTitle: "Register",
-          path: '/register',
+          path: "/register",
           errors,
           formData: req.body,
         });
@@ -109,10 +110,14 @@ exports.postRegister = async (req, res, next) => {
       newUser.profileId = emptyProfile._id;
       await newUser.save();
 
-      res.cookie("successMessage", "User registered successfully", {
-        maxAge: 3000,
-        httpOnly: true,
-      });
+      res.cookie(
+        "successMessage",
+        "You have registered successfully, Login now.",
+        {
+          maxAge: 3000,
+          httpOnly: true,
+        }
+      );
       res.redirect("/auth/login");
     }
   } catch (err) {
@@ -126,7 +131,7 @@ exports.postRegister = async (req, res, next) => {
 
     return res.status(422).render("auth/register", {
       pageTitle: "Register",
-      path: '/register',
+      path: "/register",
       errors: errors,
       formData: req.body,
     });
@@ -144,18 +149,16 @@ exports.getLogin = async (req, res) => {
       if (userRole === "jobSeeker") {
         return res.redirect("/jobSeeker/home");
       } else if (userRole === "recruiter") {
-        return res.redirect("/recruiter/home");
+        return res.redirect("/recruiter/jobPosts");
       } else if (userRole === "admin") {
-        return res.redirect("/admin/home");
-      } else {
-        return res.redirect("/auth/login"); 
+        return res.redirect("/admin/users");
       }
     }
 
     // If not logged in, show login page
     return res.status(200).render("auth/login", {
       pageTitle: "Login",
-      path: '/login',
+      path: "/login",
       errors: {},
       formData: {},
     });
@@ -183,7 +186,7 @@ exports.postLogin = async (req, res, next) => {
     if (Object.keys(errors).length > 0) {
       return res.status(401).render("auth/login", {
         pageTitle: "Login",
-        path: '/login',
+        path: "/login",
         errors,
         formData: req.body,
       });
@@ -201,7 +204,7 @@ exports.postLogin = async (req, res, next) => {
       }
       return res.status(400).render("auth/login", {
         pageTitle: "Login",
-        path: '/login',
+        path: "/login",
         errors,
         formData: req.body,
       });
@@ -214,7 +217,7 @@ exports.postLogin = async (req, res, next) => {
       errors.email = "User not found!";
       return res.status(401).render("auth/login", {
         pageTitle: "Login",
-        path: '/login',
+        path: "/login",
         errors,
         formData: req.body,
       });
@@ -225,7 +228,7 @@ exports.postLogin = async (req, res, next) => {
         "You cannot login right now because admin has deactivated you!";
       return res.status(401).render("auth/login", {
         pageTitle: "Login",
-        path: '/login',
+        path: "/login",
         errors,
         formData: req.body,
       });
@@ -236,7 +239,7 @@ exports.postLogin = async (req, res, next) => {
       errors.password = "Incorrect password!";
       return res.status(401).render("auth/login", {
         pageTitle: "Login",
-        path: '/login',
+        path: "/login",
         errors,
         formData: req.body,
       });
@@ -254,23 +257,30 @@ exports.postLogin = async (req, res, next) => {
       maxAge: 15 * 60 * 1000,
     });
 
-    res.cookie("successMessage", "Logged in successfully", {
-      maxAge: 3000,
-      httpOnly: false,
-    });
-
     const userRole = user.role;
     if (userRole === "jobSeeker") {
+      res.cookie("successMessage", "Job seeker login successfull.", {
+        maxAge: 3000,
+        httpOnly: false,
+      });
       return res.redirect("/jobSeeker/home");
     } else if (userRole === "recruiter") {
+      res.cookie("successMessage", "Recruiter login successfull.", {
+        maxAge: 3000,
+        httpOnly: false,
+      });
       return res.redirect("/recruiter/jobPosts");
     } else if (userRole === "admin") {
+      res.cookie("successMessage", "Admin login successfull.", {
+        maxAge: 3000,
+        httpOnly: false,
+      });
       return res.redirect("/admin/users");
     } else {
       errors.email = "User role is invalid";
       return res.status(401).render("auth/login", {
         pageTitle: "Login",
-        path: '/login',
+        path: "/login",
         errors,
         formData: req.body,
       });
@@ -294,10 +304,10 @@ exports.logout = (req, res, next) => {
       sameSite: "Lax",
     });
 
-    res.cookie("successMessage", "Logged out successfully", {
+    res.cookie("successMessage", "You have logged out successfully", {
       maxAge: 3000,
       httpOnly: false,
-    })
+    });
 
     res.redirect("/auth/login");
   } catch (err) {
