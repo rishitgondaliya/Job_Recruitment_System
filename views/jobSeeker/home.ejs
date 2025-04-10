@@ -1,9 +1,52 @@
 <%- include('../includes/main.ejs') %>
+<link rel="stylesheet" href="/css/table.css">
+<style>
+    .custom-table th:nth-child(4), .custom-table td:nth-child(4),
+    .custom-table th:nth-child(6), .custom-table td:nth-child(6) { 
+    text-align: center;
+}
+</style>
 <%- include('../includes/navigation.ejs') %>
-<%- include('../includes/flash.ejs') %>
+  
+    <div class="container">
+        <%- include('../includes/flash.ejs') %>
 
-        <h1>Featured Jobs</h1>
-    </body>
+        <h2 class="section-title">Featured Jobs</h2>
+        <% if(featuredJobs.length == 0){ %>
+            <h4>There is no featured jobs to show.</h4>
+        <% } else { %>
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Sr. No.</th>
+                        <th>Job Title</th>
+                        <th>Company</th>
+                        <th>Vacancy</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% let featuredJobCount = 1; %>
+                    <% featuredJobs.forEach(featuredJob => { %>
+                            <tr>
+                                <td><%= featuredJobCount++ %></td>
+                                <td><%= featuredJob.jobDetail.jobTitle %></td>
+                                <td><%= featuredJob.company %></td>
+                                <td><%= featuredJob.jobDetail.vacancy %></td>
+                                <td class="actions">
+                                    <a href="/jobSeeker/allJobs/<%= featuredJob._id %>" class="edit-btn btn">Details</a>
+                                    <form action="/jobSeeker/savefeaturedJob" method="POST">
+                                        <input type="hidden" name="featuredJobId" value="<%= featuredJob._id %>">
+                                        <button type="submit" class="edit-btn btn">Save</button>
+                                    </form>
+                                </td>
+                            </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } %>
+    </div>
+</body>
     <%- include('../includes/flashScript.ejs') %>
     <script src="/js/preventBack.js"></script>
 </html>
