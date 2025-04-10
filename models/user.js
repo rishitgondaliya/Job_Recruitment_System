@@ -111,6 +111,13 @@ userSchema.pre("save", function (next) {
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
   }
+
+  if (this.company) {
+    this.company = this.company
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
   next();
 });
 
