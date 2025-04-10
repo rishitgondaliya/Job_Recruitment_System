@@ -1,12 +1,20 @@
-const User = require("../models/user");
+// const User = require("../models/user");
 const jobListing = require("../models/jobListing");
 const Category = require("../models/jobCategory");
-const savedJobs = require('../models/savedJobs')
+const savedJobs = require("../models/savedJobs");
 
-exports.getJobSeekerHome = (req, res, next) => {
+exports.getJobSeekerHome = async (req, res, next) => {
+  // const featuredJobs = await featuredJob.find()
+  const featuredJobs = await jobListing.find({
+    "jobDetail.isFeatured.status": "Yes",
+    "jobDetail.isFeatured.endDate": { $gte: new Date() },
+  });
+  // console.log('featuredJobs',featuredJobs)
+
   res.render("jobSeeker/home", {
     pageTitle: "Home | Job Seeker",
     path: "/home",
+    featuredJobs: featuredJobs,
   });
 };
 
@@ -45,17 +53,9 @@ exports.getJobCategories = async (req, res, next) => {
 
 exports.getAllJobs = async (req, res, next) => {
   try {
-    const { category, locationType, experience } = req.query;
-
-  const filter = {};
-
-  if (category) filter.category = category;
-  if (locationType) filter['jobDetail.locationType'] = locationType;
-  if (experience) filter['jobDetail.experience'] = { $lte: experience };
-
-  const jobPosts = await jobListing.find(filter);
-  const categories = await Category.find();
-    // const jobPosts = await jobListing.find();
+    const categories = await Category.find();
+    const jobPosts = await jobListing.find();
+    console.log("jobPosts", jobPosts);
     if (!jobPosts) {
       return res.status(404).render("500", {
         pageTitle: "No Jobs Found",
@@ -68,18 +68,10 @@ exports.getAllJobs = async (req, res, next) => {
       path: "/allJobs",
       jobPosts,
       categories,
-      selectedCategory: category || '',
-    selectedLocationType: locationType || '',
-    selectedExperience: experience || '',
       // successMessage: "All jobs fetched successfully",
     });
   } catch (error) {
     console.log(error);
-    // res.status(500).render("500", {
-    //   pageTitle: "Internal Server Error",
-    //   path: "/500",
-    //   errorMessage: "Internal server error. Please try again later.",
-    // });
     next({ message: "Internal server error, please try again later" });
   }
 };
@@ -96,32 +88,27 @@ exports.postSaveJobPost = async (req, res, next) => {
     });
   }
 
-  const alreadySaved = await savedJobs.findOne({
-    "user.userId": user._id,
-    "jobDetail.jobId": jobId,
-  });
-
   let user = {
     userId: req.user._id,
-    name: req.user.firstName + ' ' + req.user.lastName,
-  }  
+    name: req.user.firstName + " " + req.user.lastName,
+  };
   let jobDetail = {
     jobId: jobPost._id,
     jobTitle: jobPost.jobDetail.jobTitle,
-    company: jobPost.company
-  }
+    company: jobPost.company,
+  };
 
   const newSavedJob = new savedJobs({
     user,
-    jobDetail
-  })
+    jobDetail,
+  });
 
-  await newSavedJob.save()
-  res.cookie('successMessage', "Job saved successfully", {
+  await newSavedJob.save();
+  res.cookie("successMessage", "Job saved successfully", {
     maxAge: 3000,
     httpOnly: false,
-  })
-  res.redirect('/jobSeeker/allJobs')
+  });
+  res.redirect("/jobSeeker/allJobs");
   // res.render('jobSeeker/allJobs', {
   //   pageTitle: "All Jobs",
   //   path: '/allJObs',
@@ -135,18 +122,18 @@ exports.getJobDetails = async (req, res, next) => {
   const jobPostId = req.params.jobPostId;
   const jobPost = await jobListing.findById(jobPostId);
   if (!jobPost) {
-    res.render('/jobSeeker/allJobs', {
+    res.render("/jobSeeker/allJobs", {
       pageTitle: "All jobs",
       path: "/allJobs",
       errorMessage: "Job post not found.",
-      jobPosts: await jobListing.find()
-    })
+      jobPosts: await jobListing.find(),
+    });
   }
   // console.log("jobPost",jobPost)
-  res.render('jobSeeker/jobDetail', {
+  res.render("jobSeeker/jobDetail", {
     pageTitle: jobPost.jobDetail.jobTitle,
     jobPost,
-    path: '/allJobs',
-    errors: {}
-  })
-}
+    path: "/allJobs",
+    errors: {},
+  });
+};
