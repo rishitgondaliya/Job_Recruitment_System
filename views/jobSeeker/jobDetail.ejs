@@ -8,17 +8,45 @@
     .custom-table td {
         padding: 0.75rem;
     }
+    .custom-table{
+        min-width: 35rem;
+        max-width: 50rem;
+    }
     td .btn {
         margin-top: 0;
+    }
+    .title {
+        display: flex;
+        justify-content: space-between;
+    }
+    .badge{
+        background-color: #15e14f;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+    .nav-btns{
+        margin-top: 1rem;
+        text-align: right;
     }
 </style>
 <%- include('../includes/navigation.ejs') %>
 
+<div class="nav-btns">
+    <a href="" class="btn">< Previous</a>
+    <a href="" class="btn">Next ></a>
+</div>
 <div class="container">
     <%- include('../includes/flash.ejs') %>
 
-    <h2 class="section-title"><%= jobPost.jobDetail.jobTitle %> - Details</h2>
-
+    <div class="title">
+        <h2 class="section-title"><%= jobPost.jobDetail.jobTitle %> - Details</h2>
+    <h3>
+        <% if(jobPost.jobDetail.isFeatured.endDate >= new Date()){ %>
+            <span class="badge">Hiring Urgently</span>
+        <% } %>
+    </h3>
+    </div>
     <table class="custom-table">
         <tbody>
             <tr>
@@ -40,7 +68,7 @@
             <tr>
                 <th>Location</th>
                 <td>
-                    <% if (jobPost.jobDetail.locationType === 'onsite' || jobPost.jobDetail.locationType === 'hybrid') { %>
+                    <% if (jobPost.jobDetail.locationType === 'On-Site' || jobPost.jobDetail.locationType === 'Hybrid') { %>
                         <%= jobPost.jobDetail.location %> (<%= jobPost.jobDetail.locationType %>)
                     <% } else { %>
                         <%= jobPost.jobDetail.locationType %>
@@ -53,7 +81,9 @@
             </tr>
             <tr>
                 <th>Experience</th>
-                <td><%= jobPost.jobDetail.experience %></td>
+                <td>
+                    <%= jobPost.jobDetail.experience === 0 ? 'Freshers' : `${jobPost.jobDetail.experience} Year` %>
+                  </td>                  
             </tr>
             <tr>
                 <th>Salary</th>
@@ -74,6 +104,9 @@
             </tr>
         </tbody>
     </table>
+    <div class="apply-now center">
+        <button class="btn">Apply now</button>
+    </div>
 </div>
 
 </body>
