@@ -34,8 +34,8 @@ exports.getAddNewJob = async (req, res) => {
 };
 
 exports.postAddNewJob = async (req, res, next) => {
-  let categories;
-
+  let categories = {};
+  let errors = {};
   try {
     const {
       jobTitle,
@@ -47,6 +47,9 @@ exports.postAddNewJob = async (req, res, next) => {
       experience,
       vacancy,
       salary,
+      status,
+      startDate,
+      endDate,
     } = req.body;
 
     // Fetch categories to re-render the form
@@ -68,6 +71,27 @@ exports.postAddNewJob = async (req, res, next) => {
       });
     }
 
+    if (status === "Yes") {
+      if (!startDate) {
+        errors["jobDetail.isFeatured.startDate"] = "Start date is required!";
+      } else if (!endDate) {
+        errors["jobDetail.isFeatured.endDate"] = "End date is required!";
+      } else if (new Date(endDate) <= new Date(startDate)) {
+        errors["jobDetail.isFeatured.endDate"] =
+          "End date must be after start date";
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return res.render("recruiter/addNewJob", {
+        pageTitle: "Add new job",
+        path: "/addNewJob",
+        errors,
+        formData: req.body,
+        categories,
+      });
+    }
+
     // Build job detail
     const jobDetail = {
       jobTitle,
@@ -80,6 +104,16 @@ exports.postAddNewJob = async (req, res, next) => {
       experience,
       vacancy,
       salary,
+      isFeatured:
+        status === "Yes"
+          ? {
+              status: "Yes",
+              startDate: startDate,
+              endDate: endDate,
+            }
+          : {
+              status: "No",
+            },
     };
 
     // Create new Job
@@ -99,8 +133,7 @@ exports.postAddNewJob = async (req, res, next) => {
     });
     return res.redirect("/recruiter/jobPosts");
   } catch (err) {
-    let errors = {};
-
+    let errorMessage;
     if (err.name === "ValidationError") {
       for (let field in err.errors) {
         // Use short field names if needed, or use full path
@@ -109,13 +142,16 @@ exports.postAddNewJob = async (req, res, next) => {
       }
     } else {
       console.log("Unexpected error:", err);
-      errors.general = "Something went wrong, please try again.";
+      errorMessage = "Something went wrong, please try again.";
     }
+    console.log("errors", errors);
+    console.log("formData", req.body);
 
     return res.render("recruiter/addNewJob", {
       pageTitle: "Add new job",
       path: "/addNewJob",
       errors,
+      errorMessage,
       formData: req.body,
       categories,
     });
@@ -142,7 +178,7 @@ exports.getJobPosts = async (req, res) => {
       pageTitle: "Job Posts",
       path: "/jobPosts",
       jobListings,
-      successMessage: "Job posts fetched successfully",
+      // successMessage: "Job posts fetched successfully",
       errors: {},
       formData: {},
     });
@@ -258,6 +294,16 @@ exports.postEditJobPost = async (req, res, next) => {
   let categories = await Category.find().select("name");
   try {
     console.log("jobPostId:", jobPostId);
+    if (req.body.status === "Yes") {
+      if (!req.body.startDate) {
+        errors["jobDetail.isFeatured.startDate"] = "Start date is required!";
+      } else if (!req.body.endDate) {
+        errors["jobDetail.isFeatured.endDate"] = "End date is required!";
+      } else if (new Date(req.body.endDate) <= new Date(req.body.startDate)) {
+        errors["jobDetail.isFeatured.endDate"] =
+          "End date must be after start date";
+      }
+    }
     const updatedJobPost = {
       // recruiterId: req.user._id,
       // categoryId: ,
@@ -273,6 +319,16 @@ exports.postEditJobPost = async (req, res, next) => {
         location: req.body.location,
         vacancy: req.body.vacancy,
         experience: req.body.experience,
+        isFeatured:
+          req.body.status === "Yes"
+            ? {
+                status: "Yes",
+                startDate: req.body.startDate,
+                endDate: req.body.endDate,
+              }
+            : {
+                status: "No",
+              },
       },
     };
     jobPost = await jobListing.findById(jobPostId);
