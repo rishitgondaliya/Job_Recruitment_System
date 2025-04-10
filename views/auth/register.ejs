@@ -42,7 +42,7 @@
                 </div>
 
                 <div class="input-group">
-                    <div class="form-input">
+                    <div class="form-input" style="width: 45%;">
                         <label for="phone">Phone:</label>
                         <input type="tel" id="phone" name="phone" value="<%= formData ? formData.phone : '' %>">
                         <% if (errors && errors.phone) { %>
@@ -50,7 +50,7 @@
                         <% } %>
                     </div>
 
-                    <div class="form-input" style="margin-left: 2rem;">
+                    <div class="form-input" style="width: 45%;">
                         <label >Role:</label>
                         <select name="role" id="roleSelect" >
                             <option>Select role</option>
