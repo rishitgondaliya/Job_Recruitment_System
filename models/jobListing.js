@@ -43,13 +43,31 @@ const listingSchema = new Schema(
         required: [true, "Requirements are required"],
       },
       isFeatured: {
-        type: Boolean,
-        default: false,
+        status: {
+          type: String,
+          enum: {
+            values: ["Yes", "No"],
+            message: "Please select Yes or No",
+          },
+          required: [true, "Please select isFeatured status"],
+        },
+        startDate: {
+          type: Date,
+          validate: {
+            validator: function (value) {
+              return value >= new Date();
+            },
+            message: "Start date must be future date",
+          },
+        },
+        endDate: {
+          type: Date,
+        },
       },
       locationType: {
         type: String,
         enum: {
-          values: ["Remote", "On-site", "Hybrid"],
+          values: ["Remote", "On-Site", "Hybrid"],
           message: "Invalid location type",
         },
         required: [true, "Location type is required"],
