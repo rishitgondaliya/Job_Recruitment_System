@@ -68,11 +68,43 @@
       </div>
     </div>
 
-    <div class="form-input" style="width: 50%;">
-      <label for="salary">Salary:</label>
-      <input type="number" name="salary" id="salary" step="1000" value="<%= jobPost?.jobDetail?.salary || '' %>">
-      <% if (errors["jobDetail.salary"]) { %><p class="input-error"><%= errors["jobDetail.salary"] %></p><% } %>
-    </div>
+    <div class="input-group">
+      <div class="form-input" style="width: 45%;">
+          <label for="salary">Salary:</label>
+          <input type="number" name="salary" id="salary" step="1000" min="1000" value="<%= jobPost?.jobDetail?.salary || ''%>">
+          <% if (errors && errors["jobDetail.salary"]) { %>
+              <p class="input-error"><%= errors["jobDetail.salary"] %></p>
+          <% } %>
+      </div>
+      <div class="form-input" style="width: 45%;">
+          <label for="status">Is Featured?</label>
+          <select name="status" id="isFeatured">
+              <option value="No" <%= jobPost?.jobDetail?.status === 'No' ? 'selected' : '' %>>No</option>
+              <option value="Yes" <%= jobPost?.jobDetail?.status === 'Yes' ? 'selected' : '' %>>Yes</option>
+          </select>
+          <% if (errors && errors["jobDetail.isFeatured.status"]) { %>
+              <p class="input-error"><%= errors["jobDetail.isFeatured.status"] %></p>
+          <% } %>
+      </div>
+  </div>
+
+  <div class="input-group" id="featuredDates" style="display: none;">
+      <div class="form-input" style="width: 45%;">
+          <label for="startDate">Start Date:</label>
+          <input type="date" name="startDate" id="startDate" value="<%= jobPost?.jobDetail?.isFeatured?.startDate || '' %>">
+          <% if (errors && errors["jobDetail.isFeatured.startDate"]) { %>
+              <p class="input-error"><%= errors["jobDetail.isFeatured.startDate"] %></p>
+          <% } %>
+      </div>
+  
+      <div class="form-input" style="width: 45%;">
+          <label for="endDate">End Date:</label>
+          <input type="date" name="endDate" id="endDate" value="<%= jobPost?.jobDetail?.isFeatured?.endDate || '' %>">
+          <% if (errors && errors["jobDetail.isFeatured.endDate"]) { %>
+              <p class="input-error"><%= errors["jobDetail.isFeatured.endDate"] %></p>
+          <% } %>
+      </div>
+  </div>
 
     <div class="center">
       <input type="hidden" name="jobPostId" value="<%= jobPost?._id %>">
@@ -80,7 +112,25 @@
     </div>
   </form>
 </div>
+  </body>
+  <script>
+    const isFeaturedSelect = document.getElementById('isFeatured');
+    const featuredDatesDiv = document.getElementById('featuredDates');
 
-<%- include('../includes/flashScript.ejs') %>
-<script src="/js/preventBack.js"></script>
+    function toggleFeaturedDates() {
+        if (isFeaturedSelect.value === 'Yes') {
+            featuredDatesDiv.style.display = 'flex';
+        } else {
+            featuredDatesDiv.style.display = 'none';
+        }
+    }
+
+    // Run on page load
+    toggleFeaturedDates();
+
+    // Run on change
+    isFeaturedSelect.addEventListener('change', toggleFeaturedDates);
+  </script>
+  <%- include('../includes/flashScript.ejs') %>
+  <script src="/js/preventBack.js"></script>
 </html>

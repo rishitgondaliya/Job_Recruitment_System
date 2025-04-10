@@ -9,29 +9,29 @@
             <form action="/recruiter/addNewJob" method="POST" novalidate>
                 <div class="input-group">
                     <div class="form-input" style="width: 45%;">
-                        <label for="jName">Job Title:</label>
-                        <input type="text" id="jName" name="jobTitle" value="<%= formData ? formData.jobTitle : '' %>">
-                        <% if (errors && errors["jobDetail.jobTitle"]) { %>
-                            <p class="input-error"><%= errors["jobDetail.jobTitle"] %></p>
-                        <% } %>
-                    </div>
-                    <div class="form-input" style="width: 45%;">
                         <label for="cName">Category:</label>
                         <select name="categoryName" id="cName">
                             <option>Select Category</option>
                             <% for (var i = 0; i < categories.length; i++) { %>
-                                <option value="<%= categories[i].name %>"><%= categories[i].name %></option>
+                                <option value="<%= categories[i].name %>" <%= formData.categoryName === categories[i].name ? 'selected' : '' %>><%= categories[i].name %></option>
                             <% } %>
                         </select>
                         <% if (errors && errors.categoryName) { %>
                             <p class="input-error"><%= errors.categoryName %></p>
                         <% } %>
                     </div>    
+                    <div class="form-input" style="width: 45%;">
+                        <label for="jName">Job Title:</label>
+                        <input type="text" id="jName" name="jobTitle" value="<%= formData.jobTitle ? formData.jobTitle : '' %>">
+                        <% if (errors && errors["jobDetail.jobTitle"]) { %>
+                            <p class="input-error"><%= errors["jobDetail.jobTitle"] %></p>
+                        <% } %>
+                    </div>
                 </div>
                 
                 <div class="form-input">
                     <label for="desc">Description:</label>
-                    <input type="text" id="desc" name="description" value="<%= formData ? formData.description : '' %>">
+                    <input type="text" id="desc" name="description" value="<%= formData.description ? formData.description : '' %>">
                     <% if (errors && errors["jobDetail.description"]) { %>
                         <p class="input-error"><%= errors["jobDetail.description"] %></p>
                     <% } %>
@@ -39,7 +39,7 @@
         
                 <div class="form-input">
                     <label for="req">Requirements:</label>
-                    <input type="text" id="req" name="requirements" value="<% formData ? formData.requirements : '' %>">
+                    <input type="text" id="req" name="requirements" value="<% formData.requirements ? formData.requirements : '' %>">
                     <% if (errors && errors["jobDetail.requirements"]) { %>
                         <p class="input-error"><%= errors["jobDetail.requirements"] %></p>
                     <% } %>
@@ -51,43 +51,73 @@
                         <select name="locType" id="locType">
                             <option>Location Type</option>
                             <option value="Remote" <%= formData.locType === 'Remote' ? 'selected' : '' %>>Remote</option>
-                            <option value="On-Site" <%= formData.locType === 'On-site' ? 'selected' : '' %>>On-Site</option>
+                            <option value="On-Site" <%= formData.locType === 'On-Site' ? 'selected' : '' %>>On-Site</option>
                             <option value="Hybrid" <%= formData.locType === 'Hybrid' ? 'selected' : '' %>>Hybrid</option>
                         </select>
-                        <% if (errors && errors["jobDetail.locType"]) { %>
-                            <p class="input-error"><%= errors["jobDetail.locType"] %></p>
+                        <% if (errors && errors["jobDetail.locationType"]) { %>
+                            <p class="input-error"><%= errors["jobDetail.locationType"] %></p>
                         <% } %>
                     </div>
                     <div class="form-input" style="width: 45%;">
                         <label for="loc">Location:</label>
-                        <input type="text" name="location" id="loc" value="<%= formData ? formData.location : '' %>">
+                        <input type="text" name="location" id="loc" value="<%= formData.location ? formData.location : '' %>">
                     </div>
                 </div>
 
                 <div class="input-group">
                     <div class="form-input" style="width: 45%;">
                         <label for="experience">Experience:</label>
-                        <input type="number" name="experience" id="experience" step="1" value="<%= formData ? formData.experience : ''%>">
+                        <input type="number" name="experience" id="experience" step="1" min="0" value="<%= formData ? formData.experience : ''%>">
                         <% if (errors && errors["jobDetail.experience"]) { %>
                             <p class="input-error"><%= errors["jobDetail.experience"] %></p>
                         <% } %>
                     </div>
                     <div class="form-input" style="width: 45%;">
                         <label for="vacancy">Vacancy:</label>
-                        <input type="number" name="vacancy" id="vacancy" value="<%= formData ? formData.vacancy : ''%>">     
+                        <input type="number" name="vacancy" id="vacancy" step="1" min="1" value="<%= formData ? formData.vacancy : ''%>">     
                         <% if (errors && errors["jobDetail.vacancy"]) { %>
                             <p class="input-error"><%= errors["jobDetail.vacancy"] %></p>
                         <% } %>
                     </div>
                 </div>
                 
-                <div class="form-input" style="width: 50%;">
-                    <label for="salary">Salary:</label>
-                    <input type="number" name="salary" id="salary" step="1000" value="<%= formData ? formData.salary : ''%>">
-                    <% if (errors && errors["jobDetail.salary"]) { %>
-                        <p class="input-error"><%= errors["jobDetail.salary"] %></p>
-                    <% } %>
+                <div class="input-group">
+                    <div class="form-input" style="width: 45%;">
+                        <label for="isFeatured">Salary:</label>
+                        <input type="number" name="salary" id="salary" step="1000" min="1000" value="<%= formData ? formData.salary : ''%>">
+                        <% if (errors && errors["jobDetail.salary"]) { %>
+                            <p class="input-error"><%= errors["jobDetail.salary"] %></p>
+                        <% } %>
+                    </div>
+                    <div class="form-input" style="width: 45%;">
+                        <label for="status">Is Featured?</label>
+                        <select name="status" id="isFeatured">
+                            <option value="No" <%= formData.status === 'No' ? 'selected' : '' %>>No</option>
+                            <option value="Yes" <%= formData.status === 'Yes' ? 'selected' : '' %>>Yes</option>
+                        </select>
+                        <% if (errors && errors["jobDetail.isFeatured.status"]) { %>
+                            <p class="input-error"><%= errors["jobDetail.isFeatured.status"] %></p>
+                        <% } %>
+                    </div>
                 </div>
+
+                <div class="input-group" id="featuredDates" style="display: none;">
+                    <div class="form-input" style="width: 45%;">
+                        <label for="startDate">Start Date:</label>
+                        <input type="date" name="startDate" id="startDate" value="<%= formData.startDate || '' %>">
+                        <% if (errors && errors["jobDetail.isFeatured.startDate"]) { %>
+                            <p class="input-error"><%= errors["jobDetail.isFeatured.startDate"] %></p>
+                        <% } %>
+                    </div>
+                
+                    <div class="form-input" style="width: 45%;">
+                        <label for="endDate">End Date:</label>
+                        <input type="date" name="endDate" id="endDate" value="<%= formData.endDate || '' %>">
+                        <% if (errors && errors["jobDetail.isFeatured.endDate"]) { %>
+                            <p class="input-error"><%= errors["jobDetail.isFeatured.endDate"] %></p>
+                        <% } %>
+                    </div>
+                </div>                
 
                 <div class="center">
                     <button class="btn" type="submit">Add job</button>
@@ -95,7 +125,24 @@
             </form>
         </div>
     </body>
-    <%- include('../includes/flashScript.ejs') %>
+    <script>
+        const isFeaturedSelect = document.getElementById('isFeatured');
+        const featuredDatesDiv = document.getElementById('featuredDates');
+    
+        function toggleFeaturedDates() {
+            if (isFeaturedSelect.value === 'Yes') {
+                featuredDatesDiv.style.display = 'flex';
+            } else {
+                featuredDatesDiv.style.display = 'none';
+            }
+        }
+    
+        // Run on page load
+        toggleFeaturedDates();
+    
+        // Run on change
+        isFeaturedSelect.addEventListener('change', toggleFeaturedDates);
+    </script>
     <%- include('../includes/flashScript.ejs') %>
     <script src="/js/preventBack.js"></script>
 </html>
