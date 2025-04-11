@@ -159,7 +159,9 @@ exports.postAddNewJob = async (req, res, next) => {
 };
 
 exports.getJobPosts = async (req, res) => {
-  let jobListings = {};
+  const jobListings = await jobListing
+    .find({ recruiterId: req.user._id })
+    .sort({ updatedAt: -1 });
   try {
     if (!req.user || req.user.role !== "recruiter") {
       return res.status(403).render("500", {
@@ -169,11 +171,7 @@ exports.getJobPosts = async (req, res) => {
           "Access denied ! You are not authorized to view this page.",
       });
     }
-    jobListings = await jobListing.find({ recruiterId: req.user._id });
-    // res.cookie("successMessage", "Job posts fetched successfully", {
-    //   maxAge: 3000,
-    //   httpOnly: false,
-    // });
+
     return res.render("recruiter/jobPosts", {
       pageTitle: "Job Posts",
       path: "/jobPosts",
@@ -199,6 +197,9 @@ exports.getJobPosts = async (req, res) => {
 };
 
 exports.deleteJobPost = async (req, res, next) => {
+  const jobListings = await jobListing
+    .find({ recruiterId: req.user._id })
+    .sort({ updatedAt: -1 });
   try {
     const jobPostId = req.body.jobPostId;
 
@@ -208,7 +209,7 @@ exports.deleteJobPost = async (req, res, next) => {
       return res.status(404).render("recruiter/jobPosts", {
         pageTitle: "Job Posts",
         path: "/jobPosts",
-        jobListings: await jobListing.find({ recruiterId: req.user._id }),
+        jobListings,
         errors: {},
         errorMessage: "Job post not found.",
       });
@@ -229,7 +230,7 @@ exports.deleteJobPost = async (req, res, next) => {
     return res.render("recruiter/jobPosts", {
       pageTitle: "Job Posts",
       path: "/jobPosts",
-      jobListings: await jobListing.find({ recruiterId: req.user._id }),
+      jobListings,
       errors: {},
       successMessage: "Job post deleted successfully.",
     });
@@ -238,7 +239,7 @@ exports.deleteJobPost = async (req, res, next) => {
     return res.status(500).render("recruiter/jobPosts", {
       pageTitle: "Job Posts",
       path: "/jobPosts",
-      jobListings: await jobListing.find({ recruiterId: req.user._id }),
+      jobListings,
       errors: {},
       errorMessage: "An error occurred while deleting the job post.",
     });
@@ -247,6 +248,9 @@ exports.deleteJobPost = async (req, res, next) => {
 
 exports.getEditJobPost = async (req, res, next) => {
   let categories = await Category.find().select("name");
+  const jobListings = await jobListing
+    .find({ recruiterId: req.user._id })
+    .sort({ updatedAt: -1 });
   try {
     const jobPostId = req.params.jobPostId;
     const jobPost = await jobListing.findById(jobPostId);
@@ -255,7 +259,7 @@ exports.getEditJobPost = async (req, res, next) => {
       return res.status(404).render("recruiter/jobPosts", {
         pageTitle: "Job Posts",
         path: "/jobPosts",
-        jobListings: await jobListing.find({ recruiterId: req.user._id }),
+        jobListings,
         errors: {},
         errorMessage: "Job post not found.",
       });
@@ -281,7 +285,7 @@ exports.getEditJobPost = async (req, res, next) => {
     return res.status(500).render("recruiter/jobPosts", {
       pageTitle: "Job Posts",
       path: "/jobPosts",
-      jobListings: await jobListing.find({ recruiterId: req.user._id }),
+      jobListings,
       errors: {},
       errorMessage: "An error occurred while getting the job post.",
     });
@@ -292,6 +296,9 @@ exports.postEditJobPost = async (req, res, next) => {
   const jobPostId = req.body.jobPostId;
   let jobPost;
   let categories = await Category.find().select("name");
+  const jobListings = await jobListing
+    .find({ recruiterId: req.user._id })
+    .sort({ updatedAt: -1 });
   try {
     console.log("jobPostId:", jobPostId);
     if (req.body.status === "Yes") {
@@ -305,8 +312,6 @@ exports.postEditJobPost = async (req, res, next) => {
       }
     }
     const updatedJobPost = {
-      // recruiterId: req.user._id,
-      // categoryId: ,
       category: req.body.categoryName,
       jobDetail: {
         jobTitle: req.body.jobTitle,
@@ -336,7 +341,7 @@ exports.postEditJobPost = async (req, res, next) => {
       return res.status(404).render("recruiter/jobPosts", {
         pageTitle: "Job Posts",
         path: "/jobPosts",
-        jobListings: await jobListing.find({ recruiterId: req.user._id }),
+        jobListings,
         errors: {},
         errorMessage: "Job post not found.",
       });
@@ -382,7 +387,7 @@ exports.postEditJobPost = async (req, res, next) => {
     return res.status(500).render("recruiter/jobPosts", {
       pageTitle: "Job Posts",
       path: "/jobPosts",
-      jobListings: await jobListing.find({ recruiterId: req.user._id }),
+      jobListings,
       errorMessage: "An error occurred while updating the job post.",
       errors: {},
     });
