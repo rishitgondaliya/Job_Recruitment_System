@@ -8,8 +8,8 @@ const jobCategorySchema = new Schema(
       trim: true,
       minlength: 2,
       match: [
-        /^[A-Za-z0-9][A-Za-z0-9\s'&\-]+$/,
-        "Category can only contain alphabets, spaces, -, &, numbers, and apostrophes",
+        /^[A-Za-z0-9][A-Za-z0-9\s'&\-\/]+$/,
+        "Category can only contain alphabets, spaces, slash, -, &, numbers, and apostrophes",
       ],
       unique: [true, "Job category already exists!"],
       required: [true, "Category Name is required"],
