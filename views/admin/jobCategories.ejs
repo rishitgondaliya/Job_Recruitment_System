@@ -1,86 +1,87 @@
 <%- include('../includes/main.ejs') %>
-<link rel="stylesheet" href="/css/table.css">
-<style>
-    .custom-table {
-        width: max-content;
-    }
+    <link rel="stylesheet" href="/css/table.css">
+    <style>
+        .custom-table {
+            width: max-content;
+        }
 
-    .add-category-btn {
-        text-align: right;
-    }
+        .add-category-btn {
+            text-align: right;
+            margin-right: 3rem;
+        }
 
-    .hidden {
-        display: none;
-    }
-</style>
-<%- include('../includes/navigation.ejs') %>
+        .hidden {
+            display: none;
+        }
+    </style>
+    <%- include('../includes/navigation.ejs') %>
 
-<div class="add-category-btn">
-    <button class="add-new-btn btn">Add Category</button>
-</div>
-<div class="form-control <%= isEditing ? '' : 'hidden' %>" id="add-new">
-    <h2 class="center"><%= isEditing ? "Edit" : "Add" %> Job Category</h2>
-  
-    <form action="<%= isEditing ? `/admin/editCategory/${category._id}` : '/admin/addCategory' %>" method="POST" novalidate>
-      <div class="form-input">
-        <label for="categoryName">Category Name:</label>
-        <input type="text" name="name" id="categoryName" value="<%= oldInput.name || '' %>">
-        <% if (errors && errors.name) { %>
-          <p class="input-error"><%= errors.name %></p>
-        <% } %>
-      </div>
-  
-      <div class="center">
-        <button class="btn" type="submit">
-          <%= isEditing ? 'Update category' : 'Add category' %>
-        </button>
-      </div>
-    </form>
-  </div>
-  
-<div class="container">
-    <h1 class="page-title">Job Categories</h1>
+        <div class="add-category-btn">
+            <button class="add-new-btn btn">Add Category</button>
+        </div>
+        <div class="form-control <%= (isEditing || showForm) ? '' : 'hidden' %>" id="add-new">
+            <h2 class="center"><%= isEditing ? "Edit" : "Add" %> Job Category</h2>
+        
+            <form action="<%= isEditing ? `/admin/editCategory/${category._id}` : '/admin/addCategory' %>" method="POST" novalidate>
+            <div class="form-input">
+                <label for="categoryName">Category Name:</label>
+                <input type="text" name="name" id="categoryName" value="<%= oldInput.name || '' %>">
+                <% if (errors && errors.name) { %>
+                <p class="input-error"><%= errors.name %></p>
+                <% } %>
+            </div>
+        
+            <div class="center">
+                <button class="btn" type="submit">
+                <%= isEditing ? 'Update category' : 'Add category' %>
+                </button>
+            </div>
+            </form>
+        </div>
+        
+        <div class="container">
+            <h1 class="page-title">Job Categories</h1>
 
-    <%- include('../includes/flash.ejs') %>
+            <%- include('../includes/flash.ejs') %>
 
-    <table class="custom-table">
-        <thead>
-            <tr>
-                <th>Sr. No.</th>
-                <th>Name</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% let index = 1; %>
-            <% categories.forEach(category => { %>
-                <tr>
-                    <td><%= index++ %></td>
-                    <td><%= category.name %></td>
-                    <td class="actions">
-                        <form action="/admin/editCategory/<%= category._id %>" method="GET">
-                            <button type="submit" class="edit-btn btn">Edit</button>
-                        </form>
-                        <form action="/admin/deleteCategory" method="POST">
-                            <input type="hidden" name="categoryId" value="<%= category._id %>">
-                            <button type="submit" class="delete-btn btn">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-            <% }); %>
-        </tbody>
-    </table>
-</div>
-</body>
-<%- include('../includes/flashScript.ejs') %>
-<script>
-    let addNewBtn = document.querySelector('.add-new-btn');
-    let addNewDiv = document.getElementById('add-new');
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Sr. No.</th>
+                        <th>Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% let index = 1; %>
+                    <% categories.forEach(category => { %>
+                        <tr>
+                            <td><%= index++ %></td>
+                            <td><%= category.name %></td>
+                            <td class="actions">
+                                <form action="/admin/editCategory/<%= category._id %>" method="GET">
+                                    <button type="submit" class="edit-btn btn">Edit</button>
+                                </form>
+                                <form action="/admin/deleteCategory" method="POST">
+                                    <input type="hidden" name="categoryId" value="<%= category._id %>">
+                                    <button type="submit" class="delete-btn btn">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <%- include('../includes/flashScript.ejs') %>
+        <script>
+            let addNewBtn = document.querySelector('.add-new-btn');
+            let addNewDiv = document.getElementById('add-new');
 
-    addNewBtn.addEventListener('click', () => {
-        addNewDiv.style.display = 'block';
-        addNewBtn.style.display = 'none';
-    });
-</script>
-<script src="/js/preventBack.js"></script>
+            addNewBtn.addEventListener('click', () => {
+                addNewDiv.style.display = 'block';
+                addNewBtn.style.display = 'none';
+            });
+        </script>
+        <script src="/js/preventBack.js"></script>
+    </body>
 </html>
