@@ -120,7 +120,12 @@ const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const jobSeekerRoutes = require("./routes/jobSeekerRoutes");
 const recruiterRoutes = require("./routes/recruiterRoutes");
-const verifyToken = require("./middlewares/authMiddleware");
+const {
+  verifyToken,
+  isAdmin,
+  isJobSeeker,
+  isRecruiter,
+} = require("./middlewares/authMiddleware");
 
 const app = express();
 dotenv.config();
@@ -167,6 +172,7 @@ app.use((req, res, next) => {
 
   res.clearCookie("successMessage");
   res.clearCookie("errorMessage");
+  res.clearCookie("editSuccess");
 
   console.log("isAuthenticated = ", res.locals.isAuthenticated);
 
@@ -178,13 +184,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
-app.use(authRoutes);
-app.use("/admin", verifyToken, adminRoutes);
-app.use("/jobSeeker", verifyToken, jobSeekerRoutes);
-app.use("/recruiter", verifyToken, recruiterRoutes);
-
 app.get("/", (req, res) => {
+  if (req.user) {
+    // Redirect based on user role
+    if (req.user.role === "admin") {
+      return res.redirect("/admin/users");
+    } else if (req.user.role === "recruiter") {
+      return res.redirect("/recruiter/jobPosts");
+    } else if (req.user.role === "jobSeeker") {
+      return res.redirect("/jobSeeker/home");
+    }
+  }
   res.clearCookie("token", {
     path: "/", // it's the same path where you set the cookie
     httpOnly: true,
@@ -194,22 +204,44 @@ app.get("/", (req, res) => {
   res.render("home", { pageTitle: "Home" });
 });
 
+// Routes
+app.use("/auth", authRoutes);
+app.use("/admin", verifyToken, isAdmin, adminRoutes);
+app.use("/jobSeeker", verifyToken, isJobSeeker, jobSeekerRoutes);
+app.use("/recruiter", verifyToken, isRecruiter, recruiterRoutes);
+
 // Error Handler
 app.use((error, req, res, next) => {
   console.error("Server Error:", error);
   const message = error.message || "Something went wrong";
-  res.status(500).render("500", { pageTitle: "Error", path: '/', errorMessage: message });
+  res
+    .status(500)
+    .render("500", { pageTitle: "Error", path: "/", errorMessage: message });
 });
 
 // DB Connect & Start
-mongoose
-  .connect(process.env.MONGO_DRIVER_URL)
-  .then(() => {
-    console.log("Database connected successfully.");
-    app.listen(3000, () => {
-      console.log("Server is running on http://localhost:3000/");
+if (require.main === module) {
+  mongoose
+    .connect(process.env.MONGO_DRIVER_URL)
+    .then(() => {
+      console.log("Database connected successfully.");
+      app.listen(3000, () => {
+        console.log("✅ Server is running on http://localhost:3000/");
+      });
+    })
+    .catch((err) => {
+      console.error("❌ Error connecting to database:", err);
     });
-  })
-  .catch((err) => {
-    console.error("Error connecting to database:", err);
-  });
+}
+
+process.on("SIGINT", async () => {
+  console.log("Stopping server...");
+  await mongoose.disconnect();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  console.log("Process terminated.");
+  await mongoose.disconnect();
+  process.exit(0);
+});

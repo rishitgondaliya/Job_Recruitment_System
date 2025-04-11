@@ -1,30 +1,29 @@
 const express = require("express");
 
 const adminController = require("../controllers/adminController");
-const isAuthenticated = require('../middlewares/authMiddleware')
 
 const router = express.Router();
 
-router.get("/home", isAuthenticated, adminController.getAdminHome);
+router.get("/home", adminController.getAdminHome);
 
-router.get("/users", isAuthenticated, adminController.getUsers);
+router.get("/users", adminController.getUsers);
 
-router.get("/jobCategories", isAuthenticated, adminController.getJobCategories);
+router.get("/jobCategories", adminController.getJobCategories);
 
-router.get("/addCategory", isAuthenticated, adminController.getAddCategory);
+router.get("/addCategory", adminController.getAddCategory);
 
-router.post("/addCategory", isAuthenticated, adminController.postAddCategory);
+router.post("/addCategory", adminController.postAddCategory);
 
-router.get("/editCategory/:categoryId", isAuthenticated, adminController.getEditCategory);
+router.get("/editCategory/:categoryId", adminController.getEditCategory);
 
-router.post("/editCategory/:categoryId", isAuthenticated, adminController.postEditCategory);
+router.post("/editCategory/:categoryId", adminController.postEditCategory);
 
-router.post('/deleteCategory', isAuthenticated, adminController.deleteCategory)
+router.post("/deleteCategory", adminController.deleteCategory);
 
-router.post('/deactivate', isAuthenticated, adminController.deactivateUser)
+router.post("/deactivate", adminController.deactivateUser);
 
-router.post('/activate', isAuthenticated, adminController.activateUser)
+router.post("/activate", adminController.activateUser);
 
-router.post('/delete', isAuthenticated, adminController.deleteUser)
+router.post("/delete", adminController.deleteUser);
 
-module.exports = router
+module.exports = router;
