@@ -3,39 +3,68 @@
 <style>
     .custom-table th:nth-child(4), .custom-table td:nth-child(4),
     .custom-table th:nth-child(6), .custom-table td:nth-child(6) { 
-    text-align: center;
-}
+        text-align: center;
+    }
+
+    .toggleFilter {
+      text-align: right;
+      margin-right: 3rem;
+    }
+
+    .toggleFilter .btn {
+      font-size: 1rem;
+    }
+
+    .center{
+      text-align: center;
+      margin: 0px auto;
+    }
+
+    .locType {
+      display: inline;
+    }
 </style>
 <%- include('../includes/navigation.ejs') %>
 
-<form action="/jobSeeker/allPosts" method="GET" class="filter-form">
-    <div>
-      <label for="category">Category:</label>
-      <select name="category" id="category">
-        <option value="">All</option>
-        <% categories.forEach(cat => { %>
-          <option value="<%= cat.name %>" <%= selectedCategory === cat.name ? "selected" : "" %>><%= cat.name %></option>
-        <% }) %>
-      </select>
+    <div class="toggleFilter">
+      <button id="toggleFilter" class="btn">Filter Jobs</button>
     </div>
-  
-    <div>
-      <label for="locationType">Location Type:</label>
-      <select name="locationType" id="locationType">
-        <option value="">All</option>
-        <option value="onsite" <%= selectedLocationType === 'onsite' ? 'selected' : '' %>>Onsite</option>
-        <option value="hybrid" <%= selectedLocationType === 'hybrid' ? 'selected' : '' %>>Hybrid</option>
-        <option value="remote" <%= selectedLocationType === 'remote' ? 'selected' : '' %>>Remote</option>
-      </select>
-    </div>
-  
-    <div>
-      <label for="experience">Experience (years):</label>
-      <input type="number" name="experience" id="experience" min="0" value="<%= selectedExperience || '' %>">
-    </div>
-  
-    <button type="submit" class="btn">Apply Filters</button>
-  </form>
+
+    <!-- Filter Form -->
+    <form id="filterForm" action="/jobSeeker/allJobs" method="GET" class="filter-form form-control" style="display: none;">
+      <div class="form-input">
+        <label for="category">Category:</label>
+        <select name="category" id="category">
+          <option value="">All</option>
+          <% categories.forEach(cat => { %>
+            <option value="<%= cat.name %>" <%= selectedCategory === cat.name ? "selected" : "" %>><%= cat.name %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="form-input">
+        <label>Location Type:</label>
+        <div class="locType">
+          <label><input type="checkbox" name="locationType" value="On-Site" <%= selectedLocationType === 'On-Site' ? 'checked' : '' %>> On-Site</label>
+          <label><input type="checkbox" name="locationType" value="Hybrid" <%= selectedLocationType === 'Hybrid' ? 'checked' : '' %>> Hybrid</label>
+          <label><input type="checkbox" name="locationType" value="Remote" <%= selectedLocationType === 'Remote' ? 'checked' : '' %>> Remote</label>
+        </div>
+      </div>
+
+      <div class="form-input">
+        <label for="experience">Experience (years):</label>
+        <input type="number" name="experience" id="experience" min="0" value="<%= selectedExperience || '' %>">
+      </div>
+
+      <div class="form-input">
+        <label for="salary">Minimum Salary:</label>
+        <input type="number" name="salary" id="salary" min="0" step="1000" value="<%= selectedSalary || '' %>">
+      </div>
+
+      <div class="center">
+        <button type="submit" class="btn">Apply Filters</button>
+      </div>
+    </form>
   
     <div class="container">
         <%- include('../includes/flash.ejs') %>
@@ -75,7 +104,22 @@
             </table>
         <% } %>
     </div>
-</body>
     <%- include('../includes/flashScript.ejs') %>
+    <script>
+      const toggleBtn = document.getElementById("toggleFilter");
+      const filterForm = document.getElementById("filterForm");
+    
+      toggleBtn.addEventListener("click", () => {
+        filterForm.style.display = filterForm.style.display === "none" ? "block" : "none";
+      });
+    
+      // Auto-hide form after submission
+      filterForm.addEventListener("submit", () => {
+        setTimeout(() => {
+          filterForm.style.display = "none";
+        }, 100); // Let the form submit first
+      });
+    </script>
     <script src="/js/preventBack.js"></script>
+</body>
 </html>
