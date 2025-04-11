@@ -1,115 +1,130 @@
 <%- include('../includes/main.ejs') %>
-<link rel="stylesheet" href="/css/table.css">
-<style>
-    .custom-table th:nth-child(1) {
-        text-align: left;
-        background-color: #f9f9f9;
-    }
-    .custom-table td {
-        padding: 0.75rem;
-    }
-    .custom-table{
-        min-width: 35rem;
-        max-width: 50rem;
-    }
-    td .btn {
-        margin-top: 0;
-    }
-    .title {
-        display: flex;
-        justify-content: space-between;
-    }
-    .badge{
-        background-color: #15e14f;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-    }
-    .nav-btns{
-        margin-top: 1rem;
-        text-align: right;
-    }
-</style>
-<%- include('../includes/navigation.ejs') %>
+    <link rel="stylesheet" href="/css/table.css">
+    <style>
+        .custom-table th:nth-child(1) {
+            text-align: left;
+            background-color: #f9f9f9;
+        }
+        .custom-table td {
+            padding: 0.75rem;
+        }
+        .custom-table{
+            min-width: 35rem;
+            max-width: 50rem;
+        }
+        td .btn {
+            margin-top: 0;
+        }
+        .title {
+            display: flex;
+            justify-content: space-between;
+        }
+        .badge{
+            background-color: #15e14f;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .nav-btns{
+            margin-top: 1rem;
+            text-align: right;
+            margin-right: 3rem;
+        }
 
-<div class="nav-btns">
-    <a href="" class="btn">< Previous</a>
-    <a href="" class="btn">Next ></a>
-</div>
-<div class="container">
-    <%- include('../includes/flash.ejs') %>
+        .nav-btns .btn {
+            font-size: 1rem;
+        }
+    </style>
+    <%- include('../includes/navigation.ejs') %>
 
-    <div class="title">
-        <h2 class="section-title"><%= jobPost.jobDetail.jobTitle %> - Details</h2>
-    <h3>
-        <% if(jobPost.jobDetail.isFeatured.endDate >= new Date()){ %>
-            <span class="badge">Hiring Urgently</span>
-        <% } %>
-    </h3>
-    </div>
-    <table class="custom-table">
-        <tbody>
-            <tr>
-                <th>Title</th>
-                <td><%= jobPost.jobDetail.jobTitle %></td>
-            </tr>
-            <tr>
-                <th>Category</th>
-                <td><%= jobPost.category %></td>
-            </tr>
-            <tr>
-                <th>Description</th>
-                <td><%= jobPost.jobDetail.description %></td>
-            </tr>
-            <tr>
-                <th>Requirements</th>
-                <td><%= jobPost.jobDetail.requirements %></td>
-            </tr>
-            <tr>
-                <th>Location</th>
-                <td>
-                    <% if (jobPost.jobDetail.locationType === 'On-Site' || jobPost.jobDetail.locationType === 'Hybrid') { %>
-                        <%= jobPost.jobDetail.location %> (<%= jobPost.jobDetail.locationType %>)
-                    <% } else { %>
-                        <%= jobPost.jobDetail.locationType %>
-                    <% } %>
-                </td>
-            </tr>            
-            <tr>
-                <th>Company</th>
-                <td><%= jobPost.company %></td>
-            </tr>
-            <tr>
-                <th>Experience</th>
-                <td>
-                    <%= jobPost.jobDetail.experience === 0 ? 'Freshers' : `${jobPost.jobDetail.experience} Year` %>
-                  </td>                  
-            </tr>
-            <tr>
-                <th>Salary</th>
-                <td><%= jobPost.jobDetail.salary %></td>
-            </tr>
-            <tr>
-                <th>Vacancy</th>
-                <td><%= jobPost.jobDetail.vacancy %></td>
-            </tr>
-            <tr>
-                <th>Actions</th>
-                <td>
-                    <form action="/jobSeeker/saveJobPost" method="POST">
-                        <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
-                        <button type="submit" class="edit-btn btn">Save</button>
-                    </form>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <div class="apply-now center">
-        <button class="btn">Apply now</button>
-    </div>
-</div>
+        <div class="nav-btns">
+            <% if (prevJobId) { %>
+            <a href="/jobSeeker/allJobs/<%= prevJobId %>" class="btn">Prev</a>
+            <% } else { %>
+            <span class="btn disabled">Prev</span>
+            <% } %>
+        
+            <% if (nextJobId) { %>
+            <a href="/jobSeeker/allJobs/<%= nextJobId %>" class="btn">Next</a>
+            <% } else { %>
+            <span class="btn disabled">Next</span>
+            <% } %>
+        </div>
+      
+        <div class="container">
+            <%- include('../includes/flash.ejs') %>
 
-</body>
-<%- include('../includes/flashScript.ejs') %>
-<script src="/js/preventBack.js"></script>
+            <div class="title">
+                <h2 class="section-title"><%= jobPost.jobDetail.jobTitle %> - Details</h2>
+            <h3>
+                <% if(jobPost.jobDetail.isFeatured.endDate >= new Date()){ %>
+                    <span class="badge">Hiring Urgently</span>
+                <% } %>
+            </h3>
+            </div>
+            <table class="custom-table">
+                <tbody>
+                    <tr>
+                        <th>Title</th>
+                        <td><%= jobPost.jobDetail.jobTitle %></td>
+                    </tr>
+                    <tr>
+                        <th>Category</th>
+                        <td><%= jobPost.category %></td>
+                    </tr>
+                    <tr>
+                        <th>Description</th>
+                        <td><%= jobPost.jobDetail.description %></td>
+                    </tr>
+                    <tr>
+                        <th>Requirements</th>
+                        <td><%= jobPost.jobDetail.requirements %></td>
+                    </tr>
+                    <tr>
+                        <th>Location</th>
+                        <td>
+                            <% if (jobPost.jobDetail.locationType === 'On-Site' || jobPost.jobDetail.locationType === 'Hybrid') { %>
+                                <%= jobPost.jobDetail.location %> (<%= jobPost.jobDetail.locationType %>)
+                            <% } else { %>
+                                <%= jobPost.jobDetail.locationType %>
+                            <% } %>
+                        </td>
+                    </tr>            
+                    <tr>
+                        <th>Company</th>
+                        <td><%= jobPost.company %></td>
+                    </tr>
+                    <tr>
+                        <th>Experience</th>
+                        <td>
+                            <%= jobPost.jobDetail.experience === 0 ? 'Freshers' : `${jobPost.jobDetail.experience} Year` %>
+                        </td>                  
+                    </tr>
+                    <tr>
+                        <th>Salary</th>
+                        <td><%= jobPost.jobDetail.salary %></td>
+                    </tr>
+                    <tr>
+                        <th>Vacancy</th>
+                        <td><%= jobPost.jobDetail.vacancy %></td>
+                    </tr>
+                    <tr>
+                        <th>Actions</th>
+                        <td>
+                            <form action="/jobSeeker/saveJobPost" method="POST">
+                                <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
+                                <button type="submit" class="edit-btn btn">Save</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="apply-now center">
+                <button class="btn">Apply now</button>
+            </div>
+        </div>
+
+        <%- include('../includes/flashScript.ejs') %>
+        <script src="/js/preventBack.js"></script>
+    </body>
 </html>
