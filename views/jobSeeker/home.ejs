@@ -35,8 +35,8 @@
                                 <td><%= featuredJob.jobDetail.vacancy %></td>
                                 <td class="actions">
                                     <a href="/jobSeeker/allJobs/<%= featuredJob._id %>" class="edit-btn btn">Details</a>
-                                    <form action="/jobSeeker/savefeaturedJob" method="POST">
-                                        <input type="hidden" name="featuredJobId" value="<%= featuredJob._id %>">
+                                    <form action="/jobSeeker/saveJobPost" method="POST">
+                                        <input type="hidden" name="jobPostId" value="<%= featuredJob._id %>">
                                         <button type="submit" class="edit-btn btn">Save</button>
                                     </form>
                                 </td>
@@ -46,7 +46,7 @@
             </table>
         <% } %>
     </div>
-</body>
     <%- include('../includes/flashScript.ejs') %>
     <script src="/js/preventBack.js"></script>
+</body>
 </html>
