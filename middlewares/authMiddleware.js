@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 
-const verifyToken = async (req, res, next) => {
+exports.verifyToken = async (req, res, next) => {
   const token = req.cookies.token;
 
   if (!token) {
@@ -25,4 +25,33 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-module.exports = verifyToken;
+exports.isAdmin = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') return next();
+  return res.status(403).render("500", {
+    pageTitle: "Forbidden",
+    path: "/500",
+    errorMessage: "Access denied! Only admin can access this page.",
+  });
+};
+
+exports.isJobSeeker = (req, res, next) => {
+  if (req.user && req.user.role === 'jobSeeker') return next();
+  return res.status(403).render("500", {
+    pageTitle: "Forbidden",
+    path: "/500",
+    errorMessage: "Access denied! Only job seeker can access this page.",
+  });
+};
+
+exports.isRecruiter = (req, res, next) => {
+  if (req.user && req.user.role === 'recruiter') return next();
+  return res.status(403).render("500", {
+    pageTitle: "Forbidden",
+    path: "/500",
+    errorMessage: "Access denied! Only recruiters can access this page.",
+  });
+};
+
+// exports.isLoggedIn = (req, res, next) => {
+//   if (req.user) return next();
+// }
