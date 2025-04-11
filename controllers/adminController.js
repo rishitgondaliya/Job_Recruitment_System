@@ -3,14 +3,6 @@ const Profile = require("../models/profile");
 const Category = require("../models/jobCategory");
 
 exports.getAdminHome = (req, res, next) => {
-  if (!req.user || req.user.role !== "admin") {
-    return res.status(403).render("500", {
-      pageTitle: "Unauthorized",
-      path: "/500",
-      errorMessage: "Access denied ! You are not authorized to view this page.",
-    });
-  }
-
   return res.render("admin/home", {
     pageTitle: "Home | Admin",
     path: "/home",
@@ -19,14 +11,6 @@ exports.getAdminHome = (req, res, next) => {
 
 exports.getUsers = async (req, res) => {
   try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage: "Access  ! You are not authorized to view this page.",
-      });
-    }
-
     const users = await User.find({ role: { $ne: "admin" } });
     let successMessage = "Fetched users successfully";
     return res.render("admin/users", {
@@ -48,19 +32,12 @@ exports.getUsers = async (req, res) => {
 
 exports.getAddCategory = async (req, res) => {
   try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage: "Access  ! You are not authorized to view this page.",
-      });
-    }
-
     return res.render("admin/jobCategories", {
       pageTitle: "Add Category",
       path: "/jobCategories",
       errors: {},
       isEditing: false,
+      showForm: true,
       oldInput: {},
     });
   } catch (err) {
@@ -72,27 +49,18 @@ exports.getAddCategory = async (req, res) => {
 exports.postAddCategory = async (req, res) => {
   let errors = {};
   try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage: "Access  ! You are not authorized to view this page.",
-      });
-    }
-
     const category = new Category({ name: req.body.name });
     await category.save();
     let successMessage = "Job category added successfully";
     return res.render("admin/jobCategories", {
       pageTitle: "Job Categories",
       path: "/jobCategories",
-      categories: await Category.find().select('name'),
+      categories: await Category.find().select("name"),
       isEditing: false,
+      showForm: false,
+      successMessage,
       oldInput: {},
       errors: {},
-      successMessage,
-      isEditing: false,
-      oldInput: {},
     });
   } catch (err) {
     console.error("Raw error:", err); // Log full error object first
@@ -108,35 +76,24 @@ exports.postAddCategory = async (req, res) => {
     console.error("Formatted error:", errors);
     return res.render("admin/jobCategories", {
       pageTitle: "Add Category",
-      path: '/jobCategories',
-      categories: await Category.find().select('name'),
+      path: "/jobCategories",
+      categories: await Category.find().select("name"),
       errors: errors,
       isEditing: false,
-      oldInput: {},
+      showForm: true,
+      oldInput: req.body,
     });
   }
 };
 
 exports.getJobCategories = async (req, res) => {
   try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage:
-          "Access denied ! You are not authorized to view this page.",
-      });
-    }
-
-    const categories = await Category.find().select('name');
-    // res.cookie("successMessage", "Job categories fetched successfully", {
-    //   maxAge: 3000,
-    //   httpOnly: false
-    // })
+    const categories = await Category.find().select("name");
     res.render("admin/jobCategories", {
       pageTitle: "Job Categories",
       path: "/jobCategories",
       isEditing: false,
+      showForm: false,
       oldInput: {},
       errors: {},
       categories,
@@ -146,12 +103,13 @@ exports.getJobCategories = async (req, res) => {
     console.error("Error fetching categories:", err);
     res.cookie("errorMessage", "Error while fetching job categories", {
       maxAge: 3000,
-      httpOnly: false
-    })
+      httpOnly: false,
+    });
     res.status(500).render("admin/jobCategories", {
       pageTitle: "Job Categories",
       path: "/jobCategories",
       isEditing: false,
+      showForm: false,
       oldInput: {},
       errors: {},
     });
@@ -160,35 +118,28 @@ exports.getJobCategories = async (req, res) => {
 
 exports.getEditCategory = async (req, res, next) => {
   try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage:
-          "Access denied ! You are not authorized to view this page.",
-      });
-    }
-
     const category = await Category.findById(req.params.categoryId);
     // console.log("id", req.params.categoryId);
     if (!category) {
       return res.status(404).render("admin/jobCategories", {
         pageTitle: "Job Categories",
         path: "/jobCategories",
-        categories: await Category.find().select('name'),
+        categories: await Category.find().select("name"),
         errorMessage: "Category not found",
         isEditing: true,
-      oldInput: {},
-      errors: {},
+        showForm: true,
+        oldInput: {},
+        errors: {},
       });
     }
     return res.render("admin/jobCategories", {
       pageTitle: "Edit Category",
       path: "/jobCategories",
       category,
-      categories: await Category.find().select('name'),
+      categories: await Category.find().select("name"),
       errors: {},
       isEditing: true,
+      showForm: true,
       oldInput: { name: category.name },
     });
   } catch (err) {
@@ -198,28 +149,21 @@ exports.getEditCategory = async (req, res, next) => {
 };
 
 exports.postEditCategory = async (req, res, next) => {
+  const categoryId = req.params.categoryId;
+  const category = await Category.findById(categoryId);
+  const categories = await Category.find().select("name");
   try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage:
-          "Access denied ! You are not authorized to view this page.",
-      });
-    }
-
-    const categoryId = req.params.categoryId;
     // console.log(categoryId, "categoryId");
-    const category = await Category.findById(categoryId);
     if (!category) {
       return res.status(404).render("admin/jobCategories", {
         pageTitle: "Job Categories",
         path: "/jobCategories",
-        // categories: await Category.find().select('name'),
+        categories,
         errorMessage: "Category not found",
         isEditing: false,
-      oldInput: {},
-      errors: {},
+        showForm: false,
+        oldInput: {},
+        errors: {},
       });
     }
     category.name = req.body.name;
@@ -231,15 +175,22 @@ exports.postEditCategory = async (req, res, next) => {
     });
     return res.redirect("/admin/jobCategories");
   } catch (err) {
+    let errors = {};
     console.error("Error updating category:", err);
-
+    if (err.name === "ValidationError") {
+      for (let field in err.errors) {
+        errors[field] = err.errors[field].message; // Extract validation error messages
+      }
+    }
     return res.render("admin/jobCategories", {
       pageTitle: "Edit Category",
-      path: '/jobCategories',
-      errorMessage: "Error updating category",
-      errors: {},
+      path: "/jobCategories",
+      category,
+      categories,
+      errors,
       isEditing: true,
-      oldInput: {},
+      showForm: true,
+      oldInput: { name: req.body.name },
     });
   }
 };
@@ -264,6 +215,7 @@ exports.deleteCategory = async (req, res, next) => {
       categories: await Category.find(),
       successMessage: "Job Category deleted successfully",
       isEditing: false,
+      showForm: false,
       oldInput: {},
       errors: {},
     });
@@ -276,6 +228,7 @@ exports.deleteCategory = async (req, res, next) => {
       categories: await Category.find(),
       errorMessage: "Error deleting job category",
       isEditing: false,
+      showForm: false,
       oldInput: {},
       errors: {},
     });
