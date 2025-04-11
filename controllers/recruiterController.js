@@ -2,6 +2,13 @@ const Job = require("../models/jobListing");
 const Category = require("../models/jobCategory");
 const jobListing = require("../models/jobListing");
 
+exports.getRecruiterHome = (req, res, next) => {
+  res.render("recruiter/home", {
+    pageTitle: "Home | Recruiter",
+    path: "/home",
+  });
+};
+
 exports.getAddNewJob = async (req, res) => {
   let categories = {};
   try {
