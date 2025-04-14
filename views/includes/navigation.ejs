@@ -47,9 +47,7 @@
         <% } else { %>
           <li class="nav-item">
             <!-- <a href="/auth/logout" class="auth-btn">Logout</a> -->
-             <form action="/auth/logout" method="POST" >
-              <button type="submit" class="logout-btn">Logout</button>
-             </form>
+             <a href="/jobSeeker/profile" class="<%= path === '/profile' ? 'active' : '' %>">Profile</a>
           </li>
         <% } %>
       </ul>
