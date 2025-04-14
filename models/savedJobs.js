@@ -28,7 +28,7 @@ const savedJobSchema = new Schema(
       },
       company: {
         type: String,
-        // required: true
+        required: true
       }
     },
   },

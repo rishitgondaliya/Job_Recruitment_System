@@ -43,41 +43,17 @@ const profileSchema = new Schema(
         // required: [true, "Branch is required"],
       },
       grade: { type: Number, trim: true },
-      yearOfPassing: {
-        type: Number,
-        trim: true,
-        // required: [true, "Passing year is required"],
+      startYear: {
+        type: Date,
+      },
+      passingYear: {
+        type: Date,
       },
     },
     resume: String,
     skills: {
       type: [String],
       default: undefined,
-    },
-    savedJobs: {
-      type: [
-        {
-          jobId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "savedJobs",
-            required: true,
-          },
-          jobTitle: {
-            type: String,
-            trim: true,
-            // required: [true, "Title is required"],
-          },
-        },
-        { _id: false },
-      ],
-      default: undefined, // If empty, the field will be absent
-      validate: {
-        validator: function (jobs) {
-          const jobIds = jobs.map((job) => job.jobId.toString());
-          return new Set(jobIds).size === jobIds.length;
-        },
-        message: "Job is already saved!",
-      },
     },
 
     // Recruiter Fields
@@ -119,9 +95,10 @@ const profileSchema = new Schema(
           },
           startDate: {
             type: Date,
+            required: [true, "Start date is required"],
             validate: {
               validator: function (value) {
-                return !value || value < this.endDate;
+                return !this.endDate || value < this.endDate;
               },
               message: "Start date must be before the end date.",
             },
@@ -145,6 +122,7 @@ const profileSchema = new Schema(
             ],
           },
         },
+        { _id: false },
       ],
       default: undefined,
     },
