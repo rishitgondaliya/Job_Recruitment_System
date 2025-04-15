@@ -49,6 +49,11 @@
             <!-- <a href="/auth/logout" class="auth-btn">Logout</a> -->
              <a href="/jobSeeker/profile" class="<%= path === '/profile' ? 'active' : '' %>">Profile</a>
           </li>
+          <li class="nav-item">
+            <form action="/auth/logout" method="POST">
+              <button type="submit" class="logout-btn">Logout</button>
+            </form>
+          </li>
         <% } %>
       </ul>
     </nav>
