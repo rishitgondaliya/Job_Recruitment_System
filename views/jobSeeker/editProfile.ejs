@@ -1,0 +1,176 @@
+<%- include('../includes/main.ejs') %>
+<link rel="stylesheet" href="/css/profile.css">
+
+    <%- include('../includes/navigation.ejs') %>
+
+        <div class="profile-container">
+            <form action="/jobSeeker/editProfile" class="edit-form" method="POST" enctype="multipart/form-data">
+                <%- include('../includes/flashScript.ejs') %>
+
+                <input type="hidden" name="profileId" value="<%= profile._id %>">
+
+                <section>
+                    <div class="profile-header">
+                        <div class="profile-photo">
+                            <img src="<%= profile.profilePhoto || '/assets/default_profile.jpg' %>" alt="Profile Photo">
+                        </div>
+                        <div class="form-input">
+                            <label for="profilePhoto">Upload Profile Photo</label>
+                            <input type="file" name="profilePhoto" accept="image/*">
+                            <% if(errors.profilePhoto){ %>
+                                <p class="input-error"><%= errors.profilePhoto %></p>
+                                <% } %>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h3>About</h3>
+                    <div class="form-input">
+                        <textarea name="about" rows="4"><%= profile.about || '' %></textarea>
+                        <% if (errors.about) { %>
+                            <p class="input-error"><%= errors.about %></p>
+                        <% } %>
+                    </div>
+                </section>
+
+                <section>
+                    <h3>Experience</h3>
+                    <% 
+                      let experienceList = (profile.experience && profile.experience.length > 0) 
+                        ? [...profile.experience].sort((a, b) => {
+                            const dateA = new Date(a.endDate || a.startDate || 0);
+                            const dateB = new Date(b.endDate || b.startDate || 0);
+                            return dateB - dateA; // descending
+                          }) 
+                        : [{}]; 
+                    %>
+                    <input type="hidden" id="experienceIndexHolder" value="<%= experienceList.length %>">
+                    <% experienceList.forEach((exp, index) => { %>
+                      <div class="experience-card">
+                        <div class="form-input">
+                          <label>Position</label>
+                          <input type="text" name="experience[<%= index %>][position]" value="<%= exp.position || '' %>">
+                          <% if (errors[`experience.${index}.position`]) { %>
+                            <p class="input-error"><%= errors[`experience.${index}.position`] %></p>
+                          <% } %>
+                        </div>
+                        <div class="form-input">
+                          <label>Company</label>
+                          <input type="text" name="experience[<%= index %>][company]" value="<%= exp.company || '' %>">
+                          <% if (errors[`experience.${index}.company`]) { %>
+                            <p class="input-error"><%= errors[`experience.${index}.company`] %></p>
+                          <% } %>
+                        </div>
+                        <div class="input-group">
+                          <div class="form-input">
+                            <label>Start Date</label>
+                            <input type="date" name="experience[<%= index %>][startDate]" value="<%= exp.startDate ? new Date(exp.startDate).toISOString().split('T')[0] : '' %>">
+                            <% if (errors[`experience.${index}.startDate`]) { %>
+                                <p class="input-error"><%= errors[`experience.${index}.startDate`] %></p>
+                              <% } %>
+                          </div>
+                          <div class="form-input">
+                            <label>End Date</label>
+                            <input type="date" name="experience[<%= index %>][endDate]" value="<%= exp.endDate ? new Date(exp.endDate).toISOString().split('T')[0] : '' %>">
+                            <% if (errors[`experience.${index}.endDate`]) { %>
+                                <p class="input-error"><%= errors[`experience.${index}.endDate`] %></p>
+                              <% } %>
+                          </div>
+                        </div>
+                        <div class="form-input">
+                          <label>Description</label>
+                          <textarea name="experience[<%= index %>][description]"><%= exp.description || '' %></textarea>
+                          <% if (errors[`experience.${index}.description`]) { %>
+                            <p class="input-error"><%= errors[`experience.${index}.description`] %></p>
+                          <% } %>
+                        </div>
+                      </div>
+                    <% }) %>
+                  
+                    <div id="experience-container"></div>
+                    <button type="button" class="btn" onclick="addExperience()" style="font-size: 1rem;">+ Add Experience</button>
+                </section>                  
+
+                <section>
+                    <h3>Education</h3>
+                    <div class="form-input">
+                        <label>College</label>
+                        <input type="text" name="college" value="<%= profile.education?.college || '' %>">
+                        <% if (errors["education.college"]) { %>
+                            <p class="input-error"><%= errors['education.college'] %></p>
+                        <% } %>
+                    </div>
+                    <div class="form-input">
+                        <label>Degree</label>
+                        <input type="text" name="degree" value="<%= profile.education?.degree || '' %>">
+                        <% if (errors["education.degree"]) { %>
+                            <p class="input-error"><%= errors['education.degree'] %></p>
+                        <% } %>
+                    </div>
+                    <div class="form-input">
+                        <label>Branch</label>
+                        <input type="text" name="branch" value="<%= profile.education?.branch || '' %>">
+                        <% if (errors["education.branch"]) { %>
+                            <p class="input-error"><%= errors['education.branch'] %></p>
+                        <% } %>
+                    </div>
+                    <div class="form-input">
+                        <label>Grade</label>
+                        <input type="number" name="grade" step="0.01" value="<%= profile.education?.grade || '' %>">
+                        <% if (errors["education.grade"]) { %>
+                            <p class="input-error"><%= errors['education.grade'] %></p>
+                        <% } %>
+                    </div>
+                    <div class="input-group">
+                        <div class="form-input">
+                            <label for="startYear">Starting Year</label>
+                            <input type="date" name="startYear" value="<%= profile.education.startYear ? new Date(profile.education.startYear).toISOString().split('T')[0] : '' %>">
+                            <% if (errors["education.startYear"]) { %>
+                                <p class="input-error"><%= errors['education.startYear'] %></p>
+                            <% } %>
+                        </div>
+                        <div class="form-input" style="margin-left: 1rem;">
+                            <label for="passingYear">Passing Year</label>
+                            <input type="date" name="passingYear" value="<%= profile.education.passingYear ? new Date(profile.education.passingYear).toISOString().split('T')[0] : '' %>">
+                            <% if (errors["education.passingYear"]) { %>
+                                <p class="input-error"><%= errors['education.passingYear'] %></p>
+                            <% } %>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h3>Skills</h3>
+                    <div class="form-input">
+                        <p>Enter skills separated by commas (e.g., JavaScript, Node.js, React)</p>
+                        <input type="text" name="skills" value="<%= profile.skills?.join(', ') %>">
+                        <% if (errors.skills) { %>
+                            <p class="input-error"><%= errors.skills %></p>
+                        <% } %>
+                    </div>
+                </section>
+
+                <section>
+                    <h3>Resume</h3>
+                    <div class="form-input">
+                        <label>Upload Resume (PDF/DOC)</label>
+                        <input type="file" name="resume" accept=".pdf,.doc,.docx">
+                    </div>
+                    <% if (errors.resume){ %>
+                        <p class="input-error"><%= errors.resume %></p>
+                    <% } %>
+                    <% if (profile.resume) { %>
+                        <p>Current Resume: <a href="/uploads/resumes/<%= profile.resume %>" target="_blank">View</a></p>
+                    <% } %>
+                </section>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button type="submit" class="btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+
+        <script src="/js/editProfile.js"></script>
+    </body>
+</html>

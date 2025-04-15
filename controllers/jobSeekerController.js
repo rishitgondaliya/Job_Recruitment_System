@@ -1,4 +1,6 @@
-const User = require("../models/user");
+const path = require("path");
+const fs = require("fs");
+
 const jobListing = require("../models/jobListing");
 const Category = require("../models/jobCategory");
 const savedJobs = require("../models/savedJobs");
@@ -208,17 +210,18 @@ exports.getEditProfile = async (req, res, next) => {
     path: "/profile",
     user,
     profile: userProfile,
+    errors: {},
   });
 };
 
 exports.postEditProfile = async (req, res, next) => {
+  const errors = {};
+  const profileId = req.user.profileId;
+  const profile = await Profile.findById(profileId);
   try {
-    const profileId = req.user.profileId;
     // console.log("profileId",profileId)
     // console.log("req.body",req.body)
 
-    // Find profile by ID
-    const profile = await Profile.findById(profileId);
     if (!profile) {
       next({ message: "Profile not found !" });
     }
@@ -229,9 +232,9 @@ exports.postEditProfile = async (req, res, next) => {
 
     // Update Education
     profile.education = {
-      college: req.body.college?.trim() || "",
-      degree: req.body.degree?.trim() || "",
-      branch: req.body.branch?.trim() || "",
+      college: req.body.college?.trim() || undefined,
+      degree: req.body.degree?.trim() || undefined,
+      branch: req.body.branch?.trim() || undefined,
       grade: req.body.grade || undefined,
       startYear: req.body.startYear || undefined,
       passingYear: req.body.passingYear || undefined,
@@ -242,13 +245,28 @@ exports.postEditProfile = async (req, res, next) => {
       const expArray = Array.isArray(req.body.experience)
         ? req.body.experience
         : Object.values(req.body.experience);
-      profile.experience = expArray.map((exp) => ({
-        company: exp.company?.trim() || "",
-        position: exp.position?.trim() || "",
-        startDate: exp.startDate || null,
-        endDate: exp.endDate || null,
-        description: exp.description?.trim() || "",
-      }));
+
+      // Check if at least one field is filled in any entry
+      const filteredExp = expArray
+        .map((exp) => ({
+          company: exp.company?.trim() || undefined,
+          position: exp.position?.trim() || undefined,
+          startDate: exp.startDate || undefined,
+          endDate: exp.endDate || undefined,
+          description: exp.description?.trim() || undefined,
+        }))
+        .filter(
+          (exp) =>
+            exp.company ||
+            exp.position ||
+            exp.startDate ||
+            exp.endDate ||
+            exp.description
+        );
+
+      profile.experience = filteredExp.length > 0 ? filteredExp : undefined;
+    } else {
+      profile.experience = undefined;
     }
 
     // Update skills as array
@@ -259,29 +277,144 @@ exports.postEditProfile = async (req, res, next) => {
         .filter((skill) => skill);
     }
 
-    // Handle photo upload or URL
-    // if (req.file && req.file.fieldname === 'photoUpload') {
-    //   const photoPath = `/uploads/photos/${req.file.filename}`;
-    //   profile.photo = photoPath;
-    // } else if (req.body.photo) {
-    //   profile.photo = req.body.photo.trim();
-    // }
+    // Handle profile photo upload
+    if (req.files?.profilePhoto?.length) {
+      // Delete old photo if exists
+      if (profile.profilePhoto) {
+        const oldPhotoPath = path.join(
+          __dirname,
+          "..",
+          "public",
+          profile.profilePhoto
+        );
+        if (fs.existsSync(oldPhotoPath)) {
+          fs.unlinkSync(oldPhotoPath);
+        }
+      }
+
+      const photoPath = `/uploads/profilePhoto/${req.files.profilePhoto[0].filename}`;
+      profile.profilePhoto = photoPath;
+    }
 
     // Handle resume upload
-    // if (req.files && req.files.resume) {
-    //   const resumeFile = req.files.resume[0];
-    //   const resumePath = `/uploads/resumes/${resumeFile.filename}`;
-    //   profile.resume = resumePath;
-    // }
+    if (req.files?.resume?.length) {
+      // Delete old resume if exists
+      if (profile.resume) {
+        const oldResumePath = path.join(
+          __dirname,
+          "..",
+          "public",
+          profile.resume
+        );
+        if (fs.existsSync(oldResumePath)) {
+          fs.unlinkSync(oldResumePath);
+        }
+      }
+
+      const resumePath = `/uploads/resume/${req.files.resume[0].filename}`;
+      profile.resume = resumePath;
+    }
 
     // console.log("updatedProfile",profile)
     await profile.save();
 
     res.cookie("successMessage", "Profile updated successfully!");
     res.redirect("/jobSeeker/profile");
+  } catch (err) {
+    // console.log("Error updating profile:", err);
+
+    if (req.files?.profilePhoto?.length) {
+      const newPhoto = path.join(
+        __dirname,
+        "..",
+        "public",
+        "/uploads/profilePhoto/",
+        req.files.profilePhoto[0].filename
+      );
+      if (fs.existsSync(newPhoto)) fs.unlinkSync(newPhoto);
+    }
+
+    if (req.files?.resume?.length) {
+      const newResume = path.join(
+        __dirname,
+        "..",
+        "public",
+        "/uploads/resume/",
+        req.files.resume[0].filename
+      );
+      if (fs.existsSync(newResume)) fs.unlinkSync(newResume);
+    }
+
+    if (err.name === "ValidationError") {
+      for (let field in err.errors) {
+        errors[field] = err.errors[field].message; // Extract validation error messages
+      }
+    }
+    console.log("errors", errors);
+    res.status(422).render("jobSeeker/editProfile", {
+      pageTitle: "Edit Profile",
+      path: "/profile",
+      user: req.user,
+      profile,
+      errors,
+    });
+    // res.cookie("errorMessage", "Something went wrong while updating profile.");
+    // res.redirect("/jobSeeker/profile");
+  }
+};
+
+exports.viewSavedJobDetail = async (req, res, next) => {
+  const savedJobId = req.params.savedJobId;
+  console.log("savedJobId", savedJobId);
+  try {
+    const savedJob = await savedJobs
+      .findById(savedJobId)
+      .populate("jobDetail.jobId");
+    // console.log("savedJob",savedJob)
+    if (!savedJob) {
+      res.cookie("errorMessage", "Job not found", {
+        maxAge: 3000,
+        httpOnly: false,
+      });
+      return res.redirect("/jobSeeker/profile");
+    }
+    const jobPost = savedJob.jobDetail.jobId;
+    // console.log("jobPost", jobPost);
+    console.log("jobPostId", jobPost._id);
+    res.render("jobSeeker/savedJobDetail", {
+      pageTitle: savedJob.jobDetail.jobTitle,
+      path: "/profile",
+      savedJob,
+      jobPost,
+    });
+  } catch (err) {
+    console.error("Error fetching saved job:", err);
+  }
+};
+
+exports.unSaveJob = async (req, res, next) => {
+  const savedJobId = req.params.savedJobId;
+  console.log("savedJobId", savedJobId);
+  try {
+    const savedJob = await savedJobs.findById(savedJobId);
+    // console.log("savedJob", savedJob);
+    if (!savedJob) {
+      res.cookie("errorMessage", "Job not found", {
+        maxAge: 3000,
+        httpOnly: false,
+      });
+      return res.redirect("/jobSeeker/profile");
+    }
+    await savedJob.deleteOne();
+    res.cookie("successMessage", "Job removed from saved jobs", {
+      maxAge: 3000,
+      httpOnly: false,
+    });
+    return res.redirect("/jobSeeker/profile");
   } catch (error) {
-    console.error("Error updating profile:", error);
-    res.cookie("errorMessage", "Something went wrong while updating profile.");
-    res.redirect("/jobSeeker/profile");
+    console.log(error);
+    next({
+      message: "An error occured while unsaving job. Please try again later...",
+    });
   }
 };
