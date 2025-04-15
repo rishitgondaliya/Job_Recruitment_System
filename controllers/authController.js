@@ -69,40 +69,8 @@ exports.postRegister = async (req, res, next) => {
       let profileData = {
         userId: newUser._id,
         profileType: role,
+        profilePhoto: ""
       };
-
-      if (role === "jobSeeker") {
-        profileData = {
-          ...profileData,
-          about: "",
-          education: {
-            college: "",
-            degree: "",
-            branch: "",
-            grade: null,
-            yearOfPassing: null,
-          },
-          resume: null,
-          skills: [],
-          savedJobs: [],
-          experience: [],
-        };
-      } else if (role === "recruiter") {
-        profileData = {
-          ...profileData,
-          experience: [],
-          companyName: company,
-          companyWebsite: "",
-          industryType: "",
-          position: "",
-          jobListing: [],
-        };
-      } else {
-        profileData = {
-          ...profileData,
-          experience: undefined,
-        };
-      }
 
       const emptyProfile = new Profile(profileData);
       await emptyProfile.save();

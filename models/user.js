@@ -75,7 +75,6 @@ const userSchema = new Schema(
         },
       ],
     },
-    profileImage: String,
     isActive: {
       type: Boolean,
       default: true,
