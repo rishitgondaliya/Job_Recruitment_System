@@ -92,6 +92,14 @@ body {
   font-size: 14px;
 }
 
+.logout-btn,
+button.logout-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
 .logout-btn:hover,
 .logout-btn:active {
   /* color: yellow; */

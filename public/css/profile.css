@@ -119,29 +119,6 @@ ul li {
   text-align: right;
 }
 
-.logout-form button {
-  margin-right: 1rem;
-}
-
-.logout-btn,
-button.logout-btn {
-  background-color: #ffffff;
-  border: 1px solid #ff0000;
-  border-radius: 4px;
-  padding: 4px 12px;
-  margin-top: 1rem;
-  font-size: 1rem;
-  color: #ff0000;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.logout-btn:hover,
-button.logout-btn:hover {
-  background-color: #ff9696;
-  color: #000;
-}
-
 .edit-btn,
 button.edit-btn {
   font-size: 1rem;

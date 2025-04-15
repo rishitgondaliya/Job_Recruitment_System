@@ -19,13 +19,15 @@
   margin-right: 1rem;
 }
 
-.nav-list .nav-item a {
+.nav-list .nav-item a,
+.nav-list .nav-item button {
   text-decoration: none;
   color: rgb(255, 255, 255);
   font-size: 1.35rem;
 }
 
-.nav-list .nav-item a:hover {
+.nav-list .nav-item a:hover,
+.nav-list .nav-item button:hover {
     color: rgb(0, 0, 0);
 }
 
