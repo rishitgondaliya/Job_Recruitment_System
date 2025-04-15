@@ -1,6 +1,7 @@
 const express = require("express");
 
 const jobSeekerController = require("../controllers/jobSeekerController");
+const upload = require('../config/multer')
 
 const router = express.Router();
 
@@ -18,6 +19,20 @@ router.get("/profile", jobSeekerController.getJobSeekerProfile);
 
 router.get("/editProfile", jobSeekerController.getEditProfile);
 
-router.post("/editProfile", jobSeekerController.postEditProfile);
+router.post(
+  "/editProfile",
+  upload.fields([
+    { name: "profilePhoto", maxCount: 1 },
+    { name: "resume", maxCount: 1 },
+  ]),
+  jobSeekerController.postEditProfile
+);
+
+router.get(
+  "/profile/savedJobs/:savedJobId",
+  jobSeekerController.viewSavedJobDetail
+);
+
+router.post("/profile/savedJobs/:savedJobId", jobSeekerController.unSaveJob);
 
 module.exports = router;
