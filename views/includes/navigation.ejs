@@ -30,6 +30,9 @@
             <li class="nav-item">
               <a href="/recruiter/addNewJob" class="<%= path === '/addNewJob' ? 'active' : '' %>">Add Job</a>
             </li>
+            <li class="nav-item">
+              <a href="/recruiter/viewJobSeekers" class="<%= path === '/viewJobSeekers' ? 'active' : '' %>">View JobSeekers</a>
+            </li>
           <% } else{ %>
             <li class="nav-item">
               <a href="/">Home</a>
@@ -45,10 +48,11 @@
             <a href="/auth/login" class="<%= path === '/login' ? 'active' : '' %>">Login</a>
           </li>
         <% } else { %>
-          <li class="nav-item">
-            <!-- <a href="/auth/logout" class="auth-btn">Logout</a> -->
-             <a href="/jobSeeker/profile" class="<%= path === '/profile' ? 'active' : '' %>">Profile</a>
-          </li>
+          <% if(userRole === 'jobSeeker' || userRole === "recruiter"){ %>
+            <li class="nav-item">
+              <a href="/<%= userRole %>/profile" class="<%= path === '/profile' ? 'active' : '' %>">Profile</a>
+            </li>
+          <% } %>
           <li class="nav-item">
             <form action="/auth/logout" method="POST">
               <button type="submit" class="logout-btn">Logout</button>
