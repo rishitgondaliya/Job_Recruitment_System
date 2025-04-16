@@ -81,6 +81,10 @@ const profileSchema = new Schema(
     },
 
     // other general fileds
+    totalExperience: {
+      type: Number,
+      default: 0,
+    },
     experience: {
       type: [
         {
@@ -100,7 +104,7 @@ const profileSchema = new Schema(
               },
               message: "Start date must be from past.",
             },
-            default: undefined
+            default: undefined,
           },
           endDate: {
             type: Date,
@@ -108,9 +112,10 @@ const profileSchema = new Schema(
               validator: function (value) {
                 return value > this.startDate && !(value > Date.now());
               },
-              message: "End date must be after the start date and should not be future date.",
+              message:
+                "End date must be after the start date and should not be future date.",
             },
-            default: undefined
+            default: undefined,
           },
           description: {
             type: String,
@@ -143,6 +148,5 @@ profileSchema.pre("validate", function (next) {
 
   next();
 });
-
 
 module.exports = mongoose.model("Profile", profileSchema);
