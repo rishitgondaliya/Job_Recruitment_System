@@ -66,7 +66,10 @@ exports.getAllJobs = async (req, res, next) => {
     if (salary) filter["jobDetail.salary"] = { $gte: Number(salary) };
 
     // console.log("filter", filter);
-    const jobPosts = await jobListing.find(filter).sort({ updatedAt: -1 });
+    const jobPosts = await jobListing.find().sort({ updatedAt: -1 });
+    const filterdJobPosts = await jobListing
+      .find(filter)
+      .sort({ updatedAt: -1 });
     const categories = await Category.find();
     // const jobPosts = await jobListing.find();
     // console.log("jobPosts", jobPosts);
@@ -77,17 +80,30 @@ exports.getAllJobs = async (req, res, next) => {
         errorMessage: "No jobs found. Please try again later.",
       });
     }
-    res.render("jobSeeker/allJobs", {
-      pageTitle: "All Jobs",
-      path: "/allJobs",
-      jobPosts,
-      categories,
-      selectedCategory: category || "",
-      selectedLocationType: locationType || "",
-      selectedExperience: experience || "",
-      selectedSalary: salary || "",
-      // successMessage: "All jobs fetched successfully",
-    });
+    if (filterdJobPosts.length === 0) {
+      res.render("jobSeeker/allJobs", {
+        pageTitle: "All Jobs",
+        path: "/allJobs",
+        jobPosts,
+        categories,
+        selectedCategory: category || "",
+        selectedLocationType: locationType || "",
+        selectedExperience: experience || "",
+        selectedSalary: salary || "",
+        errorMessage: "No jobs found matching your search criteria.",
+      });
+    } else {
+      res.render("jobSeeker/allJobs", {
+        pageTitle: "All Jobs",
+        path: "/allJobs",
+        jobPosts: filterdJobPosts,
+        categories,
+        selectedCategory: category || "",
+        selectedLocationType: locationType || "",
+        selectedExperience: experience || "",
+        selectedSalary: salary || "",
+      });
+    }
   } catch (error) {
     console.log(error);
     next({ message: "Internal server error, please try again later" });
@@ -241,20 +257,33 @@ exports.postEditProfile = async (req, res, next) => {
     };
 
     // Update Experience (array of objects)
+    let totalMonths = 0;
+
     if (req.body.experience) {
       const expArray = Array.isArray(req.body.experience)
         ? req.body.experience
         : Object.values(req.body.experience);
 
-      // Check if at least one field is filled in any entry
       const filteredExp = expArray
-        .map((exp) => ({
-          company: exp.company?.trim() || undefined,
-          position: exp.position?.trim() || undefined,
-          startDate: exp.startDate || undefined,
-          endDate: exp.endDate || undefined,
-          description: exp.description?.trim() || undefined,
-        }))
+        .map((exp) => {
+          const startDate = exp.startDate ? new Date(exp.startDate) : null;
+          const endDate = exp.endDate ? new Date(exp.endDate) : new Date(); // assume present if not provided
+
+          // Calculate duration in months
+          if (startDate && endDate && startDate < endDate) {
+            const years = endDate.getFullYear() - startDate.getFullYear();
+            const months = endDate.getMonth() - startDate.getMonth();
+            totalMonths += years * 12 + months;
+          }
+
+          return {
+            company: exp.company?.trim() || undefined,
+            position: exp.position?.trim() || undefined,
+            startDate: exp.startDate || undefined,
+            endDate: exp.endDate || undefined,
+            description: exp.description?.trim() || undefined,
+          };
+        })
         .filter(
           (exp) =>
             exp.company ||
@@ -265,8 +294,14 @@ exports.postEditProfile = async (req, res, next) => {
         );
 
       profile.experience = filteredExp.length > 0 ? filteredExp : undefined;
+
+      // Convert total experience to years + months
+      // const years = Math.floor(totalMonths / 12);
+      // const months = totalMonths % 12;
+      profile.totalExperience = totalMonths;
     } else {
       profile.experience = undefined;
+      profile.totalExperience = undefined;
     }
 
     // Update skills as array
