@@ -99,7 +99,7 @@
 
                 const y = years > 0 ? `${years} year${years > 1 ? 's' : ''}` : '';
                 const m = months > 0 ? `${months} month${months > 1 ? 's' : ''}` : '';
-                const duration = [y, m].filter(Boolean).join(', ') || '0 days';
+                const duration = [y, m].filter(Boolean).join(', ') || '1 Month';
               %>
 
                 <%= duration  %>
@@ -173,7 +173,8 @@
               <button type="submit" class="edit-btn">✏️</button>
             </form>
           </div>
-          <a href="/uploads/resumes/<%= profile.resume %>" download>Download Resume</a>
+          <!-- <iframe src="<%= profile.resume %>" frameborder="0" height="150"></iframe> -->
+          <a href="<%= profile.resume %>" target="_blank" class="btn" style="font-size: 1rem; margin-left: .5rem">View Resume</a>
         </section>
       <% } %>
 
