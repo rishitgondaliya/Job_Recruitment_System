@@ -12,18 +12,24 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);
-    cb(null, `${file.fieldname}-${Date.now()}${ext}`);
+    const uniqueName = `${file.fieldname}-${req.user.firstName.toLowerCase()}-${Date.now()}${ext}`
+    cb(null, uniqueName);
   },
 });
 
-// File filter (optional)
+// File filter
+const allowedFileTypes = [
+  "application/pdf",
+  // "application/msword", //.doc
+  // "application/vnd.openxmlformats-officedocument.wordprocessingml.document" //.docx,
+];
 const fileFilter = (req, file, cb) => {
   if (file.fieldname === "profilePhoto") {
     if (!file.mimetype.startsWith("image/"))
       return cb(new Error("Only images allowed"), false);
   } else if (file.fieldname === "resume") {
-    if (!file.mimetype.includes("pdf"))
-      return cb(new Error("Only PDFs allowed"), false);
+    if (!allowedFileTypes.includes(file.mimetype))
+      return cb(new Error("Only PDFs are allowed"), false);
   }
   cb(null, true);
 };
