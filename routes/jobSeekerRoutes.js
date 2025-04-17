@@ -1,7 +1,7 @@
 const express = require("express");
 
 const jobSeekerController = require("../controllers/jobSeekerController");
-const upload = require('../config/multer')
+const upload = require("../config/multer");
 
 const router = express.Router();
 
@@ -34,5 +34,15 @@ router.get(
 );
 
 router.post("/profile/savedJobs/:savedJobId", jobSeekerController.unSaveJob);
+
+router.get("/applyForjob/:jobPostId", jobSeekerController.getApplicationForm);
+
+router.post(
+  "/applyForJob/:jobPostId",
+  upload.fields([{ name: "resume", maxCount: 1 }]),
+  jobSeekerController.applyForJob
+);
+
+router.post('/withdraw/:applicationId', jobSeekerController.withdrawApplication)
 
 module.exports = router;
