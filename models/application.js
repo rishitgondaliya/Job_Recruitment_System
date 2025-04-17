@@ -14,6 +14,11 @@ const applicationSchema = new Schema(
         required: true,
         trim: true,
       },
+      email: {
+        type: String,
+        required: true,
+        trim: true,
+      }
     },
     jobDetail: {
       jobId: {
@@ -31,6 +36,10 @@ const applicationSchema = new Schema(
         required: true,
         trim: true,
       },
+      company: {
+        type: String,
+        required: true,
+      }
     },
     resumeLink: {
       type: String,
@@ -38,7 +47,7 @@ const applicationSchema = new Schema(
     },
     applicationStatus: {
       type: String,
-      enum: ["applied", "accepted", "rejected", "shortlisted"],
+      enum: ["Applied", "Withdrawn", "Rejected", "Shortlisted"],
     },
   },
   { timestamps: true }

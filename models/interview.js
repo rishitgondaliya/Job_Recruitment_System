@@ -14,6 +14,11 @@ const interviewSchema = new Schema(
         required: true,
         trim: true,
       },
+      email: {
+        type: String,
+        required: true,
+        trim: true,
+      }
     },
     recruiterId: {
       type: Schema.Types.ObjectId,
@@ -37,8 +42,12 @@ const interviewSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["scheduled", "cancelled", "completed"],
+      enum: ["Scheduled", "Cancelled", "Completed"],
     },
+    result: {
+      type: String,
+      enum: ["Selected", "Not selected"]
+    }
   },
   { timestamps: true }
 );
