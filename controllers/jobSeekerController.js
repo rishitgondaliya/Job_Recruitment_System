@@ -5,6 +5,7 @@ const jobListing = require("../models/jobListing");
 const Category = require("../models/jobCategory");
 const savedJobs = require("../models/savedJobs");
 const Profile = require("../models/profile");
+const Application = require("../models/application");
 
 exports.getJobSeekerHome = async (req, res, next) => {
   // const featuredJobs = await featuredJob.find()
@@ -206,6 +207,7 @@ exports.getJobSeekerProfile = async (req, res, next) => {
   const user = req.user;
   const userProfile = await Profile.findById(user.profileId);
   const savedJobsArray = await savedJobs.find({ "user.userId": user._id });
+  const applications = await Application.find({ "user.userId": user._id });
   // console.log("userProfile",userProfile)
 
   res.render("jobSeeker/profile", {
@@ -214,6 +216,7 @@ exports.getJobSeekerProfile = async (req, res, next) => {
     profile: userProfile,
     user: user,
     savedJobs: savedJobsArray,
+    applications,
   });
 };
 
@@ -451,5 +454,114 @@ exports.unSaveJob = async (req, res, next) => {
     next({
       message: "An error occured while unsaving job. Please try again later...",
     });
+  }
+};
+
+exports.getApplicationForm = async (req, res, next) => {
+  const jobPostId = req.params.jobPostId;
+  const jobPost = await jobListing.findById(jobPostId);
+  res.render("jobSeeker/applicationform", {
+    pageTitle: jobPost.jobDetail.jobTitle,
+    path: "/applyForJob",
+    job: jobPost,
+    user: req.user,
+  });
+};
+
+exports.applyForJob = async (req, res, next) => {
+  try {
+    const jobPostId = req.params.jobPostId;
+    const user = req.user;
+    let resume;
+
+    const jobPost = await jobListing.findById(jobPostId);
+    if (!jobPost) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    // Check for existing application
+    const existing = await Application.findOne({
+      "user.userId": user._id,
+      "jobDetail.jobId": jobPost._id,
+    });
+
+    if (existing) {
+      return res
+        .cookie("errorMessage", "You have already applied for this job.", {
+          maxAge: 3000,
+          httpOnly: false,
+        })
+        .redirect("/jobSeeker/allJobs");
+    }
+
+    if (req.files?.resume?.length) {
+      const resumePath = `/uploads/resume/${req.files.resume[0].filename}`;
+      resume = resumePath;
+    }
+
+    // Create a new application
+    const newApplication = new Application({
+      user: {
+        userId: user._id,
+        name: user.firstName + " " + user.lastName,
+        email: user.email
+      },
+      jobDetail: {
+        jobId: jobPostId,
+        jobTitle: jobPost.jobDetail.jobTitle,
+        recruiterId: jobPost.recruiterId,
+        company: jobPost.company,
+      },
+      resumeLink: resume,
+      applicationStatus: "Applied",
+    });
+
+    await newApplication.save();
+
+    res.cookie("successMessage", "Application submitted successfully.", {
+      maxAge: 3000,
+      httpOnly: false,
+    });
+
+    return res.redirect("/jobSeeker/allJobs");
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+};
+
+exports.withdrawApplication = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const applicationId = req.params.applicationId;
+    await Application.findByIdAndUpdate(
+      {
+        _id: applicationId,
+      },
+      {
+        $set: {
+          applicationStatus: "Withdrawn",
+        },
+      },
+      {
+        new: true,
+      }
+    );
+    res.cookie("successMessage", "Application withdrawn successfully.", {
+      maxAge: 3000,
+      httpOnly: false,
+    });
+    return res.redirect("/jobSeeker/profile");
+  } catch (err) {
+    console.log(err);
+    res.cookie(
+      "errorMessage",
+      "Something went wrong, please try again later.",
+      {
+        maxAge: 3000,
+        httpOnly: false,
+      }
+    );
+    return res.redirect("/jobSeeker/profile");
   }
 };
