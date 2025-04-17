@@ -214,15 +214,15 @@ exports.postLogin = async (req, res, next) => {
     }
 
     // Step 5: Set token and success message
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "15m",
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
     });
 
     res.cookie("token", token, {
       httpOnly: true,
       secure: false,
       sameSite: "Lax",
-      maxAge: 15 * 60 * 1000,
+      maxAge: 60 * 60 * 1000,
     });
 
     const userRole = user.role;
@@ -277,7 +277,7 @@ exports.logout = (req, res, next) => {
       httpOnly: false,
     });
 
-    res.redirect("/auth/login");
+    res.redirect("/");
   } catch (err) {
     console.error("Logout error:", err);
     res.status(500).send("Error while logging out");
