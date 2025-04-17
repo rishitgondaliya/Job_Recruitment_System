@@ -1,8 +1,12 @@
-const { FiFilter } = require("react-icons/fi");
+const path = require('path')
+const fs = require('fs')
+
 const Category = require("../models/jobCategory");
 const jobListing = require("../models/jobListing");
 const Profile = require("../models/profile");
 const User = require("../models/user");
+const Application = require("../models/application");
+const Interview = require('../models/interview');
 
 exports.getRecruiterHome = (req, res, next) => {
   res.render("recruiter/home", {
