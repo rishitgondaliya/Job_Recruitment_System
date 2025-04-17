@@ -120,7 +120,10 @@
                 </tbody>
             </table>
             <div class="apply-now center">
-                <button class="btn">Apply now</button>
+                <form action="/jobSeeker/applyForJob/<%= jobPost._id %>" method="GET">
+                    <!-- <input type="hidden" name="jobPostId" value="<%= jobPost._id %>"> -->
+                    <button type="submit" class="edit-btn btn">Apply Now</button>
+                </form>
             </div>
         </div>
 

@@ -78,10 +78,17 @@
                             <td><%= user.company || "N/A" %></td>
                             <td><%= user.isActive ? 'Active' : 'Inactive' %></td>
                             <td class="actions">
-                                <form action="/admin/deactive" method="POST">
-                                    <input type="hidden" name="userId" value="<%= user._id %>">
-                                    <button type="submit" class="deactive-btn btn">Deactivate</button>
-                                </form>
+                                <% if(user.isActive){ %>
+                                    <form action="/admin/deactivate" method="POST">
+                                        <input type="hidden" name="userId" value="<%= user._id %>">
+                                        <button type="submit" class="deactive-btn btn">Deactivate</button>
+                                    </form>
+                                <% } else{ %>
+                                    <form action="/admin/activate" method="POST">
+                                        <input type="hidden" name="userId" value="<%= user._id %>">
+                                        <button type="submit" class="deactive-btn btn">Activate</button>
+                                    </form>
+                                <% } %>
                                 <form action="/admin/delete" method="POST">
                                     <input type="hidden" name="userId" value="<%= user._id %>">
                                     <button type="submit" class="delete-btn btn">Delete</button>
