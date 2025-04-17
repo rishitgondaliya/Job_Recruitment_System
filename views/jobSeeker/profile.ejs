@@ -1,13 +1,14 @@
 <%- include('../includes/main.ejs') %>
     <link rel="stylesheet" href="/css/profile.css">
     <style>
-      .saved-jobs form {
+      .saved-jobs form,
+      .application-detail form {
         display: inline;
       }
       .saved-jobs .btn{
         padding: 2px 6px;
         font-size: 0.9rem;
-        margin-top: 0.25rem;
+        margin-top: 0rem;
         margin-left: 0.25rem;
       }
       .input-group{
@@ -20,6 +21,26 @@
       }
       form button:hover{
         cursor: pointer;
+      }
+
+      .application-detail form{
+        margin-left: .5rem;
+      }
+
+      .application-detail .btn {
+        margin-top: 0;
+        font-size: 0.9rem;
+        padding: 2px 6px;
+        border: 1px solid orangered;
+        color: orangered;
+      }
+
+      .application-detail .btn:hover {
+        background-color: orangered;
+        color: white;
+      }
+      .applications{
+        margin-top: 0;
       }
     </style>
     <%- include('../includes/navigation.ejs') %>
@@ -178,6 +199,34 @@
         </section>
       <% } %>
 
+      <% if (applications && applications.length > 0) { %>
+        <section id="applications">
+          <div class="input-group">
+            <h3>Applied Jobs</h3>
+            <form action="/jobSeeker/editProfile" method="GET">
+              <input type="hidden" name="profileId" value="<%= profile._id %>">
+              <button type="submit" class="edit-btn">✏️</button>
+            </form>
+          </div>
+          <ul class="applications">
+            <% applications.forEach(application => { %>
+              <div class="application-detail">
+                <li>
+                  <strong><%= application.jobDetail.jobTitle %></strong> - 
+                  <%= application.jobDetail.company %> - 
+                  <strong><%= application.applicationStatus %></strong>
+                  <% if (application.applicationStatus === 'Applied') { %>
+                    <form action="/jobSeeker/withdraw/<%= application._id %>" method="POST">
+                      <button type="submit" class="withdraw-btn btn">Withdraw</button>
+                    </form>
+                  <% } %>
+                </li>
+              </div>
+            <% }) %>
+          </ul>
+        </section>
+      <% } %>
+
       <% if (savedJobs && savedJobs.length > 0) { %>
         <section id="savedJobs">
           <div class="input-group">
@@ -191,10 +240,9 @@
             <% savedJobs.forEach(job => { %>
               <li>
                 <strong><%= job.jobDetail.jobTitle %></strong> - <%= job.jobDetail.company %>
-                <!-- <a href="/jobSeeker/profile/savedJobs/<%= job.jobDetail.jobId %>">View</a> -->
-                 <form action="/jobSeeker/profile/savedJobs/<%= job._id %>" method="GET">
+                <form action="/jobSeeker/profile/savedJobs/<%= job._id %>" method="GET">
                   <button class="btn" type="submit">View</button>
-                 </form>
+                </form>
               </li>
             <% }) %>
           </ul>
