@@ -1,0 +1,102 @@
+<%- include('../includes/main.ejs') %>
+    <link rel="stylesheet" href="/css/table.css">
+    <style>
+        .custom-table td .resume-btn,
+        .custom-table td .shortlist-btn {
+            border: 1px solid #007bff;
+            margin-top: 0;
+        }
+        .table {
+            margin-top: 4rem;
+        }
+    </style>
+    <%- include('../includes/navigation.ejs') %>
+    <%- include('../includes/flash.ejs') %>
+        <div class="container">
+            <div class="table">
+                <h2 class="section-title">Applications</h2>
+                <% if(applications.length > 0){ %>
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Sr. No.</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Applied For</th>
+                                <th>Resume</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% let applicationCount = 1; %>
+                            <% applications.forEach(application => { %>
+                                <tr>
+                                    <td><%= applicationCount++ %></td>
+                                    <td><%= application.user.name %></td>
+                                    <td><%= application.user.email %></td>
+                                    <td><%= application.jobDetail.jobTitle %></td>
+                                    <td><a href="<%= application.resumeLink %>" target="_blank" class="btn resume-btn">View</a></td>
+                                    <td>
+                                        <% if(application.applicationStatus === 'Shortlisted'){ %>
+                                            Shortlisted
+                                        <% } else if(application.applicationStatus === 'Rejected'){ %>
+                                            Rejected
+                                        <% } else { %>
+                                            <form action="/recruiter/select/<%= application.user.userId %>" method="GET">
+                                                <button type="submit" class="btn shortlist-btn">Shortlist</button>
+                                            </form>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                <% } else { %>
+                    <p style="font-size: 1.25rem;">No applications found.</p>
+                <% } %>
+            </div>
+            <div class="table">
+                <h2 class="section-title">Interviews</h2>
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Sr. No.</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Interviewer</td>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% let interviewCount = 1; %>
+                        <% interviews.forEach(interview => { %>
+                            <tr>
+                                <td><%= interviewCount++ %></td>
+                                <td><%= interview.user.name %></td>
+                                <td><%= interview.user.email %></td>
+                                <td><%= interview.status %></td>
+                                <td><%= user.firstName + ' ' + user.lastName %></td>
+                                <td><%= interview.interviewDate.toLocaleDateString() %></td>
+                                <td>
+                                    <% if(interview.result === 'Selected'){ %>
+                                        Selected
+                                    <% } else if(interview.result === 'Not selected'){ %>
+                                        Not Selected
+                                    <% } else { %>
+                                        <form action="/recruiter/select/<%= interview.applicationId %>" method="GET">
+                                            <button type="submit" class="btn shortlist-btn">Result</button>
+                                        </form>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <%- include('../includes/flashScript.ejs') %>
+        <script src="/js/preventBack.js"></script>
+    </body>
+</html>
