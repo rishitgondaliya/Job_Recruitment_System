@@ -90,7 +90,11 @@
                                 <td><%= jobPostCount++ %></td>
                                 <td><%= jobPost.jobDetail.jobTitle %></td>
                                 <td><%= jobPost.company %></td>
-                                <td><%= jobPost.jobDetail.vacancy %></td>
+                                <% if (jobPost.jobDetail.vacancy === 0) { %>
+                                  <td style="color: red; font-weight: bold">Hiring over</td>
+                                <% } else { %>
+                                  <td><%= jobPost.jobDetail.vacancy %></td>
+                                <% } %>
                                 <td class="actions">
                                     <a href="/jobSeeker/allJobs/<%= jobPost._id %>" class="edit-btn btn">Details</a>
                                     <form action="/jobSeeker/saveJobPost" method="POST">
