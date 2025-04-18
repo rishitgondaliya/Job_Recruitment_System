@@ -161,14 +161,16 @@
                                     <% } else { %>
                                         <td><%= jobPost.jobDetail.vacancy %></td>
                                     <% } %>                                
-                                    <td class="actions">
-                                        <form action="/recruiter/editJobPost/<%= jobPost._id %>" method="GET">
-                                            <button type="submit" class="edit-btn btn">Edit</button>
-                                        </form>
-                                        <form action="/recruiter/deleteJobPost" method="POST">
-                                            <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
-                                            <button type="submit" class="delete-btn btn">Delete</button>
-                                        </form>
+                                    <td>
+                                        <div class="actions">
+                                            <form action="/recruiter/editJobPost/<%= jobPost._id %>" method="GET">
+                                                <button type="submit" class="edit-btn btn">Edit</button>
+                                            </form>
+                                            <form action="/recruiter/deleteJobPost" method="POST">
+                                                <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
+                                                <button type="submit" class="delete-btn btn">Delete</button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                         <% }); %>

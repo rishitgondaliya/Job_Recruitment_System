@@ -15,6 +15,10 @@
       font-size: 1rem;
     }
 
+    .toggleFilter .clear-filter{
+      margin-top: 2rem;
+    }
+
     .center{
       text-align: center;
       margin: 0px auto;
@@ -26,8 +30,15 @@
 </style>
 <%- include('../includes/navigation.ejs') %>
 
+    <% const filtersApplied = selectedCategory || selectedLocationType || selectedExperience || selectedSalary; %>
     <div class="toggleFilter">
-      <button id="toggleFilter" class="btn">Filter Jobs</button>
+      <% if (filtersApplied) { %>
+        <div class="clear-filter">
+          <a href="/jobSeeker/allJobs" class="btn clear-filter">Clear Filters</a>
+        </div>
+      <% } else { %>
+        <button id="toggleFilter" class="btn apply-filter">Filter Jobs</button>
+      <% } %>
     </div>
 
     <!-- Filter Form -->
@@ -95,12 +106,14 @@
                                 <% } else { %>
                                   <td><%= jobPost.jobDetail.vacancy %></td>
                                 <% } %>
-                                <td class="actions">
-                                    <a href="/jobSeeker/allJobs/<%= jobPost._id %>" class="edit-btn btn">Details</a>
-                                    <form action="/jobSeeker/saveJobPost" method="POST">
-                                        <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
-                                        <button type="submit" class="edit-btn btn">Save</button>
-                                    </form>
+                                <td>
+                                    <div class="actions">
+                                        <a href="/jobSeeker/allJobs/<%= jobPost._id %>" class="edit-btn btn">Details</a>
+                                        <form action="/jobSeeker/saveJobPost" method="POST">
+                                            <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
+                                            <button type="submit" class="edit-btn btn">Save</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                     <% }); %>
@@ -117,11 +130,11 @@
         filterForm.style.display = filterForm.style.display === "none" ? "block" : "none";
       });
     
-      // Auto-hide form after submission
       filterForm.addEventListener("submit", () => {
         setTimeout(() => {
           filterForm.style.display = "none";
-        }, 100); // Let the form submit first
+          toggleBtn.style.display = "none"
+        }, 100);
       });
     </script>
     <script src="/js/preventBack.js"></script>

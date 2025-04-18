@@ -58,14 +58,16 @@
                         <tr>
                             <td><%= index++ %></td>
                             <td><%= category.name %></td>
-                            <td class="actions">
-                                <form action="/admin/editCategory/<%= category._id %>" method="GET">
-                                    <button type="submit" class="edit-btn btn">Edit</button>
-                                </form>
-                                <form action="/admin/deleteCategory" method="POST">
-                                    <input type="hidden" name="categoryId" value="<%= category._id %>">
-                                    <button type="submit" class="delete-btn btn">Delete</button>
-                                </form>
+                            <td>
+                                <div class="actions">
+                                    <form action="/admin/editCategory/<%= category._id %>" method="GET">
+                                        <button type="submit" class="edit-btn btn">Edit</button>
+                                    </form>
+                                    <form action="/admin/deleteCategory" method="POST">
+                                        <input type="hidden" name="categoryId" value="<%= category._id %>">
+                                        <button type="submit" class="delete-btn btn">Delete</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     <% }); %>

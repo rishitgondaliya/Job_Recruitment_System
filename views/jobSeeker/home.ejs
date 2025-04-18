@@ -33,12 +33,14 @@
                                 <td><%= featuredJob.jobDetail.jobTitle %></td>
                                 <td><%= featuredJob.company %></td>
                                 <td><%= featuredJob.jobDetail.vacancy %></td>
-                                <td class="actions">
-                                    <a href="/jobSeeker/allJobs/<%= featuredJob._id %>" class="edit-btn btn">Details</a>
-                                    <form action="/jobSeeker/saveJobPost" method="POST">
-                                        <input type="hidden" name="jobPostId" value="<%= featuredJob._id %>">
-                                        <button type="submit" class="edit-btn btn">Save</button>
-                                    </form>
+                                <td>
+                                    <div class="actions">
+                                        <a href="/jobSeeker/allJobs/<%= featuredJob._id %>" class="edit-btn btn">Details</a>
+                                        <form action="/jobSeeker/saveJobPost" method="POST">
+                                            <input type="hidden" name="jobPostId" value="<%= featuredJob._id %>">
+                                            <button type="submit" class="edit-btn btn">Save</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                     <% }); %>
