@@ -1,0 +1,97 @@
+<%- include('../includes/main.ejs') %>
+    <link rel="stylesheet" href="/css/table.css">
+    <style>
+        .toggleFilter {
+            text-align: right;
+            margin-right: 3rem;
+          }
+      
+          .toggleFilter .btn {
+            font-size: 1rem;
+          }
+    </style>
+    <%- include('../includes/navigation.ejs') %>
+        <div class="toggleFilter">
+            <button id="toggleFilter" class="btn">Filter Job Seekers</button>
+        </div>
+
+        <div class="container">
+            <%- include('../includes/flash.ejs') %>
+              <!-- Filter Form -->
+            <form id="filterForm" action="/recruiter/viewJobSeekers" method="GET" class="filter-form form-control" style="display: none;">          
+                <div class="form-input">
+                    <label for="experience">Experience (years):</label>
+                    <input type="number" name="experience" id="experience" min="0" value="<%= experience %>">
+                </div>
+        
+                <div class="form-input">
+                    <label for="skills">Skills:</label>
+                    <input type="text" name="skills" id="skills" value="<%= skills %>">
+                </div>
+            
+                <div class="center">
+                    <button type="submit" class="btn">Apply Filters</button>
+                </div>
+            </form>
+
+            <!-- Job Seekers Table -->
+            <h2 class="section-title">Job Seekers</h2>
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Sr. No.</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Skills</th>
+                        <th>Experience</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% let jobSeekerCount = 1; %>
+                    <% jobSeekers.forEach(jobSeeker => { %>
+                        <tr>
+                            <td><%= jobSeekerCount++ %></td>
+                            <td><%= jobSeeker.firstName %> <%= jobSeeker.lastName %></td>
+                            <td><%= jobSeeker.email %></td>
+                            <td><%= jobSeeker.profileId.skills?.join(', ') %></td>
+                            <td>
+                                <% 
+                                    const totalExp = jobSeeker.profileId.totalExperience || 0;
+                                    let years = Math.floor(totalExp / 12);
+                                    let months = totalExp % 12;
+                                    if(months >= 6) {
+                                        years++;
+                                        months = 0
+                                    }
+                                %>
+                              
+                              <% if (years) { %>
+                                <%= years %> Year<%= years > 1 ? 's+' : '' %>
+                              <% } else if (months < 6) { %>
+                                <%= months %> Month<%= months > 1 ? 's' : '' %>
+                              <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <%- include('../includes/flashScript.ejs') %>
+        <script>
+            const toggleBtn = document.getElementById("toggleFilter");
+            const filterForm = document.getElementById("filterForm");
+          
+            toggleBtn.addEventListener("click", () => {
+              filterForm.style.display = filterForm.style.display === "none" ? "block" : "none";
+            });
+          
+            // hide form after submission
+            filterForm.addEventListener("submit", () => {
+              setTimeout(() => {
+                filterForm.style.display = "none";
+              }, 100);
+            });
+          </script>
+        <script src="/js/preventBack.js"></script>
+    </body>
+</html>
