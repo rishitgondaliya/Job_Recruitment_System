@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get("/home", recruiterController.getRecruiterHome);
 
-router.get("/addNewJob", recruiterController.getAddNewJob);
+// router.get("/addNewJob", recruiterController.getAddNewJob);
 
 router.post("/addNewJob", recruiterController.postAddNewJob);
 
@@ -33,5 +33,15 @@ router.post(
 );
 
 router.get('/viewJobSeekers', recruiterController.viewJobSeekers)
+
+router.get('/viewApplications', recruiterController.viewApplications)
+
+router.get('/shortlist/:userId', recruiterController.getShortlistUser)
+
+router.post('/shortlist/:userId', recruiterController.postShortlistUser)
+
+router.get('/select/:applicationId', recruiterController.getResultForm)
+
+router.post('/select/:applicationId', recruiterController.postInterviewResult)
 
 module.exports = router;

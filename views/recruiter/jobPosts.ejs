@@ -1,53 +1,207 @@
 <%- include('../includes/main.ejs') %>
 <link rel="stylesheet" href="/css/table.css">
+<style>
+    .custom-table th:nth-child(4),
+    .custom-table td:nth-child(4),
+    .custom-table th:nth-child(6),
+    .custom-table td:nth-child(6),
+    .custom-table th:nth-child(7),
+    .custom-table td:nth-child(7){
+        text-align: center;
+    }
+    .add-job-btn {
+        text-align: right;
+        margin-right: 3rem;
+    }
+    .hidden {
+        display: none;
+    }
+</style>
 <%- include('../includes/navigation.ejs') %>
 
-    <div class="container">
         <%- include('../includes/flash.ejs') %>
+        <div class="add-job-btn">
+            <button class="add-new-btn btn">New Job Post</button>
+        </div>
+        <div class="form-control <%= (isEditing || showForm) ? '' : 'hidden' %>" id="add-new">
+            <h2 class="center"><%= isEditing ? 'Edit job post' : 'Post New Job' %></h2>
 
-        <h2 class="section-title">Jobs Posted by you</h2>
-        <% if(jobListings.length == 0){ %>
-            <h4>No job listings found.</h4>
-        <% } else { %>
-            <table class="custom-table">
-                <thead>
-                    <tr>
-                        <th>Sr. No.</th>
-                        <th>Job Title</th>
-                        <th>Category</th>
-                        <th>Experience</th>
-                        <th>Salary</th>
-                        <th>Vacancy</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% let jobPostCount = 1; %>
-                    <% jobListings.forEach(jobPost => { %>
-                            <tr>
-                                <td><%= jobPostCount++ %></td>
-                                <td><%= jobPost.jobDetail.jobTitle %></td>
-                                <td><%= jobPost.category %></td>
-                                <td><%= jobPost.jobDetail.experience %></td>
-                                <td><%= jobPost.jobDetail.salary %></td>
-                                <td><%= jobPost.jobDetail.vacancy %></td>
-                                <td class="actions">
-                                    <form action="/recruiter/editJobPost/<%= jobPost._id %>" method="GET">
-                                        <!-- <input type="hidden" name="jobPostId" value="<%= jobPost._id %>"> -->
-                                        <button type="submit" class="edit-btn btn">Edit</button>
-                                    </form>
-                                    <form action="/recruiter/deleteJobPost" method="POST">
-                                        <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
-                                        <button type="submit" class="delete-btn btn">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                    <% }); %>
-                </tbody>
-            </table>
-        <% } %>
-    </div>
-</body>
-    <%- include('../includes/flashScript.ejs') %>
-    <script src="/js/preventBack.js"></script>
+            <form action="<%= isEditing ? '/recruiter/editJobPost' : '/recruiter/addNewJob' %>" method="POST" novalidate>
+                <div class="input-group">
+                    <div class="form-input" style="width: 45%;">
+                        <label for="cName">Category:</label>
+                        <select name="categoryName" id="cName">
+                            <option disabled>Select Category</option>
+                            <% categories.forEach(cat => { %>
+                                <option value="<%= cat.name %>" <%= (isEditing ? jobPost?.category : formData?.categoryName) === cat.name ? 'selected' : '' %>><%= cat.name %></option>
+                                <% }) %>
+                            </select>
+                            <% if (errors?.categoryName) { %><p class="input-error"><%= errors.categoryName %></p><% } %>
+                        </div>
+                        <div class="form-input" style="width: 45%;">
+                            <label for="jName">Job Title:</label>
+                            <input type="text" id="jName" name="jobTitle" value="<%= isEditing ? jobPost?.jobDetail?.jobTitle : formData?.jobTitle || '' %>">
+                            <% if (errors?.["jobDetail.jobTitle"]) { %><p class="input-error"><%= errors["jobDetail.jobTitle"] %></p><% } %>
+                        </div>
+                    </div>
+              
+                <div class="form-input">
+                  <label for="desc">Description:</label>
+                  <input type="text" id="desc" name="description" value="<%= isEditing ? jobPost?.jobDetail?.description : formData?.description || '' %>">
+                  <% if (errors?.["jobDetail.description"]) { %><p class="input-error"><%= errors["jobDetail.description"] %></p><% } %>
+                </div>
+              
+                <div class="form-input">
+                  <label for="req">Requirements:</label>
+                  <input type="text" id="req" name="requirements" value="<%= isEditing ? jobPost?.jobDetail?.requirements : formData?.requirements || '' %>">
+                  <% if (errors?.["jobDetail.requirements"]) { %><p class="input-error"><%= errors["jobDetail.requirements"] %></p><% } %>
+                </div>
+              
+                <div class="input-group">
+                  <div class="form-input" style="width: 45%;">
+                    <label for="locType">Location Type:</label>
+                    <select name="locType" id="locType">
+                      <option value="">Location Type</option>
+                      <% ['Remote', 'On-Site', 'Hybrid'].forEach(type => { %>
+                        <option value="<%= type %>" <%= (isEditing ? jobPost?.jobDetail?.locationType : formData?.locType) === type ? 'selected' : '' %>><%= type %></option>
+                      <% }) %>
+                    </select>
+                    <% if (errors?.["jobDetail.locationType"]) { %><p class="input-error"><%= errors["jobDetail.locationType"] %></p><% } %>
+                  </div>
+                  <div class="form-input" style="width: 45%;">
+                    <label for="loc">Location:</label>
+                    <input type="text" name="location" id="loc" value="<%= isEditing ? jobPost?.jobDetail?.location : formData?.location || '' %>">
+                  </div>
+                </div>
+              
+                <div class="input-group">
+                  <div class="form-input" style="width: 45%;">
+                    <label for="experience">Experience:</label>
+                    <input type="number" name="experience" id="experience" step="1" min="0" value="<%= isEditing ? jobPost?.jobDetail?.experience : formData?.experience || '' %>">
+                    <% if (errors?.["jobDetail.experience"]) { %><p class="input-error"><%= errors["jobDetail.experience"] %></p><% } %>
+                  </div>
+                  <div class="form-input" style="width: 45%;">
+                    <label for="vacancy">Vacancy:</label>
+                    <input type="number" name="vacancy" id="vacancy" min="1" value="<%= isEditing ? jobPost?.jobDetail?.vacancy : formData?.vacancy || '' %>">
+                    <% if (errors?.["jobDetail.vacancy"]) { %><p class="input-error"><%= errors["jobDetail.vacancy"] %></p><% } %>
+                  </div>
+                </div>
+              
+                <div class="input-group">
+                  <div class="form-input" style="width: 45%;">
+                    <label for="salary">Salary:</label>
+                    <input type="number" name="salary" id="salary" step="1000" min="1000" value="<%= isEditing ? jobPost?.jobDetail?.salary : formData?.salary || '' %>">
+                    <% if (errors?.["jobDetail.salary"]) { %><p class="input-error"><%= errors["jobDetail.salary"] %></p><% } %>
+                  </div>
+                  <div class="form-input" style="width: 45%;">
+                    <label for="status">Is Featured?</label>
+                    <select name="status" id="isFeatured">
+                      <option value="No" <%= (isEditing ? jobPost?.jobDetail?.status : formData?.status) === 'No' ? 'selected' : '' %>>No</option>
+                      <option value="Yes" <%= (isEditing ? jobPost?.jobDetail?.status : formData?.status) === 'Yes' ? 'selected' : '' %>>Yes</option>
+                    </select>
+                    <% if (errors?.["jobDetail.isFeatured.status"]) { %><p class="input-error"><%= errors["jobDetail.isFeatured.status"] %></p><% } %>
+                  </div>
+                </div>
+              
+                <div class="input-group" id="featuredDates" style="display: none;">
+                  <div class="form-input" style="width: 45%;">
+                    <label for="startDate">Start Date:</label>
+                    <input type="date" name="startDate" id="startDate" value="<%= isEditing ? jobPost?.jobDetail?.isFeatured?.startDate : formData?.startDate || '' %>">
+                    <% if (errors?.["jobDetail.isFeatured.startDate"]) { %><p class="input-error"><%= errors["jobDetail.isFeatured.startDate"] %></p><% } %>
+                  </div>
+              
+                  <div class="form-input" style="width: 45%;">
+                    <label for="endDate">End Date:</label>
+                    <input type="date" name="endDate" id="endDate" value="<%= isEditing ? jobPost?.jobDetail?.isFeatured?.endDate : formData?.endDate || '' %>">
+                    <% if (errors?.["jobDetail.isFeatured.endDate"]) { %><p class="input-error"><%= errors["jobDetail.isFeatured.endDate"] %></p><% } %>
+                  </div>
+                </div>
+              
+                <% if (isEditing) { %>
+                  <input type="hidden" name="jobPostId" value="<%= jobPost?._id %>">
+                <% } %>
+              
+                <div class="center">
+                  <button class="btn" type="submit">
+                    <%= isEditing ? 'Update Job' : 'Add Job' %>
+                  </button>
+                </div>
+              </form>
+              
+        </div>
+
+        <div class="container">
+            <h2 class="section-title">Jobs Posted by you</h2>
+            <% if(jobListings.length == 0){ %>
+                <h4>No job listings found.</h4>
+            <% } else { %>
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Sr. No.</th>
+                            <th>Job Title</th>
+                            <th>Category</th>
+                            <th>Experience</th>
+                            <th>Salary</th>
+                            <th>Vacancy</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% let jobPostCount = 1; %>
+                        <% jobListings.forEach(jobPost => { %>
+                                <tr>
+                                    <td><%= jobPostCount++ %></td>
+                                    <td><%= jobPost.jobDetail.jobTitle %></td>
+                                    <td><%= jobPost.category %></td>
+                                    <td><%= jobPost.jobDetail.experience %> Years</td>
+                                    <td><%= jobPost.jobDetail.salary %></td>
+                                    <% if (jobPost.jobDetail.vacancy === 0) { %>
+                                        <td style="color: red; font-weight: bold">Hiring over</td>
+                                    <% } else { %>
+                                        <td><%= jobPost.jobDetail.vacancy %></td>
+                                    <% } %>                                
+                                    <td class="actions">
+                                        <form action="/recruiter/editJobPost/<%= jobPost._id %>" method="GET">
+                                            <button type="submit" class="edit-btn btn">Edit</button>
+                                        </form>
+                                        <form action="/recruiter/deleteJobPost" method="POST">
+                                            <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
+                                            <button type="submit" class="delete-btn btn">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } %>
+        </div>
+        <script>
+            const isFeaturedSelect = document.getElementById('isFeatured');
+            const featuredDatesDiv = document.getElementById('featuredDates');
+            let addNewBtn = document.querySelector('.add-new-btn');
+            let addNewDiv = document.getElementById('add-new');
+
+            addNewBtn.addEventListener('click', () => {
+                addNewDiv.style.display = addNewDiv.style.display === 'none' || addNewDiv.style.display === '' ? 'block' : 'none';
+            });
+            
+            
+            function toggleFeaturedDates() {
+                if (isFeaturedSelect.value === 'Yes') {
+                    featuredDatesDiv.style.display = 'flex';
+                } else {
+                    featuredDatesDiv.style.display = 'none';
+                }
+            }
+            
+            // Run on page load
+            toggleFeaturedDates();
+            
+            // Run on change
+            isFeaturedSelect.addEventListener('change', toggleFeaturedDates);
+        </script>
+        <%- include('../includes/flashScript.ejs') %>
+        <script src="/js/preventBack.js"></script>
+    </body>
 </html>

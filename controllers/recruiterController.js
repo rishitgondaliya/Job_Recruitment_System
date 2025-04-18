@@ -1,12 +1,12 @@
-const path = require('path')
-const fs = require('fs')
+const path = require("path");
+const fs = require("fs");
 
 const Category = require("../models/jobCategory");
 const jobListing = require("../models/jobListing");
 const Profile = require("../models/profile");
 const User = require("../models/user");
 const Application = require("../models/application");
-const Interview = require('../models/interview');
+const Interview = require("../models/interview");
 
 exports.getRecruiterHome = (req, res, next) => {
   res.render("recruiter/home", {
@@ -15,40 +15,43 @@ exports.getRecruiterHome = (req, res, next) => {
   });
 };
 
-exports.getAddNewJob = async (req, res) => {
-  let categories = {};
-  try {
-    if (!req.user || req.user.role !== "recruiter") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage:
-          "Access denied ! You are not authorized to view this page.",
-      });
-    }
-    categories = await Category.find().select("name");
-    return res.render("recruiter/addNewJob", {
-      pageTitle: "Add new job",
-      path: "/addNewJob",
-      categories,
-      errors: {},
-      formData: {},
-    });
-  } catch (err) {
-    console.error("Error fetching jobListing:", err);
-    return res.render("recruiter/addNewJob", {
-      pageTitle: "Add new job",
-      path: "/addNewJob",
-      categories,
-      errors: {},
-      formData: {},
-    });
-  }
-};
+// exports.getAddNewJob = async (req, res) => {
+//   let categories = {};
+//   try {
+//     if (!req.user || req.user.role !== "recruiter") {
+//       return res.status(403).render("500", {
+//         pageTitle: "Unauthorized",
+//         path: "/500",
+//         errorMessage:
+//           "Access denied ! You are not authorized to view this page.",
+//       });
+//     }
+//     categories = await Category.find().select("name");
+//     return res.render("recruiter/addNewJob", {
+//       pageTitle: "Add new job",
+//       path: "/addNewJob",
+//       categories,
+//       errors: {},
+//       formData: {},
+//     });
+//   } catch (err) {
+//     console.error("Error fetching jobListing:", err);
+//     return res.render("recruiter/addNewJob", {
+//       pageTitle: "Add new job",
+//       path: "/addNewJob",
+//       categories,
+//       errors: {},
+//       formData: {},
+//     });
+//   }
+// };
 
 exports.postAddNewJob = async (req, res, next) => {
   let categories = {};
   let errors = {};
+  const jobListings = await jobListing
+    .find({ recruiterId: req.user._id })
+    .sort({ updatedAt: -1 });
   try {
     const {
       jobTitle,
@@ -75,12 +78,15 @@ exports.postAddNewJob = async (req, res, next) => {
 
     // If category is not found
     if (!category) {
-      return res.render("recruiter/addNewJob", {
+      return res.render("recruiter/jobPosts", {
         pageTitle: "Add new job",
         path: "/addNewJob",
         errors: { categoryName: "Please select category." },
         formData: req.body,
         categories,
+        jobListings,
+        isEditing: false,
+        showForm: true,
       });
     }
 
@@ -96,12 +102,15 @@ exports.postAddNewJob = async (req, res, next) => {
     }
 
     if (Object.keys(errors).length > 0) {
-      return res.render("recruiter/addNewJob", {
+      return res.render("recruiter/jobPosts", {
         pageTitle: "Add new job",
         path: "/addNewJob",
         errors,
         formData: req.body,
         categories,
+        jobListings,
+        isEditing: false,
+        showForm: true,
       });
     }
 
@@ -130,7 +139,7 @@ exports.postAddNewJob = async (req, res, next) => {
     };
 
     // Create new Job
-    const newJob = new Job({
+    const newJob = new jobListing({
       recruiterId: req.user._id,
       categoryId: category._id,
       category: categoryName,
@@ -158,15 +167,18 @@ exports.postAddNewJob = async (req, res, next) => {
       errorMessage = "Something went wrong, please try again.";
     }
     console.log("errors", errors);
-    console.log("formData", req.body);
+    // console.log("formData", req.body);
 
-    return res.render("recruiter/addNewJob", {
+    return res.render("recruiter/jobPosts", {
       pageTitle: "Add new job",
       path: "/addNewJob",
       errors,
       errorMessage,
       formData: req.body,
       categories,
+      jobListings,
+      isEditing: false,
+      showForm: true,
     });
   }
 };
@@ -175,6 +187,7 @@ exports.getJobPosts = async (req, res) => {
   const jobListings = await jobListing
     .find({ recruiterId: req.user._id })
     .sort({ updatedAt: -1 });
+  const categories = await Category.find().select("name");
   try {
     if (!req.user || req.user.role !== "recruiter") {
       return res.status(403).render("500", {
@@ -189,9 +202,12 @@ exports.getJobPosts = async (req, res) => {
       pageTitle: "Job Posts",
       path: "/jobPosts",
       jobListings,
+      categories,
       // successMessage: "Job posts fetched successfully",
       errors: {},
       formData: {},
+      isEditing: false,
+      showForm: false,
     });
   } catch (err) {
     console.error("Error fetching jobPosts:", err);
@@ -203,16 +219,18 @@ exports.getJobPosts = async (req, res) => {
       pageTitle: "Job Posts",
       path: "/jobPosts",
       jobListings,
+      categories,
       errors: {},
       formData: {},
+      isEditing: false,
+      showForm: false,
     });
   }
 };
 
 exports.deleteJobPost = async (req, res, next) => {
-  const jobListings = await jobListing
-    .find({ recruiterId: req.user._id })
-    .sort({ updatedAt: -1 });
+  const jobListings = await jobListing.find({ recruiterId: req.user._id });
+  // .sort({ updatedAt: -1 });
   try {
     const jobPostId = req.body.jobPostId;
 
@@ -240,13 +258,11 @@ exports.deleteJobPost = async (req, res, next) => {
 
     await jobPost.deleteOne();
 
-    return res.render("recruiter/jobPosts", {
-      pageTitle: "Job Posts",
-      path: "/jobPosts",
-      jobListings,
-      errors: {},
-      successMessage: "Job post deleted successfully.",
+    res.cookie("successMessage", "Job post deleted successfully.", {
+      maxAge: 3000,
+      httpOnly: false,
     });
+    return res.redirect("/recruiter/jobPosts");
   } catch (err) {
     console.error("Error deleting job post:", err);
     return res.status(500).render("recruiter/jobPosts", {
@@ -264,16 +280,20 @@ exports.getEditJobPost = async (req, res, next) => {
   const jobListings = await jobListing
     .find({ recruiterId: req.user._id })
     .sort({ updatedAt: -1 });
-  try {
     const jobPostId = req.params.jobPostId;
     const jobPost = await jobListing.findById(jobPostId);
+  try {
     // console.log("getJobPost", jobPost);
     if (!jobPost) {
       return res.status(404).render("recruiter/jobPosts", {
         pageTitle: "Job Posts",
         path: "/jobPosts",
         jobListings,
+        categories,
+        isEditing: true,
+        showForm: true,
         errors: {},
+        jobPost,
         errorMessage: "Job post not found.",
       });
     }
@@ -286,12 +306,15 @@ exports.getEditJobPost = async (req, res, next) => {
       });
     }
     // console.log("categories", categories)
-    return res.render("recruiter/editJobPost", {
+    return res.render("recruiter/jobPosts", {
       pageTitle: "Edit Job Post",
       path: "/jobPosts",
-      jobPost: jobPost,
+      jobPost,
       errors: {},
       categories,
+      jobListings,
+      isEditing: true,
+      showForm: true,
     });
   } catch (err) {
     console.error("Error getting edit job post:", err);
@@ -299,7 +322,11 @@ exports.getEditJobPost = async (req, res, next) => {
       pageTitle: "Job Posts",
       path: "/jobPosts",
       jobListings,
+      categories,
+      isEditing: true,
+      showForm: true,
       errors: {},
+      jobPost,
       errorMessage: "An error occurred while getting the job post.",
     });
   }
@@ -355,6 +382,9 @@ exports.postEditJobPost = async (req, res, next) => {
         pageTitle: "Job Posts",
         path: "/jobPosts",
         jobListings,
+        categories,
+        isEditing: true,
+        showForm: true,
         errors: {},
         errorMessage: "Job post not found.",
       });
@@ -392,6 +422,9 @@ exports.postEditJobPost = async (req, res, next) => {
         path: "/jobPosts",
         jobPost: jobPost,
         categories,
+        jobListings,
+        isEditing: true,
+        showForm: true,
         errors,
         errorMessage: "Validation failed. Please correct the fields.",
       });
@@ -401,6 +434,9 @@ exports.postEditJobPost = async (req, res, next) => {
       pageTitle: "Job Posts",
       path: "/jobPosts",
       jobListings,
+      categories,
+      isEditing: false,
+      showForm: false,
       errorMessage: "An error occurred while updating the job post.",
       errors: {},
     });
@@ -642,6 +678,147 @@ exports.viewJobSeekers = async (req, res, next) => {
         skills: req.query.skills || "",
       });
     }
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+
+exports.viewApplications = async (req, res, next) => {
+  try {
+    const applications = await Application.find({
+      "jobDetail.recruiterId": req.user._id,
+      applicationStatus: { $in: ["Applied", "Shortlisted"] },
+    });
+    // console.log("applications",applications);
+    const interviews = await Interview.find({
+      recruiterId: req.user._id,
+    });
+
+    interviews.sort((a, b) => {
+      const order = { Scheduled: 0, Completed: 1, Rejected: 2 }; // customize this order if needed
+      return order[a.status] - order[b.status];
+    });
+    // console.log("interview",interviews)
+    res.render("recruiter/viewApplications", {
+      pageTitle: "Applications",
+      path: "/viewApplications",
+      applications,
+      interviews,
+      user: req.user,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+exports.getShortlistUser = async (req, res, next) => {
+  try {
+    const userId = req.params.userId;
+    console.log("userId", userId);
+    const user = await User.findById(userId);
+    console.log("user", user);
+    res.render("recruiter/shortlistUser", {
+      pageTitle: "Shortlist User",
+      path: "/shortlistUser",
+      errors: {},
+      job: {},
+      user,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+exports.postShortlistUser = async (req, res, next) => {
+  let errors = {};
+  const userId = req.params.userId;
+  const user = await User.findById(userId);
+  try {
+    const application = await Application.findOne({ "user.userId": userId });
+    application.applicationStatus = "Shortlisted";
+    await application.save();
+
+    const newInterview = new Interview({
+      user: {
+        userId: userId,
+        name: user.firstName + " " + user.lastName,
+        email: user.email,
+      },
+      recruiterId: req.user._id,
+      applicationId: application._id,
+      interviewDate: req.body.interviewDate,
+      status: "Scheduled",
+      result: undefined,
+    });
+    await newInterview.save();
+    res.cookie("successMessage", "User shortlisted successfully", {
+      maxAge: 3000,
+      httpOnly: false,
+    });
+    res.redirect("/recruiter/viewApplications");
+  } catch (err) {
+    console.log("err", err);
+    for (let field in err.errors) {
+      errors[field] = err.errors[field].message;
+    }
+    console.log("errors", errors);
+    return res.render("recruiter/shortlistUser", {
+      pageTitle: "Shortlist User",
+      path: "/recruiter/shortlistUser",
+      errors,
+      user,
+    });
+  }
+};
+
+exports.getResultForm = async (req, res, next) => {
+  const applicationId = req.params.applicationId;
+  const application = await Application.findById(applicationId);
+  res.render("recruiter/resultForm", {
+    pageTitle: application.jobDetail.jobTitle,
+    path: "/application",
+    application,
+    user: req.user,
+  });
+};
+
+exports.postInterviewResult = async (req, res, next) => {
+  const applicationId = req.params.applicationId;
+  const { action } = req.body;
+
+  try {
+    const interview = await Interview.findOne({ applicationId: applicationId });
+    const application = await Application.findById(applicationId);
+    const jobPost = await jobListing.findById(application.jobDetail.jobId);
+    let totalVacancy = jobPost.jobDetail.vacancy;
+    if (!application) {
+      return res.status(404).send("Application not found");
+    }
+
+    // console.log("action",action)
+    if (action === "select") {
+      application.applicationStatus = "Selected";
+      interview.result = "Selected";
+      interview.status = "Completed";
+      totalVacancy = totalVacancy > 0 ? (totalVacancy -= 1) : 0;
+      jobPost.jobDetail.vacancy = totalVacancy;
+    } else if (action === "reject") {
+      application.applicationStatus = "Rejected";
+      interview.result = "Not selected";
+      interview.status = "Completed";
+    }
+
+    await jobPost.save();
+    await interview.save();
+    await application.save();
+
+    res.cookie("successMessage", `Candidate ${action}ed successfully`, {
+      maxAge: 3000,
+      httpOnly: false,
+    });
+
+    res.redirect("/recruiter/viewApplications");
   } catch (err) {
     console.log(err);
     next(err);
