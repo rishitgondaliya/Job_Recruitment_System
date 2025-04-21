@@ -37,6 +37,12 @@
             pointer-events: none;
 
         }
+        .custom-table td .review-btn {
+            border: 1px solid #15e14f;
+        }
+        .custom-table td .review-btn:hover {
+            background-color: #15e14f;
+        }
     </style>
     <%- include('../includes/navigation.ejs') %>
 
@@ -116,12 +122,27 @@
                         <% } %>
                     </tr>
                     <tr>
+                        <th>Rating</th>
+                        <td>
+                            <% if(jobPost.jobDetail.avgRating){ %>
+                                <%= jobPost.jobDetail.avgRating %>⭐
+                            <% } else { %>
+                                N/A
+                            <% } %>
+                        </td>
+                    </tr>
+                    <tr>
                         <th>Actions</th>
                         <td>
-                            <form action="/jobSeeker/saveJobPost" method="POST">
-                                <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
-                                <button type="submit" class="edit-btn btn">Save</button>
-                            </form>
+                            <div class="actions">
+                                <form action="/jobSeeker/saveJobPost" method="POST">
+                                    <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
+                                    <button type="submit" class="edit-btn btn">Save</button>
+                                </form>
+                                <form action="/jobSeeker/reviewJob/<%= jobPost._id %>" method="GET">
+                                    <button type="submit" class="review-btn btn">Rate this job</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 </tbody>

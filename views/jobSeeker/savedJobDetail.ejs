@@ -30,9 +30,14 @@
             text-align: right;
             margin-right: 3rem;
         }
-
         .nav-btns .btn {
             font-size: 1rem;
+        }
+        .custom-table td .review-btn {
+            border: 1px solid #15e14f;
+        }
+        .custom-table td .review-btn:hover {
+            background-color: #15e14f;
         }
     </style>
     <%- include('../includes/navigation.ejs') %>
@@ -95,19 +100,32 @@
                         <td><%= jobPost.jobDetail.vacancy %></td>
                     </tr>
                     <tr>
+                        <th>Rating</th>
+                        <td>
+                            <% if(jobPost.jobDetail.avgRating){ %>
+                                <%= jobPost.jobDetail.avgRating %>⭐
+                            <% } else { %>
+                                N/A
+                            <% } %>
+                        </td>
+                    </tr>
+                    <tr>
                         <th>Actions</th>
                         <td>
-                            <form action="/jobSeeker/profile/savedJobs/<%= savedJob._id %>" method="POST">
-                                <!-- <input type="hidden" name="savedJobId" value="<%= savedJob._id %>"> -->
-                                <button type="submit" class="delete-btn btn">Unsave</button>
-                            </form>
+                            <div class="actions">
+                                <form action="/jobSeeker/profile/savedJobs/<%= savedJob._id %>" method="POST">
+                                    <button type="submit" class="delete-btn btn">Unsave</button>
+                                </form>
+                                <form action="/jobSeeker/reviewJob/<%= jobPost._id %>" method="POST">
+                                    <button type="submit" class="review-btn btn">Rate this job</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
             </table>
             <div class="apply-now center">
                 <form action="/jobSeeker/applyForJob/<%= jobPost._id %>" method="GET">
-                    <!-- <input type="hidden" name="jobPostId" value="<%= jobPost._id %>"> -->
                     <button type="submit" class="edit-btn btn">Apply Now</button>
                 </form>
             </div>
