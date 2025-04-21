@@ -8,21 +8,20 @@ const reviewSchema = new Schema(
       ref: "User",
       required: true,
     },
-    recruiterId: {
+    jobId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Listing",
       required: true,
     },
     rating: {
       type: Number,
-      default: 0,
       required: [true, "Rating value is required"],
     },
     description: {
       type: String,
       required: false,
       match: [
-        /^[A-Za-z\s'-0-9]+$/,
+        /^[A-Za-z\s'-0-9!]+$/,
         "Description can only contain alphabets, spaces, hyphens, numbers and apostrophes",
       ],
       maxlength: 400,
