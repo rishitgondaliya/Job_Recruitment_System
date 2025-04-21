@@ -1,0 +1,56 @@
+<%- include('../includes/main.ejs') %>
+    <style>
+        .btn {
+            font-size: 1.1rem;
+        }
+        .delete-btn {
+            border: 1px solid red;
+            color: #ff0000;
+        }
+        .delete-btn:hover{
+            background-color: #ff0000;
+            color: #ffffff;
+            transition: all 0.3s;
+        }
+    </style>
+    <!-- <%- include('../includes/navigation.ejs') %> -->
+
+    <div class="form-control">
+            <div class="center" style="margin-bottom: 0;">
+                <p>Hiring a</p><h2><%= application.jobDetail.jobTitle %></h2>
+            </div>
+            <% if (errorMessage) { %>
+                <div class="alert alert-danger"><%= errorMessage %></div>
+            <% } %>
+
+            <% if (successMessage) { %>
+                <div class="alert alert-success"><%= successMessage %></div>
+            <% } %>
+
+            <form action="/recruiter/select/<%= application._id %>" method="POST">
+                <div class="form-input">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" name="fullName" value="<%= application.user.name %>" readonly>
+                </div>
+
+                <div class="form-input">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" value="<%= application.user.email %>" readonly>
+                </div>
+
+                <!-- <div class="form-input">
+                    <label for="jobTitle">JobTitle</label>
+                    <input type="jobTitle" name="jobTitle" value="<%= application.jobDetail.jobTitle %>" readonly>
+                </div> -->
+
+                <div class="center">
+                    <button type="submit" class="btn" name="action" value="select">Select</button>
+                    <button type="submit" class="delete-btn btn" name="action" value="reject">Reject</button>
+                </div>
+            </form>
+        </div>
+
+        <%- include('../includes/flashScript.ejs') %>
+        <script src="/js/preventBack.js"></script>
+    </body>
+</html>
