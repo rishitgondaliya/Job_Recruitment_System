@@ -1,0 +1,65 @@
+<%- include('../includes/main.ejs') %>
+<style>
+    .form-control .rating{
+        display: flex;
+        align-items: baseline;
+        justify-content: space-around;
+    }
+    .form-control .rating input {
+        font-size: 1.25rem;
+        margin: 0rem 0rem 2rem 1rem;
+    }
+    .form-control .submit {
+        margin: 0px auto;
+        text-align: center;
+    }
+    .form-control .submit button {
+        font-size: 1rem;
+    }
+    .form-control .title {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .form-control .title h2 {
+        margin: 0.5rem 0;
+    }
+    .form-control .rating-error{
+        margin-bottom: 1rem;
+    }
+</style>
+    <%- include('../includes/navigation.ejs') %>
+
+        <div class="form-control">
+            <div class="title">Rate
+                <h2><%= jobPost.jobDetail.jobTitle %></h2>
+                <%= jobPost.company %>
+            </div>
+            <%- include('../includes/flash.ejs') %>
+            <form action="/jobSeeker/reviewJob/<%= jobPost._id %>" method="POST" class="review-form">
+                <div class="rating-error">
+                    <% if(errors.rating){ %>
+                        <p class="input-error"><%= errors.rating %></p>
+                    <% } %>
+                </div>
+                <div class="rating">
+                    <% for (let i = 5; i >= 1; i--) { %>
+                        <input type="radio" id="star<%= i %>" value="<%= i %>" name="rating" class="form-input" />
+                        <label for="star<%= i %>"><%= i %>⭐</label>
+                    <% } %>
+                </div>
+            
+                <div class="form-input">
+                    <textarea name="description" maxlength="400" placeholder="Write a review (optional)"></textarea>
+                    <% if(errors.description){ %>
+                        <p class="input-error"><%= errors.description %></p>
+                    <% } %>
+                </div>
+                <div class="submit">
+                    <button type="submit" class="btn">Submit Review</button>
+                </div>
+            </form>          
+        </div>
+        <%- include('../includes/flashScript.ejs') %>
+        <script src="/js/preventBack.js"></script>
+    </body>
+</html>

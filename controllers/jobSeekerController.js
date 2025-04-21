@@ -6,6 +6,7 @@ const Category = require("../models/jobCategory");
 const savedJobs = require("../models/savedJobs");
 const Profile = require("../models/profile");
 const Application = require("../models/application");
+const Review = require("../models/review");
 
 exports.getJobSeekerHome = async (req, res, next) => {
   // const featuredJobs = await featuredJob.find()
@@ -70,7 +71,7 @@ exports.getAllJobs = async (req, res, next) => {
     const jobPosts = await jobListing.find().sort({ updatedAt: -1 });
     const filterdJobPosts = await jobListing
       .find(filter)
-      .sort({ updatedAt: -1 });
+      .sort({ createdAt: -1 });
     const categories = await Category.find();
     // const jobPosts = await jobListing.find();
     // console.log("jobPosts", jobPosts);
@@ -418,7 +419,7 @@ exports.viewSavedJobDetail = async (req, res, next) => {
     }
     const jobPost = savedJob.jobDetail.jobId;
     // console.log("jobPost", jobPost);
-    console.log("jobPostId", jobPost._id);
+    // console.log("jobPostId", jobPost._id);
     res.render("jobSeeker/savedJobDetail", {
       pageTitle: savedJob.jobDetail.jobTitle,
       path: "/profile",
@@ -504,7 +505,7 @@ exports.applyForJob = async (req, res, next) => {
       user: {
         userId: user._id,
         name: user.firstName + " " + user.lastName,
-        email: user.email
+        email: user.email,
       },
       jobDetail: {
         jobId: jobPostId,
@@ -563,5 +564,30 @@ exports.withdrawApplication = async (req, res, next) => {
       }
     );
     return res.redirect("/jobSeeker/profile");
+  }
+};
+
+exports.getReviewForm = async (req, res, next) => {
+  const jobId = req.params.jobId;
+  const jobPost = await jobListing.findById(jobId);
+  const userId = req.user._id;
+  const existing = await Review.findOne({ userId, jobId });
+  try {
+    if (existing) {
+      res.cookie("errorMessage", "You have already rated this job!", {
+        maxAge: 3000,
+        httpOnly: false,
+      });
+      return res.redirect(`/jobSeeker/allJobs/${jobId}`);
+    }
+    res.render("jobSeeker/reviewJob", {
+      pageTitle: "Review job",
+      path: "/reviewJob",
+      jobPost: jobPost,
+      userId,
+      errors: {}
+    });
+  } catch (err) {
+    console.log(err);
   }
 };
