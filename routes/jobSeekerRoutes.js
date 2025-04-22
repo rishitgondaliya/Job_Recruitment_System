@@ -47,4 +47,6 @@ router.post('/withdraw/:applicationId', jobSeekerController.withdrawApplication)
 
 router.get('/reviewJob/:jobId', jobSeekerController.getReviewForm)
 
+router.post('/reviewJob/:jobId', jobSeekerController.postJobReview)
+
 module.exports = router;
