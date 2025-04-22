@@ -10,31 +10,63 @@ exports.getAdminHome = (req, res, next) => {
 };
 
 exports.getUsers = async (req, res) => {
+  const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1;
+  const recruiterPage = parseInt(req.query.recruiterPage) || 1;
+  const userLimit = parseInt(req.query.userLimit) || 5;
+
+  const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
+  const recruiterSkip = (recruiterPage - 1) * userLimit;
+
+  const jobSeekers = await User.find({ role: "jobSeeker" })
+    .skip(jobSeekerSkip)
+    .limit(userLimit);
+
+  const recruiters = await User.find({ role: "recruiter" })
+    .skip(recruiterSkip)
+    .limit(userLimit);
+
+  const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
+  const totalRecruiters = await User.countDocuments({ role: "recruiter" });
+
+  const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
+  const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
+
   try {
-    const users = await User.find({ role: { $ne: "admin" } });
-    let successMessage = "Fetched users successfully";
-    return res.render("admin/users", {
+    res.render("admin/users", {
       pageTitle: "Users",
       path: "/users",
-      users,
-      successMessage,
+      jobSeekers,
+      recruiters,
+      userLimit,
+      jobSeekerPage,
+      recruiterPage,
+      totalJobSeekerPages,
+      totalRecruiterPages,
     });
   } catch (err) {
     console.error("Error fetching users:", err);
-    let errorMessage = "can not fetched users, please try again";
-    return res.render("admin/users", {
+    res.render("admin/users", {
       pageTitle: "Users",
       path: "/users",
-      errorMessage,
+      jobSeekers,
+      recruiters,
+      userLimit,
+      jobSeekerPage,
+      recruiterPage,
+      totalJobSeekerPages,
+      totalRecruiterPages,
+      errorMessage: "Cannot fetch users, please try again",
     });
   }
 };
 
 exports.getAddCategory = async (req, res) => {
+  const categories = await Category.find().select("name");
   try {
     return res.render("admin/jobCategories", {
       pageTitle: "Add Category",
       path: "/jobCategories",
+      categories,
       errors: {},
       isEditing: false,
       showForm: true,
@@ -48,20 +80,23 @@ exports.getAddCategory = async (req, res) => {
 
 exports.postAddCategory = async (req, res) => {
   let errors = {};
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5;
+  const skip = (page - 1) * limit;
+  const categories = await Category.find()
+    .select("name")
+    .skip(skip)
+    .limit(limit);
+  const totalCategories = await Category.countDocuments();
+  const totalPages = Math.ceil(totalCategories / limit);
   try {
     const category = new Category({ name: req.body.name });
     await category.save();
-    let successMessage = "Job category added successfully";
-    return res.render("admin/jobCategories", {
-      pageTitle: "Job Categories",
-      path: "/jobCategories",
-      categories: await Category.find().select("name"),
-      isEditing: false,
-      showForm: false,
-      successMessage,
-      oldInput: {},
-      errors: {},
+    res.cookie("successMessage", "Job category added successfully", {
+      maxAge: 3000,
+      httpOnly: false,
     });
+    return res.redirect("/admin/jobCategories");
   } catch (err) {
     console.error("Raw error:", err); // Log full error object first
 
@@ -77,7 +112,10 @@ exports.postAddCategory = async (req, res) => {
     return res.render("admin/jobCategories", {
       pageTitle: "Add Category",
       path: "/jobCategories",
-      categories: await Category.find().select("name"),
+      categories,
+      currentPage: page,
+      limit,
+      totalPages,
       errors: errors,
       isEditing: false,
       showForm: true,
@@ -87,8 +125,16 @@ exports.postAddCategory = async (req, res) => {
 };
 
 exports.getJobCategories = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5;
+  const skip = (page - 1) * limit;
+  const categories = await Category.find()
+    .select("name")
+    .skip(skip)
+    .limit(limit);
+  const totalCategories = await Category.countDocuments();
+  const totalPages = Math.ceil(totalCategories / limit);
   try {
-    const categories = await Category.find().select("name");
     res.render("admin/jobCategories", {
       pageTitle: "Job Categories",
       path: "/jobCategories",
@@ -97,6 +143,9 @@ exports.getJobCategories = async (req, res) => {
       oldInput: {},
       errors: {},
       categories,
+      currentPage: page,
+      limit,
+      totalPages,
       // successMessage: "Job categories fetched successfully",
     });
   } catch (err) {
@@ -112,11 +161,23 @@ exports.getJobCategories = async (req, res) => {
       showForm: false,
       oldInput: {},
       errors: {},
+      currentPage: page,
+      limit,
+      totalPages,
     });
   }
 };
 
 exports.getEditCategory = async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5;
+  const skip = (page - 1) * limit;
+  const categories = await Category.find()
+    .select("name")
+    .skip(skip)
+    .limit(limit);
+  const totalCategories = await Category.countDocuments();
+  const totalPages = Math.ceil(totalCategories / limit);
   try {
     const category = await Category.findById(req.params.categoryId);
     // console.log("id", req.params.categoryId);
@@ -124,7 +185,10 @@ exports.getEditCategory = async (req, res, next) => {
       return res.status(404).render("admin/jobCategories", {
         pageTitle: "Job Categories",
         path: "/jobCategories",
-        categories: await Category.find().select("name"),
+        categories,
+        currentPage: page,
+        limit,
+        totalPages,
         errorMessage: "Category not found",
         isEditing: true,
         showForm: true,
@@ -136,7 +200,10 @@ exports.getEditCategory = async (req, res, next) => {
       pageTitle: "Edit Category",
       path: "/jobCategories",
       category,
-      categories: await Category.find().select("name"),
+      categories,
+      currentPage: page,
+      limit,
+      totalPages,
       errors: {},
       isEditing: true,
       showForm: true,
@@ -149,9 +216,17 @@ exports.getEditCategory = async (req, res, next) => {
 };
 
 exports.postEditCategory = async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5;
+  const skip = (page - 1) * limit;
+  const categories = await Category.find()
+    .select("name")
+    .skip(skip)
+    .limit(limit);
+  const totalCategories = await Category.countDocuments();
+  const totalPages = Math.ceil(totalCategories / limit);
   const categoryId = req.params.categoryId;
   const category = await Category.findById(categoryId);
-  const categories = await Category.find().select("name");
   try {
     // console.log(categoryId, "categoryId");
     if (!category) {
@@ -159,6 +234,9 @@ exports.postEditCategory = async (req, res, next) => {
         pageTitle: "Job Categories",
         path: "/jobCategories",
         categories,
+        currentPage: page,
+        limit,
+        totalPages,
         errorMessage: "Category not found",
         isEditing: false,
         showForm: false,
@@ -187,6 +265,9 @@ exports.postEditCategory = async (req, res, next) => {
       path: "/jobCategories",
       category,
       categories,
+      currentPage: page,
+      limit,
+      totalPages,
       errors,
       isEditing: true,
       showForm: true,
@@ -196,6 +277,15 @@ exports.postEditCategory = async (req, res, next) => {
 };
 
 exports.deleteCategory = async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5;
+  const skip = (page - 1) * limit;
+  const categories = await Category.find()
+    .select("name")
+    .skip(skip)
+    .limit(limit);
+  const totalCategories = await Category.countDocuments();
+  const totalPages = Math.ceil(totalCategories / limit);
   try {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
@@ -209,23 +299,21 @@ exports.deleteCategory = async (req, res, next) => {
     const categoryId = req.body.categoryId;
     await Category.findByIdAndDelete(categoryId);
 
-    res.render("admin/jobCategories", {
-      pageTitle: "Job categories",
-      path: "/jobCategories",
-      categories: await Category.find(),
-      successMessage: "Job Category deleted successfully",
-      isEditing: false,
-      showForm: false,
-      oldInput: {},
-      errors: {},
+    res.cookie("successMessage", "Job Category deleted successfully", {
+      maxAge: 3000,
+      httpOnly: false,
     });
+    res.redirect("/admin/jobCategories");
   } catch (err) {
     console.error("Error deleting category:", err);
 
     res.render("admin/jobCategories", {
       pageTitle: "Job categories",
       path: "/jobCategories",
-      categories: await Category.find(),
+      categories,
+      currentPage: page,
+      limit,
+      totalPages,
       errorMessage: "Error deleting job category",
       isEditing: false,
       showForm: false,
@@ -236,6 +324,26 @@ exports.deleteCategory = async (req, res, next) => {
 };
 
 exports.deactivateUser = async (req, res, next) => {
+  const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1;
+  const recruiterPage = parseInt(req.query.recruiterPage) || 1;
+  const userLimit = parseInt(req.query.userLimit) || 5;
+
+  const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
+  const recruiterSkip = (recruiterPage - 1) * userLimit;
+
+  const jobSeekers = await User.find({ role: "jobSeeker" })
+    .skip(jobSeekerSkip)
+    .limit(userLimit);
+
+  const recruiters = await User.find({ role: "recruiter" })
+    .skip(recruiterSkip)
+    .limit(userLimit);
+
+  const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
+  const totalRecruiters = await User.countDocuments({ role: "recruiter" });
+
+  const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
+  const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
   try {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
@@ -254,30 +362,61 @@ exports.deactivateUser = async (req, res, next) => {
       return res.render("admin/users", {
         pageTitle: "Users",
         path: "/users",
-        users: await User.find(),
+        jobSeekers,
+        recruiters,
+        userLimit,
+        jobSeekerPage,
+        recruiterPage,
+        totalJobSeekerPages,
+        totalRecruiterPages,
         errorMessage: "User not found",
       });
     }
 
-    return res.render("admin/users", {
-      pageTitle: "Users",
-      path: "/users",
-      users: await User.find(),
-      successMessage: "User deactivated successfully!",
+    res.cookie("successMessage", "User deactivated successfully!", {
+      maxAge: 3000,
+      httpOnly: false,
     });
+    return res.redirect("/admin/users");
   } catch (err) {
     console.error("Error deactivating user:", err);
 
     return res.render("admin/users", {
       pageTitle: "Users",
       path: "/users",
-      users: await User.find(),
+      jobSeekers,
+      recruiters,
+      userLimit,
+      jobSeekerPage,
+      recruiterPage,
+      totalJobSeekerPages,
+      totalRecruiterPages,
       errorMessage: "An error occurred while deactivating the user.",
     });
   }
 };
 
 exports.activateUser = async (req, res, next) => {
+  const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1;
+  const recruiterPage = parseInt(req.query.recruiterPage) || 1;
+  const userLimit = parseInt(req.query.userLimit) || 5;
+
+  const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
+  const recruiterSkip = (recruiterPage - 1) * userLimit;
+
+  const jobSeekers = await User.find({ role: "jobSeeker" })
+    .skip(jobSeekerSkip)
+    .limit(userLimit);
+
+  const recruiters = await User.find({ role: "recruiter" })
+    .skip(recruiterSkip)
+    .limit(userLimit);
+
+  const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
+  const totalRecruiters = await User.countDocuments({ role: "recruiter" });
+
+  const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
+  const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
   try {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
@@ -296,30 +435,61 @@ exports.activateUser = async (req, res, next) => {
       return res.render("admin/users", {
         pageTitle: "Users",
         path: "/users",
-        users: await User.find(),
+        jobSeekers,
+        recruiters,
+        userLimit,
+        jobSeekerPage,
+        recruiterPage,
+        totalJobSeekerPages,
+        totalRecruiterPages,
         errorMessage: "User not found",
       });
     }
 
-    return res.render("admin/users", {
-      pageTitle: "Users",
-      path: "/users",
-      users: await User.find(),
-      successMessage: "User activated successfully!",
+    res.cookie("successMessage", "User activated successfully!", {
+      maxAge: 3000,
+      httpOnly: false,
     });
+    return res.redirect("/admin/users");
   } catch (err) {
     console.error("Error activating user:", err);
 
     return res.render("admin/users", {
       pageTitle: "Users",
       path: "/users",
-      users: await User.find(),
+      jobSeekers,
+      recruiters,
+      userLimit,
+      jobSeekerPage,
+      recruiterPage,
+      totalJobSeekerPages,
+      totalRecruiterPages,
       errorMessage: "An error occurred while activating the user.",
     });
   }
 };
 
 exports.deleteUser = async (req, res, next) => {
+  const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1;
+  const recruiterPage = parseInt(req.query.recruiterPage) || 1;
+  const userLimit = parseInt(req.query.userLimit) || 5;
+
+  const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
+  const recruiterSkip = (recruiterPage - 1) * userLimit;
+
+  const jobSeekers = await User.find({ role: "jobSeeker" })
+    .skip(jobSeekerSkip)
+    .limit(userLimit);
+
+  const recruiters = await User.find({ role: "recruiter" })
+    .skip(recruiterSkip)
+    .limit(userLimit);
+
+  const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
+  const totalRecruiters = await User.countDocuments({ role: "recruiter" });
+
+  const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
+  const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
   try {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).render("500", {
@@ -339,24 +509,35 @@ exports.deleteUser = async (req, res, next) => {
       return res.render("admin/users", {
         pageTitle: "Users",
         path: "/users",
-        users: await User.find(),
+        jobSeekers,
+        recruiters,
+        userLimit,
+        jobSeekerPage,
+        recruiterPage,
+        totalJobSeekerPages,
+        totalRecruiterPages,
         errorMessage: "User not found",
       });
     }
 
-    return res.render("admin/users", {
-      pageTitle: "Users",
-      path: "/users",
-      users: await User.find(),
-      successMessage: "User deleted successfully!",
+    res.cookie("successMessage", "User deleted successfully!", {
+      maxAge: 3000,
+      httpOnly: false,
     });
+    return res.redirect("/admin/users");
   } catch (err) {
     console.error("Error deleting user:", err);
 
     return res.render("admin/users", {
       pageTitle: "Users",
       path: "/users",
-      users: await User.find(),
+      jobSeekers,
+      recruiters,
+      userLimit,
+      jobSeekerPage,
+      recruiterPage,
+      totalJobSeekerPages,
+      totalRecruiterPages,
       errorMessage: "An error occurred while deleting the user.",
     });
   }

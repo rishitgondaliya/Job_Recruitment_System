@@ -1,0 +1,31 @@
+<div class="pagination">
+    <% if (totalPages > 1) { %>
+        <ul class="pagination-list">
+            <% if (currentPage > 1) { %>
+                <a href="?page=<%= currentPage - 1 %>&limit=<%= limit %>">
+                    <li>Prev</li>
+                </a>
+            <% } %>
+
+            <% if(!(currentPage == 1)){ %>
+                <a href="?page=1&limit=<%= limit %>">
+                    <li>1</li>
+                </a>
+            <% } %>
+  
+            <span> Page <%= currentPage %> of <%= totalPages %> </span>
+
+            <% if(!(currentPage == totalPages)){ %>
+                <a href="?page=<%= totalPages %>&limit=<%= limit %>">
+                    <li><%= totalPages %></li>
+                </a>
+            <% } %>
+      
+            <% if (currentPage < totalPages) { %>
+                <a href="?page=<%= currentPage + 1 %>&limit=<%= limit %>">
+                    <li>Next</li>
+                </a>
+            <% } %>
+        </ul>
+    <% } %>
+</div> 
