@@ -9,21 +9,38 @@ const Application = require("../models/application");
 const Review = require("../models/review");
 
 exports.getJobSeekerHome = async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5; // jobs per page
+  const skip = (page - 1) * limit;
   // const featuredJobs = await featuredJob.find()
-  const featuredJobs = await jobListing.find({
+  const totalFeaturedJobs = await jobListing.countDocuments({
     "jobDetail.isFeatured.status": "Yes",
     "jobDetail.isFeatured.endDate": { $gte: new Date() },
   });
+  const featuredJobs = await jobListing
+    .find({
+      "jobDetail.isFeatured.status": "Yes",
+      "jobDetail.isFeatured.endDate": { $gte: new Date() },
+    })
+    .skip(skip)
+    .limit(limit);
+  const totalPages = Math.ceil(totalFeaturedJobs / limit);
   // console.log('featuredJobs',featuredJobs)
 
   res.render("jobSeeker/home", {
     pageTitle: "Home | Job Seeker",
     path: "/home",
     featuredJobs: featuredJobs,
+    currentPage: page,
+    limit,
+    totalPages,
   });
 };
 
 exports.getJobCategories = async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5; // jobs per page
+  const skip = (page - 1) * limit;
   try {
     if (!req.user || req.user.role !== "jobSeeker") {
       return res.status(403).render("500", {
@@ -34,29 +51,32 @@ exports.getJobCategories = async (req, res, next) => {
       });
     }
 
-    const categories = await Category.find().select("name");
-    // res.cookie("successMessage", "Job categories fetched successfully", {
-    //   maxAge: 3000,
-    //   httpOnly: false
-    // })
+    const totalCategories = await Category.countDocuments();
+    const categories = await Category.find()
+      .select("name")
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    const totalPages = Math.ceil(totalCategories / limit);
+
     res.render("jobSeeker/jobCategories", {
       pageTitle: "Job Categories",
       path: "/jobCategories",
       categories,
-      successMessage: "Job categories fetched successfully",
+      currentPage: page,
+      limit,
+      totalPages,
     });
   } catch (err) {
     console.error("Error fetching categories:", err);
-    // res.status(500).render("/500", {
-    //   pageTitle: "Internal server error",
-    //   path: "/500",
-    //   errorMessage: "Internal server error, please try again later",
-    // });
     next({ message: "Internal server error, please try again later" });
   }
 };
 
 exports.getAllJobs = async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5; // jobs per page
+  const skip = (page - 1) * limit;
   try {
     const { category, locationType, experience, salary } = req.query;
 
@@ -68,10 +88,18 @@ exports.getAllJobs = async (req, res, next) => {
     if (salary) filter["jobDetail.salary"] = { $gte: Number(salary) };
 
     // console.log("filter", filter);
-    const jobPosts = await jobListing.find().sort({ updatedAt: -1 });
+    const totalJobs = await jobListing.countDocuments();
+    const jobPosts = await jobListing
+      .find()
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    const totalPages = Math.ceil(totalJobs / limit);
     const filterdJobPosts = await jobListing
       .find(filter)
-      .sort({ createdAt: -1 });
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit);
     const categories = await Category.find();
     // const jobPosts = await jobListing.find();
     // console.log("jobPosts", jobPosts);
@@ -88,6 +116,9 @@ exports.getAllJobs = async (req, res, next) => {
         path: "/allJobs",
         jobPosts,
         categories,
+        currentPage: page,
+        limit,
+        totalPages,
         selectedCategory: category || "",
         selectedLocationType: locationType || "",
         selectedExperience: experience || "",
@@ -100,6 +131,9 @@ exports.getAllJobs = async (req, res, next) => {
         path: "/allJobs",
         jobPosts: filterdJobPosts,
         categories,
+        currentPage: page,
+        limit,
+        totalPages,
         selectedCategory: category || "",
         selectedLocationType: locationType || "",
         selectedExperience: experience || "",
@@ -524,7 +558,7 @@ exports.applyForJob = async (req, res, next) => {
       httpOnly: false,
     });
 
-    return res.redirect("/jobSeeker/allJobs");
+    return res.redirect("/jobSeeker/profile");
   } catch (err) {
     console.error(err);
     next(err);
@@ -585,9 +619,55 @@ exports.getReviewForm = async (req, res, next) => {
       path: "/reviewJob",
       jobPost: jobPost,
       userId,
-      errors: {}
+      errors: {},
     });
   } catch (err) {
     console.log(err);
+  }
+};
+
+exports.postJobReview = async (req, res, next) => {
+  const jobId = req.params.jobId;
+  const userId = req.user._id;
+  const jobPost = await jobListing.findById(jobId);
+  // console.log("jobPostId",jobId)
+  try {
+    const newReview = new Review({
+      userId: userId,
+      jobId: jobId,
+      rating: req.body.rating,
+      description: req.body.description,
+    });
+    await newReview.save();
+    const reviews = await Review.find({ jobId: jobId });
+    const avgRating = parseFloat(
+      reviews.reduce((sum, r) => sum + r.rating, 0) /
+        (reviews.length || 1).toPrecision(1)
+    );
+
+    // console.log("avgRating", avgRating);
+    await jobListing.updateOne(
+      { _id: jobId },
+      { "jobDetail.avgRating": avgRating }
+    );
+    // jobPost.jobDetail.avgRating = avgRating;
+    // await jobPost.save({ validateBeforeSave: false });
+
+    // console.log("newReview",newReview)
+    res.redirect(`/jobSeeker/allJobs/${jobId}`);
+  } catch (err) {
+    // console.log(err);
+    let errors = {};
+    for (let field in err.errors) {
+      errors[field] = err.errors[field].message;
+    }
+    console.log("errors", errors);
+    res.render("jobSeeker/reviewJob", {
+      pageTitle: "Review job",
+      path: "/reviewJob",
+      jobPost: jobPost,
+      userId,
+      errors,
+    });
   }
 };
