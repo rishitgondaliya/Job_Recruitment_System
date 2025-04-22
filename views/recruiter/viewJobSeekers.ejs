@@ -9,11 +9,28 @@
           .toggleFilter .btn {
             font-size: 1rem;
           }
+          .itemsPerPageForm {
+            margin-top: 1rem;
+            margin-right: 3rem;
+          }
     </style>
     <%- include('../includes/navigation.ejs') %>
-        <div class="toggleFilter">
-            <button id="toggleFilter" class="btn">Filter Job Seekers</button>
-        </div>
+    <div class="toggleFilter">
+      <button id="toggleFilter" class="btn">Filter Job Seekers</button>
+    </div>
+    <div class="itemsPerPageForm">
+      <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
+          <div class="form-input">
+              <label for="limit">Items per page:</label>
+              <select name="limit" id="limit">
+                  <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
+                  <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
+                  <option value="20" <%= limit === 20 ? "selected" : "" %>>20</option>
+              </select>
+          </div>
+          <input type="hidden" id="page" name="page" value="<%= currentPage %>">
+      </form>
+    </div>
 
         <div class="container">
             <%- include('../includes/flash.ejs') %>
@@ -75,6 +92,7 @@
                     <% }); %>
                 </tbody>
             </table>
+            <%- include('../includes/pagination.ejs') %>
         </div>
         <%- include('../includes/flashScript.ejs') %>
         <script>
@@ -91,7 +109,12 @@
                 filterForm.style.display = "none";
               }, 100);
             });
-          </script>
+
+            document.getElementById("limit").addEventListener("change", function () {
+              document.getElementById("page").value = 1; // Reset page
+              document.getElementById("itemsPerPageForm").submit(); // Submit form
+            });
+        </script>
         <script src="/js/preventBack.js"></script>
     </body>
 </html>

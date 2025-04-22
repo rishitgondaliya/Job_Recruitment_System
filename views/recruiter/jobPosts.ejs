@@ -16,12 +16,29 @@
     .hidden {
         display: none;
     }
+    .itemsPerPageForm {
+      margin-top: 0.5rem;
+      margin-right: 3rem;
+    }
 </style>
 <%- include('../includes/navigation.ejs') %>
 
         <%- include('../includes/flash.ejs') %>
         <div class="add-job-btn">
             <button class="add-new-btn btn">New Job Post</button>
+        </div>
+        <div class="itemsPerPageForm">
+            <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
+                <div class="form-input">
+                    <label for="limit">Items per page:</label>
+                    <select name="limit" id="limit">
+                        <option value="3" <%= limit === 3 ? "selected" : "" %>>3</option>
+                        <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
+                        <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
+                    </select>
+                </div>
+                <input type="hidden" id="page" name="page" value="<%= currentPage %>">
+            </form>
         </div>
         <div class="form-control <%= (isEditing || showForm) ? '' : 'hidden' %>" id="add-new">
             <h2 class="center"><%= isEditing ? 'Edit job post' : 'Post New Job' %></h2>
@@ -31,7 +48,7 @@
                     <div class="form-input" style="width: 45%;">
                         <label for="cName">Category:</label>
                         <select name="categoryName" id="cName">
-                            <option disabled>Select Category</option>
+                            <option>Select Category</option>
                             <% categories.forEach(cat => { %>
                                 <option value="<%= cat.name %>" <%= (isEditing ? jobPost?.category : formData?.categoryName) === cat.name ? 'selected' : '' %>><%= cat.name %></option>
                                 <% }) %>
@@ -177,6 +194,7 @@
                     </tbody>
                 </table>
             <% } %>
+            <%- include('../includes/pagination.ejs') %>
         </div>
         <script>
             const isFeaturedSelect = document.getElementById('isFeatured');
@@ -202,6 +220,11 @@
             
             // Run on change
             isFeaturedSelect.addEventListener('change', toggleFeaturedDates);
+
+            document.getElementById("limit").addEventListener("change", function () {
+              document.getElementById("page").value = 1; // Reset page
+              document.getElementById("itemsPerPageForm").submit(); // Submit form
+            });
         </script>
         <%- include('../includes/flashScript.ejs') %>
         <script src="/js/preventBack.js"></script>

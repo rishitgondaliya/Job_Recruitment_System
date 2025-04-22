@@ -15,43 +15,22 @@ exports.getRecruiterHome = (req, res, next) => {
   });
 };
 
-// exports.getAddNewJob = async (req, res) => {
-//   let categories = {};
-//   try {
-//     if (!req.user || req.user.role !== "recruiter") {
-//       return res.status(403).render("500", {
-//         pageTitle: "Unauthorized",
-//         path: "/500",
-//         errorMessage:
-//           "Access denied ! You are not authorized to view this page.",
-//       });
-//     }
-//     categories = await Category.find().select("name");
-//     return res.render("recruiter/addNewJob", {
-//       pageTitle: "Add new job",
-//       path: "/addNewJob",
-//       categories,
-//       errors: {},
-//       formData: {},
-//     });
-//   } catch (err) {
-//     console.error("Error fetching jobListing:", err);
-//     return res.render("recruiter/addNewJob", {
-//       pageTitle: "Add new job",
-//       path: "/addNewJob",
-//       categories,
-//       errors: {},
-//       formData: {},
-//     });
-//   }
-// };
-
 exports.postAddNewJob = async (req, res, next) => {
   let categories = {};
   let errors = {};
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5; // jobs per page
+  const skip = (page - 1) * limit;
+  const totalJobPosts = await jobListing.countDocuments({
+    recruiterId: req.user._id,
+  });
   const jobListings = await jobListing
     .find({ recruiterId: req.user._id })
-    .sort({ updatedAt: -1 });
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalPages = Math.ceil(totalJobPosts / limit);
   try {
     const {
       jobTitle,
@@ -85,6 +64,9 @@ exports.postAddNewJob = async (req, res, next) => {
         formData: req.body,
         categories,
         jobListings,
+        currentPage: page,
+        limit,
+        totalPages,
         isEditing: false,
         showForm: true,
       });
@@ -109,6 +91,9 @@ exports.postAddNewJob = async (req, res, next) => {
         formData: req.body,
         categories,
         jobListings,
+        currentPage: page,
+        limit,
+        totalPages,
         isEditing: false,
         showForm: true,
       });
@@ -177,6 +162,9 @@ exports.postAddNewJob = async (req, res, next) => {
       formData: req.body,
       categories,
       jobListings,
+      currentPage: page,
+      limit,
+      totalPages,
       isEditing: false,
       showForm: true,
     });
@@ -184,9 +172,19 @@ exports.postAddNewJob = async (req, res, next) => {
 };
 
 exports.getJobPosts = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5; // jobs per page
+  const skip = (page - 1) * limit;
+  const totalJobPosts = await jobListing.countDocuments({
+    recruiterId: req.user._id,
+  });
   const jobListings = await jobListing
     .find({ recruiterId: req.user._id })
-    .sort({ updatedAt: -1 });
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalPages = Math.ceil(totalJobPosts / limit);
   const categories = await Category.find().select("name");
   try {
     if (!req.user || req.user.role !== "recruiter") {
@@ -203,7 +201,9 @@ exports.getJobPosts = async (req, res) => {
       path: "/jobPosts",
       jobListings,
       categories,
-      // successMessage: "Job posts fetched successfully",
+      currentPage: page,
+      limit,
+      totalPages,
       errors: {},
       formData: {},
       isEditing: false,
@@ -220,6 +220,9 @@ exports.getJobPosts = async (req, res) => {
       path: "/jobPosts",
       jobListings,
       categories,
+      currentpage: page,
+      limit,
+      totalPages,
       errors: {},
       formData: {},
       isEditing: false,
@@ -229,8 +232,20 @@ exports.getJobPosts = async (req, res) => {
 };
 
 exports.deleteJobPost = async (req, res, next) => {
-  const jobListings = await jobListing.find({ recruiterId: req.user._id });
-  // .sort({ updatedAt: -1 });
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5; // jobs per page
+  const skip = (page - 1) * limit;
+  const totalJobPosts = await jobListing.countDocuments({
+    recruiterId: req.user._id,
+  });
+  const jobListings = await jobListing
+    .find({ recruiterId: req.user._id })
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalPages = Math.ceil(totalJobPosts / limit);
+
   try {
     const jobPostId = req.body.jobPostId;
 
@@ -241,6 +256,9 @@ exports.deleteJobPost = async (req, res, next) => {
         pageTitle: "Job Posts",
         path: "/jobPosts",
         jobListings,
+        currentPage: page,
+        limit,
+        totalPages,
         errors: {},
         errorMessage: "Job post not found.",
       });
@@ -269,6 +287,9 @@ exports.deleteJobPost = async (req, res, next) => {
       pageTitle: "Job Posts",
       path: "/jobPosts",
       jobListings,
+      currentPage: page,
+      limit,
+      totalPages,
       errors: {},
       errorMessage: "An error occurred while deleting the job post.",
     });
@@ -276,12 +297,23 @@ exports.deleteJobPost = async (req, res, next) => {
 };
 
 exports.getEditJobPost = async (req, res, next) => {
-  let categories = await Category.find().select("name");
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5; // jobs per page
+  const skip = (page - 1) * limit;
+  const totalJobPosts = await jobListing.countDocuments({
+    recruiterId: req.user._id,
+  });
   const jobListings = await jobListing
     .find({ recruiterId: req.user._id })
-    .sort({ updatedAt: -1 });
-    const jobPostId = req.params.jobPostId;
-    const jobPost = await jobListing.findById(jobPostId);
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalPages = Math.ceil(totalJobPosts / limit);
+  let categories = await Category.find().select("name");
+
+  const jobPostId = req.params.jobPostId;
+  const jobPost = await jobListing.findById(jobPostId);
   try {
     // console.log("getJobPost", jobPost);
     if (!jobPost) {
@@ -290,6 +322,9 @@ exports.getEditJobPost = async (req, res, next) => {
         path: "/jobPosts",
         jobListings,
         categories,
+        currentPage: page,
+        limit,
+        totalPages,
         isEditing: true,
         showForm: true,
         errors: {},
@@ -313,6 +348,9 @@ exports.getEditJobPost = async (req, res, next) => {
       errors: {},
       categories,
       jobListings,
+      currentPage: page,
+      limit,
+      totalPages,
       isEditing: true,
       showForm: true,
     });
@@ -323,6 +361,9 @@ exports.getEditJobPost = async (req, res, next) => {
       path: "/jobPosts",
       jobListings,
       categories,
+      currentPage: page,
+      limit,
+      totalPages,
       isEditing: true,
       showForm: true,
       errors: {},
@@ -333,12 +374,22 @@ exports.getEditJobPost = async (req, res, next) => {
 };
 
 exports.postEditJobPost = async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5; // jobs per page
+  const skip = (page - 1) * limit;
+  const totalJobPosts = await jobListing.countDocuments({
+    recruiterId: req.user._id,
+  });
+  const jobListings = await jobListing
+    .find({ recruiterId: req.user._id })
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalPages = Math.ceil(totalJobPosts / limit);
   const jobPostId = req.body.jobPostId;
   let jobPost;
   let categories = await Category.find().select("name");
-  const jobListings = await jobListing
-    .find({ recruiterId: req.user._id })
-    .sort({ updatedAt: -1 });
   try {
     console.log("jobPostId:", jobPostId);
     if (req.body.status === "Yes") {
@@ -383,6 +434,9 @@ exports.postEditJobPost = async (req, res, next) => {
         path: "/jobPosts",
         jobListings,
         categories,
+        currentPage: page,
+        limit,
+        totalPages,
         isEditing: true,
         showForm: true,
         errors: {},
@@ -423,6 +477,9 @@ exports.postEditJobPost = async (req, res, next) => {
         jobPost: jobPost,
         categories,
         jobListings,
+        currentPage: page,
+        limit,
+        totalPages,
         isEditing: true,
         showForm: true,
         errors,
@@ -435,6 +492,9 @@ exports.postEditJobPost = async (req, res, next) => {
       path: "/jobPosts",
       jobListings,
       categories,
+      currentPage: page,
+      limit,
+      totalPages,
       isEditing: false,
       showForm: false,
       errorMessage: "An error occurred while updating the job post.",
@@ -634,50 +694,65 @@ exports.postEditProfile = async (req, res, next) => {
 
 exports.viewJobSeekers = async (req, res, next) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
     const { experience, skills } = req.query;
     const targetExperience = experience ? parseInt(experience) * 12 : null;
     const skillsArray = skills ? skills.split(",").map((s) => s.trim()) : [];
 
-    const jobSeekers = await User.find({ role: "jobSeeker" }).populate(
-      "profileId"
-    );
+    // base filter
+    const filter = { role: "jobSeeker" };
 
-    const filteredJobSeekers = jobSeekers.filter((jobSeeker) => {
+    // Get all job seekers with profiles
+    let jobSeekers = await User.find(filter).populate("profileId");
+
+    // Apply filtering in memory (because experience and skills are in profileId)
+    jobSeekers = jobSeekers.filter((jobSeeker) => {
       const profile = jobSeeker.profileId;
-
       if (!profile) return false;
 
       const matchExperience = targetExperience
         ? profile.totalExperience >= targetExperience
         : true;
 
-      const matchSkills =
-        skillsArray.length > 0
-          ? skillsArray.every((skill) => profile.skills?.includes(skill))
-          : true;
+      const matchSkills = skillsArray.length
+        ? skillsArray.every((skill) => profile.skills?.includes(skill))
+        : true;
 
       return matchExperience && matchSkills;
     });
-    // console.log("jobseekeres", filteredJobSeekers);
-    // console.log("experience and skills", experience, skills)
-    if (filteredJobSeekers.length === 0) {
-      res.status(404).render("recruiter/viewJobSeekers", {
+
+    // Pagination after filtering
+    const totalJobSeekers = jobSeekers.length;
+    const totalPages = Math.ceil(totalJobSeekers / limit);
+    const paginatedJobSeekers = jobSeekers.slice(skip, skip + limit);
+
+    if (paginatedJobSeekers.length === 0) {
+      return res.status(404).render("recruiter/viewJobSeekers", {
         pageTitle: "Job Seekers",
         path: "/viewJobSeekers",
         errorMessage: "No job seekers found with the provided criteria.",
-        jobSeekers,
-        experience: req.query.experience || "",
-        skills: req.query.skills || "",
-      });
-    } else {
-      res.render("recruiter/viewJobSeekers", {
-        pageTitle: "Job Seekers",
-        path: "/viewJobSeekers",
-        jobSeekers: filteredJobSeekers,
+        jobSeekers: [],
+        currentPage: page,
+        limit,
+        totalPages,
         experience: req.query.experience || "",
         skills: req.query.skills || "",
       });
     }
+
+    res.render("recruiter/viewJobSeekers", {
+      pageTitle: "Job Seekers",
+      path: "/viewJobSeekers",
+      jobSeekers: paginatedJobSeekers,
+      currentPage: page,
+      limit,
+      totalPages,
+      experience: req.query.experience || "",
+      skills: req.query.skills || "",
+    });
   } catch (err) {
     console.log(err);
     next(err);
@@ -685,30 +760,64 @@ exports.viewJobSeekers = async (req, res, next) => {
 };
 
 exports.viewApplications = async (req, res, next) => {
+  const appPage = parseInt(req.query.applicationPage) || 1;
+  const appLimit = parseInt(req.query.applicationLimit) || 5;
+  const appSkip = (appPage - 1) * appLimit;
+
+  const interviewPage = parseInt(req.query.interviewPage) || 1;
+  const interviewLimit = parseInt(req.query.interviewLimit) || 5;
+  const interviewSkip = (interviewPage - 1) * interviewLimit;
+
   try {
-    const applications = await Application.find({
+    const totalApplications = await Application.countDocuments({
       "jobDetail.recruiterId": req.user._id,
       applicationStatus: { $in: ["Applied", "Shortlisted"] },
     });
-    // console.log("applications",applications);
-    const interviews = await Interview.find({
+
+    const applications = await Application.find({
+      "jobDetail.recruiterId": req.user._id,
+      applicationStatus: { $in: ["Applied", "Shortlisted"] },
+    })
+      .skip(appSkip)
+      .limit(appLimit)
+      .populate("user");
+
+    const totalApplicationPage = Math.ceil(totalApplications / appLimit);
+
+    const totalInterviews = await Interview.countDocuments({
       recruiterId: req.user._id,
     });
 
+    const interviews = await Interview.find({
+      recruiterId: req.user._id,
+    })
+      .skip(interviewSkip)
+      .limit(interviewLimit)
+      .populate("user");
+
+    const totalInterviewPage = Math.ceil(totalInterviews / interviewLimit);
+
     interviews.sort((a, b) => {
-      const order = { Scheduled: 0, Completed: 1, Rejected: 2 }; // customize this order if needed
+      const order = { Scheduled: 0, Completed: 1, Rejected: 2 };
       return order[a.status] - order[b.status];
     });
-    // console.log("interview",interviews)
+
     res.render("recruiter/viewApplications", {
       pageTitle: "Applications",
       path: "/viewApplications",
       applications,
       interviews,
+      appPage,
+      appLimit,
+      totalApplicationPage,
+      interviewPage,
+      interviewLimit,
+      totalInterviewPage,
       user: req.user,
     });
   } catch (err) {
     console.log(err);
+    next(err);
   }
 };
 
@@ -717,7 +826,7 @@ exports.getShortlistUser = async (req, res, next) => {
     const userId = req.params.userId;
     console.log("userId", userId);
     const user = await User.findById(userId);
-    console.log("user", user);
+    // console.log("user", user);
     res.render("recruiter/shortlistUser", {
       pageTitle: "Shortlist User",
       path: "/shortlistUser",
@@ -775,8 +884,9 @@ exports.postShortlistUser = async (req, res, next) => {
 exports.getResultForm = async (req, res, next) => {
   const applicationId = req.params.applicationId;
   const application = await Application.findById(applicationId);
+  // console.log("application", application);
   res.render("recruiter/resultForm", {
-    pageTitle: application.jobDetail.jobTitle,
+    pageTitle: "application.jobDetail.jobTitle",
     path: "/application",
     application,
     user: req.user,
@@ -809,7 +919,7 @@ exports.postInterviewResult = async (req, res, next) => {
       interview.status = "Completed";
     }
 
-    await jobPost.save();
+    await jobPost.save({ validateBeforeSave: false });
     await interview.save();
     await application.save();
 
