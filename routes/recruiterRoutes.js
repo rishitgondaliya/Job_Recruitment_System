@@ -36,9 +36,9 @@ router.get('/viewJobSeekers', recruiterController.viewJobSeekers)
 
 router.get('/viewApplications', recruiterController.viewApplications)
 
-router.get('/shortlist/:userId', recruiterController.getShortlistUser)
+router.get('/shortlist/:applicationId', recruiterController.getShortlistUser)
 
-router.post('/shortlist/:userId', recruiterController.postShortlistUser)
+router.post('/shortlist/:applicationId', recruiterController.postShortlistUser)
 
 router.get('/select/:applicationId', recruiterController.getResultForm)
 
