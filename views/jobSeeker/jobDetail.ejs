@@ -135,10 +135,16 @@
                         <th>Actions</th>
                         <td>
                             <div class="actions">
-                                <form action="/jobSeeker/saveJobPost" method="POST">
-                                    <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
-                                    <button type="submit" class="edit-btn btn">Save</button>
-                                </form>
+                                <% if(!savedJob){ %>
+                                    <form action="/jobSeeker/saveJobPost" method="POST">
+                                        <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
+                                        <button type="submit" class="edit-btn btn">Save</button>
+                                    </form>
+                                <% }else{ %>
+                                    <form action="/jobSeeker/profile/savedJobs/<%= savedJob._id %>" method="POST">
+                                        <button type="submit" class="delete-btn btn">Unsave</button>
+                                    </form>
+                                <% } %>
                                 <form action="/jobSeeker/reviewJob/<%= jobPost._id %>" method="GET">
                                     <button type="submit" class="review-btn btn">Rate this job</button>
                                 </form>
