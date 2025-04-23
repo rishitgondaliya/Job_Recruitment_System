@@ -19,7 +19,7 @@
     </style>
     <%- include('../includes/navigation.ejs') %>
     <%- include('../includes/flash.ejs') %>
-    <div class="itemsPerPageForm">
+      <div class="itemsPerPageForm">
         <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
           <div class="form-input">
             <label for="applicationLimit">Applications per page:</label>
@@ -75,7 +75,7 @@
                                         <% } else if(application.applicationStatus === 'Rejected'){ %>
                                             Rejected
                                         <% } else { %>
-                                            <form action="/recruiter/shortlist/<%= application.user.userId %>" method="GET">
+                                            <form action="/recruiter/shortlist/<%= application._id %>" method="GET">
                                                 <button type="submit" class="btn shortlist-btn">Shortlist</button>
                                             </form>
                                         <% } %>

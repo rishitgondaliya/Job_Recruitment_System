@@ -27,7 +27,7 @@
                 <div class="alert alert-success"><%= successMessage %></div>
             <% } %>
 
-            <form action="/recruiter/shortlist/<%= user._id %>" method="POST">
+            <form action="/recruiter/shortlist/<%= application._id %>" method="POST">
                 <div class="form-input">
                     <label for="fullName">Full Name</label>
                     <input type="text" name="fullName" value="<%= user.firstName + ' ' + user.lastName %>" readonly>
