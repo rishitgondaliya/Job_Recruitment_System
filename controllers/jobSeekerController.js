@@ -75,71 +75,53 @@ exports.getJobCategories = async (req, res, next) => {
 
 exports.getAllJobs = async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5; // jobs per page
+  const limit = parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
+
   try {
     const { category, locationType, experience, salary } = req.query;
 
     const filter = {};
-
     if (category) filter.category = category;
     if (locationType) filter["jobDetail.locationType"] = locationType;
     if (experience) filter["jobDetail.experience"] = { $lte: experience };
     if (salary) filter["jobDetail.salary"] = { $gte: Number(salary) };
 
-    // console.log("filter", filter);
-    const totalJobs = await jobListing.countDocuments();
-    const jobPosts = await jobListing
-      .find()
-      .sort({ updatedAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    // console.log("filter",filter)
+    const savedJobsId = await savedJobs
+      .find({ "user.userId": req.user._id })
+      .select("jobDetail.jobId");
+
+    const totalJobs = await jobListing.countDocuments(filter);
     const totalPages = Math.ceil(totalJobs / limit);
-    const filterdJobPosts = await jobListing
+
+    // console.log("totalJobs",totalJobs,"totalPages",totalPages)
+    const jobPosts = await jobListing
       .find(filter)
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit);
+
+      // console.log("jobPosts",jobPosts)
     const categories = await Category.find();
-    // const jobPosts = await jobListing.find();
-    // console.log("jobPosts", jobPosts);
-    if (!jobPosts) {
-      return res.status(404).render("500", {
-        pageTitle: "No Jobs Found",
-        path: "/500",
-        errorMessage: "No jobs found. Please try again later.",
-      });
-    }
-    if (filterdJobPosts.length === 0) {
-      res.render("jobSeeker/allJobs", {
-        pageTitle: "All Jobs",
-        path: "/allJobs",
-        jobPosts,
-        categories,
-        currentPage: page,
-        limit,
-        totalPages,
-        selectedCategory: category || "",
-        selectedLocationType: locationType || "",
-        selectedExperience: experience || "",
-        selectedSalary: salary || "",
-        errorMessage: "No jobs found matching your search criteria.",
-      });
-    } else {
-      res.render("jobSeeker/allJobs", {
-        pageTitle: "All Jobs",
-        path: "/allJobs",
-        jobPosts: filterdJobPosts,
-        categories,
-        currentPage: page,
-        limit,
-        totalPages,
-        selectedCategory: category || "",
-        selectedLocationType: locationType || "",
-        selectedExperience: experience || "",
-        selectedSalary: salary || "",
-      });
-    }
+
+    res.render("jobSeeker/allJobs", {
+      pageTitle: "All Jobs",
+      path: "/allJobs",
+      jobPosts,
+      categories,
+      savedJobsId,
+      currentPage: page,
+      limit,
+      totalPages,
+      selectedCategory: category || "",
+      selectedLocationType: locationType || "",
+      selectedExperience: experience || "",
+      selectedSalary: salary || "",
+      errorMessage: jobPosts.length === 0
+        ? "No jobs found matching your search criteria."
+        : null,
+    });
   } catch (error) {
     console.log(error);
     next({ message: "Internal server error, please try again later" });
@@ -212,6 +194,10 @@ exports.postSaveJobPost = async (req, res, next) => {
 exports.getJobDetails = async (req, res, next) => {
   const jobPostId = req.params.jobPostId;
   const jobPost = await jobListing.findById(jobPostId);
+  const savedJob = await savedJobs.findOne({
+    "user.userId": req.user._id,
+    "jobDetail.jobId": jobPostId,
+  });
 
   const allJobs = await jobListing.find({}, "_id").sort({ updatedAt: -1 });
   const jobIndex = allJobs.findIndex((j) => j._id.toString() === jobPostId);
@@ -232,6 +218,7 @@ exports.getJobDetails = async (req, res, next) => {
     pageTitle: jobPost.jobDetail.jobTitle,
     path: "/allJobs",
     jobPost,
+    savedJob,
     prevJobId,
     nextJobId,
     errors: {},
@@ -242,7 +229,9 @@ exports.getJobSeekerProfile = async (req, res, next) => {
   const user = req.user;
   const userProfile = await Profile.findById(user.profileId);
   const savedJobsArray = await savedJobs.find({ "user.userId": user._id });
-  const applications = await Application.find({ "user.userId": user._id });
+  const applications = await Application.find({ "user.userId": user._id }).sort(
+    { createdAt: -1 }
+  );
   // console.log("userProfile",userProfile)
 
   res.render("jobSeeker/profile", {
@@ -302,6 +291,8 @@ exports.postEditProfile = async (req, res, next) => {
         ? req.body.experience
         : Object.values(req.body.experience);
 
+      // console.log("expArray",expArray)
+
       const filteredExp = expArray
         .map((exp) => {
           const startDate = exp.startDate ? new Date(exp.startDate) : null;
@@ -331,11 +322,9 @@ exports.postEditProfile = async (req, res, next) => {
             exp.description
         );
 
+      // console.log("filteredExp",filteredExp)
       profile.experience = filteredExp.length > 0 ? filteredExp : undefined;
 
-      // Convert total experience to years + months
-      // const years = Math.floor(totalMonths / 12);
-      // const months = totalMonths % 12;
       profile.totalExperience = totalMonths;
     } else {
       profile.experience = undefined;
@@ -509,7 +498,10 @@ exports.applyForJob = async (req, res, next) => {
     const user = req.user;
     let resume;
 
+    // console.log("jobPostId",jobPostId)
+    // console.log("user",user)
     const jobPost = await jobListing.findById(jobPostId);
+    // console.log("jobPost",jobPost)
     if (!jobPost) {
       return res.status(404).json({ message: "Job not found" });
     }
@@ -641,11 +633,12 @@ exports.postJobReview = async (req, res, next) => {
     await newReview.save();
     const reviews = await Review.find({ jobId: jobId });
     const avgRating = parseFloat(
-      reviews.reduce((sum, r) => sum + r.rating, 0) /
-        (reviews.length || 1).toPrecision(1)
+      (
+        reviews.reduce((sum, r) => sum + r.rating, 0) / (reviews.length || 1)
+      ).toFixed(1)
     );
 
-    // console.log("avgRating", avgRating);
+    console.log("avgRating", avgRating);
     await jobListing.updateOne(
       { _id: jobId },
       { "jobDetail.avgRating": avgRating }
