@@ -13,6 +13,15 @@ header h1 {
 header p {
     font-size: 1.15rem;
 }
+header a {
+    text-decoration: none;
+    margin-right: 1rem;
+    color: black;
+    font-weight: 500;
+    border: 1px solid black;
+    border-radius: 0.25rem;
+    padding: 3px 6px;
+}
 .container {
     width: 60%;
     margin: auto;
