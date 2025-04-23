@@ -47,7 +47,7 @@ const applicationSchema = new Schema(
     },
     applicationStatus: {
       type: String,
-      enum: ["Applied", "Withdrawn", "Selected", "Rejected", "Shortlisted"],
+      enum: ["Applied", "Withdrawn", "Selected", "Not selected", "Shortlisted"],
     },
   },
   { timestamps: true }
