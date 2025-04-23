@@ -1,31 +1,42 @@
+<% 
+  const queryString = 
+    `limit=${limit}` +
+    (typeof selectedCategory !== 'undefined' && selectedCategory ? `&category=${selectedCategory}` : '') +
+    (typeof selectedLocationType !== 'undefined' && selectedLocationType ? `&locationType=${selectedLocationType}` : '') +
+    (typeof selectedExperience !== 'undefined' && selectedExperience ? `&experience=${selectedExperience}` : '') +
+    (typeof selectedSalary !== 'undefined' && selectedSalary ? `&salary=${selectedSalary}` : '') +
+    (typeof experience !== 'undefined' && experience ? `&experience=${experience}` : '') +
+    (typeof skills !== 'undefined' && skills ? `&skills=${skills}` : '');
+%>
+
 <div class="pagination">
-    <% if (totalPages > 1) { %>
-        <ul class="pagination-list">
-            <% if (currentPage > 1) { %>
-                <a href="?page=<%= currentPage - 1 %>&limit=<%= limit %>">
-                    <li>Prev</li>
-                </a>
-            <% } %>
+  <% if (totalPages > 1) { %>
+    <ul class="pagination-list">
+      <% if (currentPage > 1) { %>
+        <a href="?page=<%= currentPage - 1 %>&<%= queryString %>">
+          <li>Prev</li>
+        </a>
+      <% } %>
 
-            <% if(!(currentPage == 1)){ %>
-                <a href="?page=1&limit=<%= limit %>">
-                    <li>1</li>
-                </a>
-            <% } %>
-  
-            <span> Page <%= currentPage %> of <%= totalPages %> </span>
+      <% if (currentPage !== 1) { %>
+        <a href="?page=1&<%= queryString %>">
+          <li>1</li>
+        </a>
+      <% } %>
 
-            <% if(!(currentPage == totalPages)){ %>
-                <a href="?page=<%= totalPages %>&limit=<%= limit %>">
-                    <li><%= totalPages %></li>
-                </a>
-            <% } %>
-      
-            <% if (currentPage < totalPages) { %>
-                <a href="?page=<%= currentPage + 1 %>&limit=<%= limit %>">
-                    <li>Next</li>
-                </a>
-            <% } %>
-        </ul>
-    <% } %>
-</div> 
+      <span> Page <%= currentPage %> of <%= totalPages %> </span>
+
+      <% if (currentPage !== totalPages) { %>
+        <a href="?page=<%= totalPages %>&<%= queryString %>">
+          <li><%= totalPages %></li>
+        </a>
+      <% } %>
+
+      <% if (currentPage < totalPages) { %>
+        <a href="?page=<%= currentPage + 1 %>&<%= queryString %>">
+          <li>Next</li>
+        </a>
+      <% } %>
+    </ul>
+  <% } %>
+</div>

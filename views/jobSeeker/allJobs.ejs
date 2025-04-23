@@ -124,13 +124,23 @@
                                   <td><%= jobPost.jobDetail.vacancy %></td>
                                 <% } %>
                                 <td>
-                                    <div class="actions">
-                                        <a href="/jobSeeker/allJobs/<%= jobPost._id %>" class="edit-btn btn">Details</a>
-                                        <form action="/jobSeeker/saveJobPost" method="POST">
-                                            <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
-                                            <button type="submit" class="edit-btn btn">Save</button>
-                                        </form>
-                                    </div>
+                                  <div class="actions">
+                                    <a href="/jobSeeker/allJobs/<%= jobPost._id %>" class="edit-btn btn">Details</a>
+                                  
+                                    <%
+                                      const matchedSaved = savedJobsId.find(saved => saved.jobDetail.jobId.toString() === jobPost._id.toString());
+                                      if (matchedSaved) {
+                                    %>
+                                      <form action="/jobSeeker/profile/savedJobs/<%= matchedSaved._id %>" method="POST">
+                                        <button type="submit" class="delete-btn btn">Unsave</button>
+                                      </form>
+                                    <% } else { %>
+                                      <form action="/jobSeeker/saveJobPost" method="POST">
+                                        <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
+                                        <button type="submit" class="edit-btn btn">Save</button>
+                                      </form>
+                                    <% } %>
+                                  </div>                                   
                                 </td>
                             </tr>
                     <% }); %>
