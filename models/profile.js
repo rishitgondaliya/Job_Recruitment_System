@@ -74,11 +74,6 @@ const profileSchema = new Schema(
       type: String,
       trim: true,
     },
-    jobListing: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "Listing",
-      default: undefined,
-    },
 
     // other general fileds
     totalExperience: {
