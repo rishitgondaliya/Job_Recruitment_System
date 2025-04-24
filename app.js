@@ -8,6 +8,7 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 
 const User = require("./models/user");
+const Admin = require("./models/admin");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const jobSeekerRoutes = require("./routes/jobSeekerRoutes");
@@ -42,8 +43,13 @@ app.use(async (req, res, next) => {
   }
 
   try {
+    let user;
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-password");
+    if (decoded.role === "admin") {
+      user = await Admin.findById(decoded.id).select("-password -adminSecret");
+    } else {
+      user = await User.findById(decoded.id).select("-password");
+    }
     if (user) {
       req.user = user;
     }

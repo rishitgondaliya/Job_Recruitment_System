@@ -70,13 +70,9 @@ const adminSchema = new Schema(
       type: Boolean,
       default: true,
     },
-    adminKey: {
+    adminSecret: {
       type: String,
-      required: true,
-    },
-    jwt: {
-      type: String,
-      required: true,
+      required: [true, "Admin secret key is required!"],
     },
     resetPasswordToken: String,
   },

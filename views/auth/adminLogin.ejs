@@ -2,11 +2,11 @@
 <%- include('../includes/header.ejs') %>
 
         <div class="form-control">
-            <h2 class="center">Login</h2>
+            <h2 class="center">Admin Login</h2>
 
             <%- include('../includes/flash.ejs') %>
             
-            <form action="/auth/login" method="POST" novalidate>
+            <form action="/auth/admin/login" method="POST" novalidate>
                 <div class="form-input">
                     <label for="email">Email:</label>
                     <input type="email" id="email" name="email" value="<%= formData ? formData.email : '' %>">
@@ -23,16 +23,26 @@
                     <% } %>
                 </div>
 
+                <div class="form-input">
+                    <label for="role">Role:</label>
+                    <select name="role" id="role">
+                        <option value="admin" selected>Admin</option>
+                    </select>
+                    <% if (errors && errors.role) { %>
+                        <p class="input-error"><%= errors.role %></p>
+                    <% } %>
+                </div>
+
+                <div class="form-input admin-secret-key">
+                    <label for="adminSecret">Admin Secret Key:</label>
+                    <input type="password" id="adminSecret" name="adminSecret">
+                    <% if (errors && errors.adminSecret) { %>
+                        <p class="input-error"><%= errors.adminSecret %></p>
+                    <% } %>
+                </div>
+
                 <div class="center">
                     <button class="btn" type="submit">Login</button>
-                </div>
-
-                <div class="center">
-                    <p><a href="/auth/forgotPassword">Forgot password?</a></p>
-                </div>
-
-                <div class="center">
-                    <p>Don't have an account? <a href="/auth/register">Register</a></p>
                 </div>
             </form>
         </div>

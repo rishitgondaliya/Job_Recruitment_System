@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+const Admin = require("../models/admin");
 
 exports.verifyToken = async (req, res, next) => {
   const token = req.cookies.token;
@@ -9,12 +10,20 @@ exports.verifyToken = async (req, res, next) => {
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const user = await User.findById(decoded.id).select("-password");
-    if (!user) {
-      return res.redirect("/auth/login");
+    // console.log("decoded", decoded);
+    let user;
+    if (decoded.role === "admin") {
+      user = await Admin.findById(decoded.id).select("-password -adminSecret");
+      if (!user) {
+        return res.redirect("/auth/admin/login");
+      }
+    } else {
+      user = await User.findById(decoded.id).select("-password");
+      if (!user) {
+        return res.redirect("/auth/login");
+      }
     }
-    
+
     req.user = user;
     // console.log("req.user", req.user)
     next();
@@ -26,7 +35,7 @@ exports.verifyToken = async (req, res, next) => {
 };
 
 exports.isAdmin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') return next();
+  if (req.user && req.user.role === "admin") return next();
   return res.status(403).render("500", {
     pageTitle: "Forbidden",
     path: "/500",
@@ -35,7 +44,7 @@ exports.isAdmin = (req, res, next) => {
 };
 
 exports.isJobSeeker = (req, res, next) => {
-  if (req.user && req.user.role === 'jobSeeker') return next();
+  if (req.user && req.user.role === "jobSeeker") return next();
   return res.status(403).render("500", {
     pageTitle: "Forbidden",
     path: "/500",
@@ -44,7 +53,7 @@ exports.isJobSeeker = (req, res, next) => {
 };
 
 exports.isRecruiter = (req, res, next) => {
-  if (req.user && req.user.role === 'recruiter') return next();
+  if (req.user && req.user.role === "recruiter") return next();
   return res.status(403).render("500", {
     pageTitle: "Forbidden",
     path: "/500",

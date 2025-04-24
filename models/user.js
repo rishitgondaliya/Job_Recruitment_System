@@ -87,11 +87,8 @@ const userSchema = new Schema(
       type: String,
       default: undefined,
     },
-    // jwt: {
-    //   type: String,
-    //   required: true,
-    // },
-    // resetPasswordToken: String,
+    resetPasswordToken: String,
+    resetTokenExpiry: Date,
   },
   { timestamps: true }
 );
