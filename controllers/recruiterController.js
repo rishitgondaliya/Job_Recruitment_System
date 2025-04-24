@@ -823,16 +823,19 @@ exports.viewApplications = async (req, res, next) => {
 
 exports.getShortlistUser = async (req, res, next) => {
   try {
-    const userId = req.params.userId;
-    console.log("userId", userId);
+    const applicationId = req.params.applicationId;
+    const application = await Application.findById(applicationId);
+    const userId = application.user.userId;
+    // console.log("userId", userId);
     const user = await User.findById(userId);
-    // console.log("user", user);
+    // console.log("application", application);
     res.render("recruiter/shortlistUser", {
       pageTitle: "Shortlist User",
       path: "/shortlistUser",
       errors: {},
       job: {},
       user,
+      application,
     });
   } catch (err) {
     console.log(err);
@@ -841,10 +844,12 @@ exports.getShortlistUser = async (req, res, next) => {
 
 exports.postShortlistUser = async (req, res, next) => {
   let errors = {};
-  const userId = req.params.userId;
+  const applicationId = req.params.applicationId;
+  const application = await Application.findById(applicationId);
+  // console.log("application", application);
+  const userId = application.user.userId;
   const user = await User.findById(userId);
   try {
-    const application = await Application.findOne({ "user.userId": userId });
     application.applicationStatus = "Shortlisted";
     await application.save();
 
@@ -914,7 +919,7 @@ exports.postInterviewResult = async (req, res, next) => {
       totalVacancy = totalVacancy > 0 ? (totalVacancy -= 1) : 0;
       jobPost.jobDetail.vacancy = totalVacancy;
     } else if (action === "reject") {
-      application.applicationStatus = "Rejected";
+      application.applicationStatus = "Not selected";
       interview.result = "Not selected";
       interview.status = "Completed";
     }
