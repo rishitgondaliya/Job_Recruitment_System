@@ -53,12 +53,6 @@ const listingSchema = new Schema(
         },
         startDate: {
           type: Date,
-          validate: {
-            validator: function (value) {
-              return value >= new Date();
-            },
-            message: "Start date must be future date",
-          },
         },
         endDate: {
           type: Date,
@@ -97,5 +91,20 @@ const listingSchema = new Schema(
   },
   { timestamps: true }
 );
+
+listingSchema.pre('validate', function (next) {
+  const startDate = this?.jobDetail?.isFeatured?.startDate;
+
+  // Only validate future date if startDate is being modified or if it's a new doc
+  if ((this.isNew || this.isModified('jobDetail')) && startDate) {
+    if (new Date(startDate) <= new Date()) {
+      this.invalidate(
+        'jobDetail.isFeatured.startDate',
+        'Start date must be a future date.'
+      );
+    }
+  }
+  next();
+});
 
 module.exports = mongoose.model("Listing", listingSchema);
