@@ -325,8 +325,8 @@ exports.getEditJobPost = async (req, res, next) => {
         currentPage: page,
         limit,
         totalPages,
-        isEditing: true,
-        showForm: true,
+        isEditing: false,
+        showForm: false,
         errors: {},
         jobPost,
         errorMessage: "Job post not found.",
@@ -374,6 +374,7 @@ exports.getEditJobPost = async (req, res, next) => {
 };
 
 exports.postEditJobPost = async (req, res, next) => {
+  let errors = {}
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 5; // jobs per page
   const skip = (page - 1) * limit;
@@ -437,7 +438,7 @@ exports.postEditJobPost = async (req, res, next) => {
         currentPage: page,
         limit,
         totalPages,
-        isEditing: true,
+        isEditing: false,
         showForm: true,
         errors: {},
         errorMessage: "Job post not found.",
@@ -471,7 +472,7 @@ exports.postEditJobPost = async (req, res, next) => {
 
       console.log("errors:", errors);
 
-      return res.status(422).render("recruiter/editJobPost", {
+      return res.status(422).render("recruiter/jobPosts", {
         pageTitle: "Edit job post",
         path: "/jobPosts",
         jobPost: jobPost,
@@ -483,7 +484,7 @@ exports.postEditJobPost = async (req, res, next) => {
         isEditing: true,
         showForm: true,
         errors,
-        errorMessage: "Validation failed. Please correct the fields.",
+        // errorMessage: "Validation failed. Please correct the fields.",
       });
     }
 

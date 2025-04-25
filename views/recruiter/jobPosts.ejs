@@ -14,17 +14,30 @@
     .hidden {
         display: none;
     }
+    #add-new{
+      margin-top: 2rem;
+    }
     .itemsPerPageForm {
       margin-top: 0.5rem;
       margin-right: 3rem;
+    }
+    .center .delete-btn {
+      color: red;
+      border: 1px solid red;
+    }
+    .center .delete-btn:hover{
+      color: white;
+      background-color: red;
     }
 </style>
 <%- include('../includes/navigation.ejs') %>
 
         <%- include('../includes/flash.ejs') %>
-        <div class="add-job-btn">
-            <button class="add-new-btn btn">New Job Post</button>
-        </div>
+        <% if(!showForm){ %>
+            <div class="add-job-btn">
+              <button class="add-new-btn btn">New Job Post</button>
+            </div>
+        <% } %>
         <div class="itemsPerPageForm">
             <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
                 <div class="form-input">
@@ -111,8 +124,8 @@
                   <div class="form-input" style="width: 45%;">
                     <label for="status">Is Featured?</label>
                     <select name="status" id="isFeatured">
-                      <option value="No" <%= (isEditing ? jobPost?.jobDetail?.status : formData?.status) === 'No' ? 'selected' : '' %>>No</option>
-                      <option value="Yes" <%= (isEditing ? jobPost?.jobDetail?.status : formData?.status) === 'Yes' ? 'selected' : '' %>>Yes</option>
+                      <option value="No" <%= (isEditing ? jobPost?.jobDetail?.isFeatured?.status : formData?.status) === 'No' ? 'selected' : '' %>>No</option>
+                      <option value="Yes" <%= (isEditing ? jobPost?.jobDetail?.isFeatured?.status : formData?.status) === 'Yes' ? 'selected' : '' %>>Yes</option>
                     </select>
                     <% if (errors?.["jobDetail.isFeatured.status"]) { %><p class="input-error"><%= errors["jobDetail.isFeatured.status"] %></p><% } %>
                   </div>
@@ -121,13 +134,13 @@
                 <div class="input-group" id="featuredDates" style="display: none;">
                   <div class="form-input" style="width: 45%;">
                     <label for="startDate">Start Date:</label>
-                    <input type="date" name="startDate" id="startDate" value="<%= isEditing ? jobPost?.jobDetail?.isFeatured?.startDate : formData?.startDate || '' %>">
+                    <input type="date" name="startDate" id="startDate" value="<%= isEditing && jobPost?.jobDetail?.isFeatured?.startDate ? jobPost.jobDetail.isFeatured.startDate.toISOString().split('T')[0] : formData?.startDate %>">
                     <% if (errors?.["jobDetail.isFeatured.startDate"]) { %><p class="input-error"><%= errors["jobDetail.isFeatured.startDate"] %></p><% } %>
                   </div>
               
                   <div class="form-input" style="width: 45%;">
                     <label for="endDate">End Date:</label>
-                    <input type="date" name="endDate" id="endDate" value="<%= isEditing ? jobPost?.jobDetail?.isFeatured?.endDate : formData?.endDate || '' %>">
+                    <input type="date" name="endDate" id="endDate" value="<%= isEditing ? jobPost?.jobDetail?.isFeatured?.endDate.toISOString().split('T')[0] : formData?.endDate || '' %>">
                     <% if (errors?.["jobDetail.isFeatured.endDate"]) { %><p class="input-error"><%= errors["jobDetail.isFeatured.endDate"] %></p><% } %>
                   </div>
                 </div>
@@ -139,7 +152,8 @@
                 <div class="center">
                   <button class="btn" type="submit">
                     <%= isEditing ? 'Update Job' : 'Add Job' %>
-                  </button>
+                  </button> 
+                  <a href="/recruiter/jobPosts" class="delete-btn btn">Cancel</a>
                 </div>
               </form>
               
@@ -195,35 +209,40 @@
             <%- include('../includes/pagination.ejs') %>
         </div>
         <script>
+          document.addEventListener('DOMContentLoaded', function () {
             const isFeaturedSelect = document.getElementById('isFeatured');
             const featuredDatesDiv = document.getElementById('featuredDates');
-            let addNewBtn = document.querySelector('.add-new-btn');
-            let addNewDiv = document.getElementById('add-new');
-
-            addNewBtn.addEventListener('click', () => {
-                addNewDiv.style.display = addNewDiv.style.display === 'none' || addNewDiv.style.display === '' ? 'block' : 'none';
-            });
-            
-            
+            const addNewBtn = document.querySelector('.add-new-btn');
+            const addNewDiv = document.getElementById('add-new');
+            const limitSelect = document.getElementById("limit");
+            const pageInput = document.getElementById("page");
+            const itemsPerPageForm = document.getElementById("itemsPerPageForm");
+        
+            // Featured Dates toggle
             function toggleFeaturedDates() {
-                if (isFeaturedSelect.value === 'Yes') {
-                    featuredDatesDiv.style.display = 'flex';
-                } else {
-                    featuredDatesDiv.style.display = 'none';
-                }
+              if (isFeaturedSelect.value === 'Yes') {
+                featuredDatesDiv.style.display = 'flex';
+              } else {
+                featuredDatesDiv.style.display = 'none';
+              }
             }
-            
-            // Run on page load
-            toggleFeaturedDates();
-            
-            // Run on change
+        
+            toggleFeaturedDates(); // run on load
             isFeaturedSelect.addEventListener('change', toggleFeaturedDates);
-
-            document.getElementById("limit").addEventListener("change", function () {
-              document.getElementById("page").value = 1; // Reset page
-              document.getElementById("itemsPerPageForm").submit(); // Submit form
+        
+            // Add New Toggle
+            addNewBtn.addEventListener('click', () => {
+              addNewDiv.style.display = (addNewDiv.style.display === 'none' || addNewDiv.style.display === '') ? 'block' : 'none';
+              addNewBtn.style.display = 'none';
             });
-        </script>
+        
+            // Pagination Limit Change
+            limitSelect.addEventListener("change", function () {
+              pageInput.value = 1; // Reset page
+              itemsPerPageForm.submit(); // Submit form
+            });
+          });
+        </script>        
         <%- include('../includes/flashScript.ejs') %>
         <script src="/js/preventBack.js"></script>
     </body>
