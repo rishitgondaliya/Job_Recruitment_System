@@ -297,30 +297,9 @@ exports.adminLogin = async (req, res, next) => {
   let errors = {};
 
   try {
-    const { email, password, role, adminSecret } = req.body;
+    const { email, password, adminSecret } = req.body;
 
-    // Step 1: Basic manual checks
-    // if (!email) {
-    //   errors.email = "Email is required";
-    // }
-    // if (!password) {
-    //   errors.password = "Password is required";
-    // }
-    // if(!secretKey) {
-    //   errors.secretKey = "Secret key is required"
-    // }
-
-    // Step 2: If basic checks fail, stop early
-    // if (Object.keys(errors).length > 0) {
-    //   return res.status(401).render("auth/adminLogin", {
-    //     pageTitle: "Login",
-    //     path: "/login",
-    //     errors,
-    //     formData: req.body,
-    //   });
-    // }
-
-    // Step 3: Create a temporary admin instance to validate schema rules
+    // Create a temporary admin instance to validate schema rules
     const tempUser = new Admin({ email, password, adminSecret });
 
     try {
@@ -374,10 +353,9 @@ exports.adminLogin = async (req, res, next) => {
       });
     }
 
-    // console.log("secretKey", secretKey);
-    // console.log("adminSecret", user.adminSecret);
-    if (adminSecret !== user.adminSecret) {
-      errors.adminSecret = "Invalid admin secret key!";
+    const matchedAdminSecret = await bcrypt.compare(adminSecret, user.adminSecret)
+    if (!matchedAdminSecret) {
+      errors.adminSecret = "Incorrect adminSecret!";
       return res.status(401).render("auth/adminLogin", {
         pageTitle: "Admin Login",
         path: "/login",
@@ -386,7 +364,10 @@ exports.adminLogin = async (req, res, next) => {
       });
     }
 
-    // Step 5: Set token and success message
+    // console.log("secretKey", secretKey);
+    // console.log("adminSecret", user.adminSecret);
+
+    // Set token and success message
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -479,7 +460,7 @@ exports.postForgotPassword = async (req, res, next) => {
 
   const resetUrl = `http://localhost:3000/auth/resetPassword/${resetToken}`;
   const msg = {
-    from: "myshop.mail.from@gmail.com",
+    from: process.env.EMAIL_FROM,
     to: email,
     subject: "Reset Password",
     text: "Click the link below to reset your password.",
