@@ -55,15 +55,6 @@ const adminSchema = new Schema(
     },
     password: {
       type: String,
-      validate: {
-        validator: function (v) {
-          return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#])[A-Za-z\d@$!%*?&^#]{8,}$/.test(
-            v
-          );
-        },
-        message:
-          "Password must have at least 8 characters, including an uppercase letter, a lowercase letter, a number, and a special character.",
-      },
       required: [true, "User password is required"],
     },
     isActive: {
@@ -78,5 +69,21 @@ const adminSchema = new Schema(
   },
   { timestamps: true }
 );
+
+adminSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+
+  const passwordValidationPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  if (!passwordValidationPattern.test(this.password)) {
+    const err = new Error("Password must have at least 8 characters, including an uppercase letter, a lowercase letter, a number, and a special character.");
+    return next(err);
+  }
+
+  const bcrypt = require("bcryptjs");
+  this.password = await bcrypt.hash(this.password, 12);
+  this.adminSecret = await bcrypt.hash(this.adminSecret, 12);
+  next();
+});
+
 
 module.exports = mongoose.model("Admin", adminSchema);
