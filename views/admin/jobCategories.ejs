@@ -61,6 +61,9 @@
 
             <%- include('../includes/flash.ejs') %>
 
+            <% if(categories.length === 0) { %>
+                No categories found.
+            <% }else { %>
             <table class="custom-table">
                 <thead>
                     <tr>
@@ -91,6 +94,7 @@
                 </tbody>
             </table>
             <%- include('../includes/pagination.ejs') %>
+            <% } %>
         </div>
         <%- include('../includes/flashScript.ejs') %>
         <script>

@@ -32,6 +32,9 @@
 
     <!-- Job Seekers Table -->
     <h2 class="section-title">Job Seekers</h2>
+    <% if(jobSeekers.length === 0) { %>
+        No Jobseekers found.
+    <% }else { %>
     <table class="custom-table">
         <thead>
             <tr>
@@ -90,9 +93,13 @@
             </ul>
         </div>
     <% } %>  
+    <% } %>
 
     <!-- Recruiters Table -->
     <h2 class="section-title">Recruiters</h2>
+    <% if(recruiters.length === 0) { %>
+        No recruiters found.
+    <% }else { %>
     <table class="custom-table">
         <thead>
             <tr>
@@ -151,6 +158,7 @@
             </ul>
         </div>
     <% } %>  
+    <% } %>
 </div>
 
 <%- include('../includes/flashScript.ejs') %>
