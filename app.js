@@ -118,13 +118,33 @@ app.use((error, req, res, next) => {
 });
 
 // DB Connect & Start
+
 if (require.main === module) {
   mongoose
-    .connect(process.env.MONGO_DRIVER_URL)
-    .then(() => {
+    .connect(process.env.MONGO_URI)
+    .then(async () => {
       console.log("Database connected successfully.");
-      app.listen(3000, () => {
-        console.log("✅ Server is running on http://localhost:3000/");
+
+      // ✅ Check if an admin exists
+      const existingAdmin = await Admin.findOne();
+      if (!existingAdmin) {
+        await Admin.create({
+          firstName: "Super",
+          lastName: "Admin",
+          email: "admin@example.com",
+          phone: "9879876543",
+          password: "@Admin123",
+          role: "admin",
+          adminSecret: process.env.ADMIN_SECRET || "supersecret", // Optional extra field
+        });
+
+        console.log(`✅ Default admin created: admin@example.com / Super Admin / Password: @Admin123 / Admin secret: ${process.env.ADMIN_SECRET}`);
+      }
+
+      const PORT = process.env.PORT || 3006;
+
+      app.listen(PORT, () => {
+        console.log(`✅ Server is running on http://localhost:${PORT}/`);
       });
     })
     .catch((err) => {
