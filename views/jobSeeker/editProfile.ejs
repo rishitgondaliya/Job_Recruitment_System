@@ -1,31 +1,49 @@
 <%- include('../includes/main.ejs') %>
-<link rel="stylesheet" href="/css/profile.css">
-
+    <link rel="stylesheet" href="/css/profile.css">
+    <style>
+        form .save-btn{
+            margin-top: -0.5rem;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+          }
+        form button:hover{
+            cursor: pointer;
+        }
+        section .title-group {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
     <%- include('../includes/navigation.ejs') %>
-
         <div class="profile-container">
             <form action="/jobSeeker/editProfile" class="edit-form" method="POST" enctype="multipart/form-data">
                 <%- include('../includes/flashScript.ejs') %>
-
                 <input type="hidden" name="profileId" value="<%= profile._id %>">
 
                 <section>
-                    <div class="profile-header">
-                        <div class="profile-photo">
-                            <img src="<%= profile.profilePhoto || '/assets/default_profile.jpg' %>" alt="Profile Photo">
+                    <div class="title-group">
+                        <div class="profile-header">
+                            <div class="profile-photo">
+                                <img src="<%= profile.profilePhoto || '/assets/default_profile.jpg' %>" alt="Profile Photo">
+                            </div>
+                            <div class="form-input">
+                                <label for="profilePhoto">Upload Profile Photo</label>
+                                <input type="file" name="profilePhoto" accept="image/*">
+                                <% if(errors.profilePhoto){ %>
+                                    <p class="input-error"><%= errors.profilePhoto %></p>
+                                    <% } %>
+                            </div>
                         </div>
-                        <div class="form-input">
-                            <label for="profilePhoto">Upload Profile Photo</label>
-                            <input type="file" name="profilePhoto" accept="image/*">
-                            <% if(errors.profilePhoto){ %>
-                                <p class="input-error"><%= errors.profilePhoto %></p>
-                                <% } %>
-                        </div>
+                        <button type="submit" class="save-btn">✅</button>
                     </div>
                 </section>
 
                 <section>
+                    <div class="title-group">
                     <h3>About</h3>
+                        <button type="submit" class="save-btn">✅</button>
+                    </div>
                     <div class="form-input">
                         <textarea name="about" rows="4"><%= profile.about || '' %></textarea>
                         <% if (errors.about) { %>
@@ -35,7 +53,10 @@
                 </section>
 
                 <section>
-                    <h3>Experience</h3>
+                    <div class="title-group">
+                        <h3>Experience</h3>
+                        <button type="submit" class="save-btn">✅</button>
+                    </div>
                     <% 
                       let experienceList = (profile.experience && profile.experience.length > 0) 
                         ? [...profile.experience].sort((a, b) => {
@@ -93,7 +114,10 @@
                 </section>                  
 
                 <section>
-                    <h3>Education</h3>
+                    <div class="title-group">
+                        <h3>Education</h3>
+                        <button type="submit" class="save-btn">✅</button>
+                    </div>
                     <div class="form-input">
                         <label>College</label>
                         <input type="text" name="college" value="<%= profile.education?.college || '' %>">
@@ -141,9 +165,12 @@
                 </section>
 
                 <section>
-                    <h3>Skills</h3>
+                    <div class="title-group">
+                        <h3>Skills</h3>
+                        <button type="submit" class="save-btn">✅</button>
+                    </div>
                     <div class="form-input">
-                        <p>Enter skills separated by commas (e.g., JavaScript, Node.js, React)</p>
+                        <label>Enter skills separated by commas (e.g., JavaScript, React,...)</label>
                         <input type="text" name="skills" value="<%= profile.skills?.join(', ') %>">
                         <% if (errors.skills) { %>
                             <p class="input-error"><%= errors.skills %></p>
@@ -152,7 +179,10 @@
                 </section>
 
                 <section>
-                    <h3>Resume</h3>
+                    <div class="title-group">
+                        <h3>Resume</h3>
+                        <button type="submit" class="save-btn">✅</button>
+                    </div>
                     <div class="form-input">
                         <label>Upload Resume (PDF/DOC)</label>
                         <input type="file" name="resume" accept=".pdf,.doc,.docx">
@@ -170,7 +200,6 @@
                 </div>
             </form>
         </div>
-
         <script src="/js/editProfile.js"></script>
     </body>
 </html>
