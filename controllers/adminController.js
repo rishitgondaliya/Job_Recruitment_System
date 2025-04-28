@@ -124,7 +124,7 @@ exports.postAddCategory = async (req, res) => {
   }
 };
 
-exports.getJobCategories = async (req, res) => {
+exports.getJobCategories = async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
@@ -146,25 +146,10 @@ exports.getJobCategories = async (req, res) => {
       currentPage: page,
       limit,
       totalPages,
-      // successMessage: "Job categories fetched successfully",
     });
   } catch (err) {
     console.error("Error fetching categories:", err);
-    res.cookie("errorMessage", "Error while fetching job categories", {
-      maxAge: 3000,
-      httpOnly: false,
-    });
-    res.status(500).render("admin/jobCategories", {
-      pageTitle: "Job Categories",
-      path: "/jobCategories",
-      isEditing: false,
-      showForm: false,
-      oldInput: {},
-      errors: {},
-      currentPage: page,
-      limit,
-      totalPages,
-    });
+    next({message: "Something went wrong. Please try again later."})
   }
 };
 
@@ -211,7 +196,7 @@ exports.getEditCategory = async (req, res, next) => {
     });
   } catch (err) {
     console.error("Error fetching category:", err);
-    next({ message: "Internal Server Error" });
+    next({message: "Something went wrong. Please try again later."})
   }
 };
 
@@ -287,15 +272,6 @@ exports.deleteCategory = async (req, res, next) => {
   const totalCategories = await Category.countDocuments();
   const totalPages = Math.ceil(totalCategories / limit);
   try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage:
-          "Access denied ! You are not authorized to view this page.",
-      });
-    }
-
     const categoryId = req.body.categoryId;
     await Category.findByIdAndDelete(categoryId);
 
@@ -345,15 +321,6 @@ exports.deactivateUser = async (req, res, next) => {
   const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
   const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
   try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage:
-          "Access denied ! You are not authorized to view this page.",
-      });
-    }
-
     const userId = req.body.userId;
     // console.log(userId);
     const user = await User.findByIdAndUpdate(userId, { isActive: false });
@@ -418,15 +385,6 @@ exports.activateUser = async (req, res, next) => {
   const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
   const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
   try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage:
-          "Access denied ! You are not authorized to view this page.",
-      });
-    }
-
     const userId = req.body.userId;
     // console.log(userId);
     const user = await User.findByIdAndUpdate(userId, { isActive: true });
@@ -491,15 +449,6 @@ exports.deleteUser = async (req, res, next) => {
   const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
   const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
   try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage:
-          "Access denied ! You are not authorized to view this page.",
-      });
-    }
-
     const userId = req.body.userId;
     const user = await User.findByIdAndDelete(userId);
 

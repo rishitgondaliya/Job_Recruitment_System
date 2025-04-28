@@ -180,7 +180,7 @@ exports.getJobPosts = async (req, res) => {
   });
   const jobListings = await jobListing
     .find({ recruiterId: req.user._id })
-    .sort({ updatedAt: -1 })
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
@@ -329,6 +329,7 @@ exports.getEditJobPost = async (req, res, next) => {
         showForm: false,
         errors: {},
         jobPost,
+        formData: {},
         errorMessage: "Job post not found.",
       });
     }
@@ -351,6 +352,7 @@ exports.getEditJobPost = async (req, res, next) => {
       currentPage: page,
       limit,
       totalPages,
+      formData: {},
       isEditing: true,
       showForm: true,
     });

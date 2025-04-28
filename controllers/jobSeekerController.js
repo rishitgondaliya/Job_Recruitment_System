@@ -13,28 +13,33 @@ exports.getJobSeekerHome = async (req, res, next) => {
   const limit = parseInt(req.query.limit) || 5; // jobs per page
   const skip = (page - 1) * limit;
   // const featuredJobs = await featuredJob.find()
-  const totalFeaturedJobs = await jobListing.countDocuments({
-    "jobDetail.isFeatured.status": "Yes",
-    "jobDetail.isFeatured.endDate": { $gte: new Date() },
-  });
-  const featuredJobs = await jobListing
-    .find({
+  try {
+    const totalFeaturedJobs = await jobListing.countDocuments({
       "jobDetail.isFeatured.status": "Yes",
       "jobDetail.isFeatured.endDate": { $gte: new Date() },
-    })
-    .skip(skip)
-    .limit(limit);
-  const totalPages = Math.ceil(totalFeaturedJobs / limit);
-  // console.log('featuredJobs',featuredJobs)
+    });
+    const featuredJobs = await jobListing
+      .find({
+        "jobDetail.isFeatured.status": "Yes",
+        "jobDetail.isFeatured.endDate": { $gte: new Date() },
+      })
+      .skip(skip)
+      .limit(limit);
+    const totalPages = Math.ceil(totalFeaturedJobs / limit);
+    // console.log('featuredJobs',featuredJobs)
 
-  res.render("jobSeeker/home", {
-    pageTitle: "Home | Job Seeker",
-    path: "/home",
-    featuredJobs: featuredJobs,
-    currentPage: page,
-    limit,
-    totalPages,
-  });
+    res.render("jobSeeker/home", {
+      pageTitle: "Home | Job Seeker",
+      path: "/home",
+      featuredJobs: featuredJobs,
+      currentPage: page,
+      limit,
+      totalPages,
+    });
+  } catch (error) {
+    console.log(error);
+    next({ message: "Something went wrong. Please try again later." });
+  }
 };
 
 exports.getJobCategories = async (req, res, next) => {
@@ -42,15 +47,6 @@ exports.getJobCategories = async (req, res, next) => {
   const limit = parseInt(req.query.limit) || 5; // jobs per page
   const skip = (page - 1) * limit;
   try {
-    if (!req.user || req.user.role !== "jobSeeker") {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage:
-          "Access denied ! You are not authorized to view this page.",
-      });
-    }
-
     const totalCategories = await Category.countDocuments();
     const categories = await Category.find()
       .select("name")
@@ -69,7 +65,7 @@ exports.getJobCategories = async (req, res, next) => {
     });
   } catch (err) {
     console.error("Error fetching categories:", err);
-    next({ message: "Internal server error, please try again later" });
+    next({ message: "Internal server error. Please try again later." });
   }
 };
 
@@ -79,13 +75,20 @@ exports.getAllJobs = async (req, res, next) => {
   const skip = (page - 1) * limit;
 
   try {
-    const { category, locationType, experience, salary } = req.query;
+    const { category, locationType, experience, salary, search } = req.query;
 
     const filter = {};
     if (category) filter.category = category;
     if (locationType) filter["jobDetail.locationType"] = locationType;
     if (experience) filter["jobDetail.experience"] = { $lte: experience };
     if (salary) filter["jobDetail.salary"] = { $gte: Number(salary) };
+
+    if (search) {
+      filter.$or = [
+        { "jobDetail.jobTitle": { $regex: search, $options: "i" } },
+        { company: { $regex: search, $options: "i" } },
+      ];
+    }
 
     // console.log("filter",filter)
     const savedJobsId = await savedJobs
@@ -98,11 +101,11 @@ exports.getAllJobs = async (req, res, next) => {
     // console.log("totalJobs",totalJobs,"totalPages",totalPages)
     const jobPosts = await jobListing
       .find(filter)
-      .sort({ updatedAt: -1 })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-      // console.log("jobPosts",jobPosts)
+    // console.log("jobPosts",jobPosts)
     const categories = await Category.find();
 
     res.render("jobSeeker/allJobs", {
@@ -118,9 +121,11 @@ exports.getAllJobs = async (req, res, next) => {
       selectedLocationType: locationType || "",
       selectedExperience: experience || "",
       selectedSalary: salary || "",
-      errorMessage: jobPosts.length === 0
-        ? "No jobs found matching your search criteria."
-        : null,
+      searchQuery: search || "",
+      errorMessage:
+        jobPosts.length === 0
+          ? "No jobs found matching your search criteria."
+          : null,
     });
   } catch (error) {
     console.log(error);
@@ -193,75 +198,91 @@ exports.postSaveJobPost = async (req, res, next) => {
 
 exports.getJobDetails = async (req, res, next) => {
   const jobPostId = req.params.jobPostId;
-  const jobPost = await jobListing.findById(jobPostId);
-  const savedJob = await savedJobs.findOne({
-    "user.userId": req.user._id,
-    "jobDetail.jobId": jobPostId,
-  });
-
-  const allJobs = await jobListing.find({}, "_id").sort({ updatedAt: -1 });
-  const jobIndex = allJobs.findIndex((j) => j._id.toString() === jobPostId);
-  const prevJobId = jobIndex > 0 ? allJobs[jobIndex - 1]._id : null;
-  const nextJobId =
-    jobIndex < allJobs.length - 1 ? allJobs[jobIndex + 1]._id : null;
-
-  if (!jobPost) {
-    res.render("/jobSeeker/allJobs", {
-      pageTitle: "All jobs",
-      path: "/allJobs",
-      errorMessage: "Job post not found.",
-      jobPosts: await jobListing.find(),
+  try {
+    const jobPost = await jobListing.findById(jobPostId);
+    const savedJob = await savedJobs.findOne({
+      "user.userId": req.user._id,
+      "jobDetail.jobId": jobPostId,
     });
+
+    const allJobs = await jobListing.find({}, "_id").sort({ updatedAt: -1 });
+    const jobIndex = allJobs.findIndex((j) => j._id.toString() === jobPostId);
+    const prevJobId = jobIndex > 0 ? allJobs[jobIndex - 1]._id : null;
+    const nextJobId =
+      jobIndex < allJobs.length - 1 ? allJobs[jobIndex + 1]._id : null;
+
+    if (!jobPost) {
+      res.render("/jobSeeker/allJobs", {
+        pageTitle: "All jobs",
+        path: "/allJobs",
+        errorMessage: "Job post not found.",
+        jobPosts: await jobListing.find(),
+      });
+    }
+    // console.log("jobPost",jobPost)
+    res.render("jobSeeker/jobDetail", {
+      pageTitle: jobPost.jobDetail.jobTitle,
+      path: "/allJobs",
+      jobPost,
+      savedJob,
+      prevJobId,
+      nextJobId,
+      errors: {},
+    });
+  } catch (error) {
+    console.log(error);
+    next({ message: "Internal server error. Please try again later." });
   }
-  // console.log("jobPost",jobPost)
-  res.render("jobSeeker/jobDetail", {
-    pageTitle: jobPost.jobDetail.jobTitle,
-    path: "/allJobs",
-    jobPost,
-    savedJob,
-    prevJobId,
-    nextJobId,
-    errors: {},
-  });
 };
 
 exports.getJobSeekerProfile = async (req, res, next) => {
   const user = req.user;
-  const userProfile = await Profile.findById(user.profileId);
-  const savedJobsArray = await savedJobs.find({ "user.userId": user._id });
-  const applications = await Application.find({ "user.userId": user._id }).sort(
-    { createdAt: -1 }
-  );
-  // console.log("userProfile",userProfile)
+  try {
+    const userProfile = await Profile.findById(user.profileId);
+    const savedJobsArray = await savedJobs.find({ "user.userId": user._id });
+    const applications = await Application.find({
+      "user.userId": user._id,
+    }).sort({ createdAt: -1 });
+    // console.log("userProfile",userProfile)
 
-  res.render("jobSeeker/profile", {
-    pageTitle: "Profile",
-    path: "/profile",
-    profile: userProfile,
-    user: user,
-    savedJobs: savedJobsArray,
-    applications,
-  });
+    res.render("jobSeeker/profile", {
+      pageTitle: "Profile",
+      path: "/profile",
+      profile: userProfile,
+      user: user,
+      savedJobs: savedJobsArray,
+      applications,
+    });
+  } catch (error) {
+    console.log(error);
+    next({ message: "Something went wrong. Please try again later." });
+  }
 };
 
 exports.getEditProfile = async (req, res, next) => {
   const user = req.user;
-  const userProfile = await Profile.findById(user.profileId);
-  // console.log("userProfile",userProfile)
-  res.render("jobSeeker/editProfile", {
-    pageTitle: "Edit Profile",
-    path: "/profile",
-    user,
-    profile: userProfile,
-    errors: {},
-  });
+  try {
+    const userProfile = await Profile.findById(user.profileId);
+    // console.log("userProfile",userProfile)
+    res.render("jobSeeker/editProfile", {
+      pageTitle: "Edit Profile",
+      path: "/profile",
+      user,
+      profile: userProfile,
+      errors: {},
+    });
+  } catch (error) {
+    console.log(error);
+    next({ message: "Internal server error. Please try again later." });
+  }
 };
 
 exports.postEditProfile = async (req, res, next) => {
   const errors = {};
   const profileId = req.user.profileId;
-  const profile = await Profile.findById(profileId);
+  let profile;
   try {
+    profile = await Profile.findById(profileId);
     // console.log("profileId",profileId)
     // console.log("req.body",req.body)
 
@@ -383,7 +404,7 @@ exports.postEditProfile = async (req, res, next) => {
     res.cookie("successMessage", "Profile updated successfully!");
     res.redirect("/jobSeeker/profile");
   } catch (err) {
-    // console.log("Error updating profile:", err);
+    console.log("Error updating profile:", err);
 
     if (req.files?.profilePhoto?.length) {
       const newPhoto = path.join(
@@ -420,8 +441,6 @@ exports.postEditProfile = async (req, res, next) => {
       profile,
       errors,
     });
-    // res.cookie("errorMessage", "Something went wrong while updating profile.");
-    // res.redirect("/jobSeeker/profile");
   }
 };
 
@@ -451,6 +470,7 @@ exports.viewSavedJobDetail = async (req, res, next) => {
     });
   } catch (err) {
     console.error("Error fetching saved job:", err);
+    next({ message: "Something went wrong. Please try again later." });
   }
 };
 
@@ -483,21 +503,25 @@ exports.unSaveJob = async (req, res, next) => {
 
 exports.getApplicationForm = async (req, res, next) => {
   const jobPostId = req.params.jobPostId;
-  const jobPost = await jobListing.findById(jobPostId);
-  res.render("jobSeeker/applicationform", {
-    pageTitle: jobPost.jobDetail.jobTitle,
-    path: "/applyForJob",
-    job: jobPost,
-    user: req.user,
-  });
+  try {
+    const jobPost = await jobListing.findById(jobPostId);
+    res.render("jobSeeker/applicationform", {
+      pageTitle: jobPost.jobDetail.jobTitle,
+      path: "/applyForJob",
+      job: jobPost,
+      user: req.user,
+    });
+  } catch (error) {
+    console.log(error);
+    next({ message: "Something went wrong. Please try again later." });
+  }
 };
 
 exports.applyForJob = async (req, res, next) => {
+  const jobPostId = req.params.jobPostId;
+  const user = req.user;
+  let resume;
   try {
-    const jobPostId = req.params.jobPostId;
-    const user = req.user;
-    let resume;
-
     // console.log("jobPostId",jobPostId)
     // console.log("user",user)
     const jobPost = await jobListing.findById(jobPostId);
@@ -553,14 +577,13 @@ exports.applyForJob = async (req, res, next) => {
     return res.redirect("/jobSeeker/profile");
   } catch (err) {
     console.error(err);
-    next(err);
+    next({ message: "Something went wrong. Please try again later." });
   }
 };
 
 exports.withdrawApplication = async (req, res, next) => {
+  const applicationId = req.params.applicationId;
   try {
-    const user = req.user;
-    const applicationId = req.params.applicationId;
     await Application.findByIdAndUpdate(
       {
         _id: applicationId,
@@ -595,10 +618,10 @@ exports.withdrawApplication = async (req, res, next) => {
 
 exports.getReviewForm = async (req, res, next) => {
   const jobId = req.params.jobId;
-  const jobPost = await jobListing.findById(jobId);
   const userId = req.user._id;
-  const existing = await Review.findOne({ userId, jobId });
   try {
+    const jobPost = await jobListing.findById(jobId);
+    const existing = await Review.findOne({ userId, jobId });
     if (existing) {
       res.cookie("errorMessage", "You have already rated this job!", {
         maxAge: 3000,
@@ -615,15 +638,17 @@ exports.getReviewForm = async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
+    next({ message: "Something went wrong. Please try again later." });
   }
 };
 
 exports.postJobReview = async (req, res, next) => {
   const jobId = req.params.jobId;
   const userId = req.user._id;
-  const jobPost = await jobListing.findById(jobId);
+  let jobPost;
   // console.log("jobPostId",jobId)
   try {
+    jobPost = await jobListing.findById(jobId);
     const newReview = new Review({
       userId: userId,
       jobId: jobId,
@@ -647,7 +672,7 @@ exports.postJobReview = async (req, res, next) => {
     // await jobPost.save({ validateBeforeSave: false });
 
     // console.log("newReview",newReview)
-    res.redirect(`/jobSeeker/allJobs/${jobId}`);
+    return res.redirect(`/jobSeeker/allJobs/${jobId}`);
   } catch (err) {
     // console.log(err);
     let errors = {};
