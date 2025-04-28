@@ -1,29 +1,37 @@
 <%- include('../includes/main.ejs') %>
 <link rel="stylesheet" href="/css/table.css">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+/>
 <style>
     .custom-table th:nth-child(4), .custom-table td:nth-child(4),
     .custom-table th:nth-child(6), .custom-table td:nth-child(6) { 
         text-align: center;
     }
-
+    form .search-form {
+      width: 25%;
+    }
+    form .search-form {
+      margin: -4rem auto 3rem;
+    }
+    form .search-form input {
+      height: 1.5rem;
+    }
     .toggleFilter {
       text-align: right;
       margin-right: 3rem;
     }
-
     .toggleFilter .btn {
       font-size: 1rem;
     }
-
     .toggleFilter .clear-filter{
       margin-top: 2rem;
     }
-
     .center{
       text-align: center;
       margin: 0px auto;
     }
-
     .locType {
       display: inline;
     }
@@ -58,8 +66,32 @@
       </div>  
     </div>
 
+    <form action="/jobSeeker/allJobs" method="get" id="serch-form">
+      <div class="form-input search-form" style="position: relative;">
+        <input
+          type="text"
+          name="search"
+          id="search"
+          placeholder="Search jobs by title or company"
+          value="<%= searchQuery || '' %>"
+          style="padding-right: 35px;"
+        >
+        <button type="submit" style="
+          position: absolute;
+          right: 4px;
+          top: 20%;
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 1.1rem;
+        ">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>      
+    </form>
     <!-- Filter Form -->
     <form id="filterForm" action="/jobSeeker/allJobs" method="GET" class="filter-form form-control" style="display: none;">
+      
       <div class="form-input">
         <label for="category">Category:</label>
         <select name="category" id="category">
