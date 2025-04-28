@@ -84,11 +84,11 @@
         <div class="pagination" id="jobSeekerPagination">
             <ul class="pagination-list">
                 <% if (jobSeekerPage > 1) { %>
-                    <a href="?jobSeekerPage=<%= jobSeekerPage - 1 %>&recruiterPage=<%= recruiterPage %>&userLimit=<%= userLimit %>#jobSeekerPagination"><li>Prev</li></a>
+                    <a href="?jobSeekerPage=<%= jobSeekerPage - 1 %>&recruiterPage=<%= recruiterPage %>&userLimit=<%= userLimit %>"><li>Prev</li></a>
                 <% } %>
                 <span> Page <%= jobSeekerPage %> of <%= totalJobSeekerPages %> </span>
                 <% if (jobSeekerPage < totalJobSeekerPages) { %>
-                    <a href="?jobSeekerPage=<%= jobSeekerPage + 1 %>&recruiterPage=<%= recruiterPage %>&userLimit=<%= userLimit %>#jobSeekerPagination"><li>Next</li></a>
+                    <a href="?jobSeekerPage=<%= jobSeekerPage + 1 %>&recruiterPage=<%= recruiterPage %>&userLimit=<%= userLimit %>"><li>Next</li></a>
                 <% } %>
             </ul>
         </div>
