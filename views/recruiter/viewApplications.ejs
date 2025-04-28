@@ -163,17 +163,17 @@
                     <p style="font-size: 1.25rem;">No interviews scheduled.</p>
                 <% } %>
             </div>
-            <div class="pagination">
+            <div class="pagination" id="interviewPagination">
                 <% if (totalInterviewPage > 1) { %>
                     <ul class="pagination-list">
                       <% if (interviewPage > 1) { %>
-                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=<%= interviewPage - 1 %>&interviewLimit=<%= interviewLimit %>">
+                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=<%= interviewPage - 1 %>&interviewLimit=<%= interviewLimit %>#interviewPagination">
                           <li>Prev</li>
                         </a>
                       <% } %>
                   
                       <% if (interviewPage !== 1) { %>
-                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=1&interviewLimit=<%= interviewLimit %>">
+                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=1&interviewLimit=<%= interviewLimit %>#interviewPagination">
                           <li>1</li>
                         </a>
                       <% } %>
@@ -181,13 +181,13 @@
                       <span> Page <%= interviewPage %> of <%= totalInterviewPage %> </span>
                   
                       <% if (interviewPage !== totalInterviewPage) { %>
-                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=<%= totalInterviewPage %>&interviewLimit=<%= interviewLimit %>">
+                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=<%= totalInterviewPage %>&interviewLimit=<%= interviewLimit %>#interviewPagination">
                           <li><%= totalInterviewPage %></li>
                         </a>
                       <% } %>
                   
                       <% if (interviewPage < totalInterviewPage) { %>
-                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=<%= interviewPage + 1 %>&interviewLimit=<%= interviewLimit %>">
+                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=<%= interviewPage + 1 %>&interviewLimit=<%= interviewLimit %>#interviewPagination">
                           <li>Next</li>
                         </a>
                       <% } %>
