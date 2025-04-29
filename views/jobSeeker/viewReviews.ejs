@@ -1,0 +1,47 @@
+<%- include('../includes/main.ejs') %>
+    <style>
+        .reviews {
+            width: 50%;
+            margin: 5rem auto;
+            padding: 1rem;
+            background-color: white;
+            box-shadow: 0px 2px 8px rgb(174, 174, 174);
+        }
+        .review {
+            background-color: aliceblue;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .reviews .back-btn{
+            margin-bottom: 1rem;
+        }
+        .review p {
+            margin: 0.5rem 0 0.5rem;
+        }
+    </style>
+    </head>
+    <body>
+        <div class="reviews">
+            <div class="back-btn">
+                <a href="/jobSeeker/allJobs/<%= jobId %>" class="btn" style="margin-bottom: 1rem;">Back</a>
+            </div>
+            <% if(reviews.length === 0){ %>
+                <p>No reviews found.</p>
+                <% }else{ %>
+                    <% reviews.forEach((review) => { %>
+                    <div class="review">
+                        <p><strong><%= review.userId.firstName + ' ' + review.userId.lastName %></strong> <small><%= review.createdAt.toLocaleDateString() %></small></p>
+                        <div class="stars">
+                            <% for (let i = 1; i <= 5; i++) { %>
+                              <% if (i <= review.rating) { %>
+                                ⭐
+                              <% } %>
+                            <% } %>
+                          </div>
+                        <p><%= review.description %></p>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
+    </body>
+</html>

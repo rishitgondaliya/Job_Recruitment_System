@@ -49,4 +49,6 @@ router.get('/reviewJob/:jobId', jobSeekerController.getReviewForm)
 
 router.post('/reviewJob/:jobId', jobSeekerController.postJobReview)
 
+router.get('/reviews/:jobId', jobSeekerController.viewJobReviews)
+
 module.exports = router;
