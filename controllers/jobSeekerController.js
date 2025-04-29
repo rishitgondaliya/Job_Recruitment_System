@@ -6,6 +6,7 @@ const Category = require("../models/jobCategory");
 const savedJobs = require("../models/savedJobs");
 const Profile = require("../models/profile");
 const Application = require("../models/application");
+const Interview = require("../models/interview");
 const Review = require("../models/review");
 
 exports.getJobSeekerHome = async (req, res, next) => {
@@ -46,13 +47,16 @@ exports.getJobCategories = async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 5; // jobs per page
   const skip = (page - 1) * limit;
+
   try {
     const totalCategories = await Category.countDocuments();
+
     const categories = await Category.find()
       .select("name")
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit);
+
     const totalPages = Math.ceil(totalCategories / limit);
 
     res.render("jobSeeker/jobCategories", {
@@ -77,12 +81,14 @@ exports.getAllJobs = async (req, res, next) => {
   try {
     const { category, locationType, experience, salary, search } = req.query;
 
+    // apply filters
     const filter = {};
     if (category) filter.category = category;
     if (locationType) filter["jobDetail.locationType"] = locationType;
     if (experience) filter["jobDetail.experience"] = { $lte: experience };
     if (salary) filter["jobDetail.salary"] = { $gte: Number(salary) };
 
+    // if user search from search bar
     if (search) {
       filter.$or = [
         { "jobDetail.jobTitle": { $regex: search, $options: "i" } },
@@ -91,6 +97,7 @@ exports.getAllJobs = async (req, res, next) => {
     }
 
     // console.log("filter",filter)
+    // check if user having any saved jobs
     const savedJobsId = await savedJobs
       .find({ "user.userId": req.user._id })
       .select("jobDetail.jobId");
@@ -153,6 +160,7 @@ exports.postSaveJobPost = async (req, res, next) => {
       });
     }
 
+    // check if already saved
     const alreadySaved = await savedJobs.findOne({
       "user.userId": req.user._id,
       "jobDetail.jobId": jobPostId,
@@ -177,6 +185,7 @@ exports.postSaveJobPost = async (req, res, next) => {
       company: jobPost.company,
     };
 
+    // save savedJob to database
     const newSavedJob = new savedJobs({
       user,
       jobDetail,
@@ -198,7 +207,9 @@ exports.postSaveJobPost = async (req, res, next) => {
 
 exports.getJobDetails = async (req, res, next) => {
   const jobPostId = req.params.jobPostId;
+
   try {
+    // find jobpost
     const jobPost = await jobListing.findById(jobPostId);
     const savedJob = await savedJobs.findOne({
       "user.userId": req.user._id,
@@ -219,7 +230,9 @@ exports.getJobDetails = async (req, res, next) => {
         jobPosts: await jobListing.find(),
       });
     }
+
     // console.log("jobPost",jobPost)
+    // display jobDetails
     res.render("jobSeeker/jobDetail", {
       pageTitle: jobPost.jobDetail.jobTitle,
       path: "/allJobs",
@@ -237,14 +250,27 @@ exports.getJobDetails = async (req, res, next) => {
 
 exports.getJobSeekerProfile = async (req, res, next) => {
   const user = req.user;
+
   try {
+    // find userProfile
     const userProfile = await Profile.findById(user.profileId);
+
+    // find is user having savedjobs
     const savedJobsArray = await savedJobs.find({ "user.userId": user._id });
+
+    // find any applications
     const applications = await Application.find({
       "user.userId": user._id,
     }).sort({ createdAt: -1 });
+
+    // find any interviews scheduled
+    const interviews = await Interview.find({
+      "user.userId": user._id,
+      status: "Scheduled",
+    });
     // console.log("userProfile",userProfile)
 
+    // display profile with all data
     res.render("jobSeeker/profile", {
       pageTitle: "Profile",
       path: "/profile",
@@ -252,6 +278,7 @@ exports.getJobSeekerProfile = async (req, res, next) => {
       user: user,
       savedJobs: savedJobsArray,
       applications,
+      interviews,
     });
   } catch (error) {
     console.log(error);
@@ -282,6 +309,7 @@ exports.postEditProfile = async (req, res, next) => {
   const profileId = req.user.profileId;
   let profile;
   try {
+    // find profile
     profile = await Profile.findById(profileId);
     // console.log("profileId",profileId)
     // console.log("req.body",req.body)
@@ -291,6 +319,7 @@ exports.postEditProfile = async (req, res, next) => {
     }
 
     // console.log("profile",profile)
+
     // Update About
     profile.about = req.body.about?.trim() || "";
 
@@ -314,6 +343,7 @@ exports.postEditProfile = async (req, res, next) => {
 
       // console.log("expArray",expArray)
 
+      // filter experience with atleast one field
       const filteredExp = expArray
         .map((exp) => {
           const startDate = exp.startDate ? new Date(exp.startDate) : null;
@@ -399,6 +429,7 @@ exports.postEditProfile = async (req, res, next) => {
     }
 
     // console.log("updatedProfile",profile)
+    // save updated data
     await profile.save();
 
     res.cookie("successMessage", "Profile updated successfully!");
@@ -406,6 +437,7 @@ exports.postEditProfile = async (req, res, next) => {
   } catch (err) {
     console.log("Error updating profile:", err);
 
+    // prevent uploading if any error occurs
     if (req.files?.profilePhoto?.length) {
       const newPhoto = path.join(
         __dirname,
@@ -446,12 +478,15 @@ exports.postEditProfile = async (req, res, next) => {
 
 exports.viewSavedJobDetail = async (req, res, next) => {
   const savedJobId = req.params.savedJobId;
-  console.log("savedJobId", savedJobId);
+  // console.log("savedJobId", savedJobId);
+
   try {
+    // find saved job
     const savedJob = await savedJobs
       .findById(savedJobId)
       .populate("jobDetail.jobId");
     // console.log("savedJob",savedJob)
+
     if (!savedJob) {
       res.cookie("errorMessage", "Job not found", {
         maxAge: 3000,
@@ -459,9 +494,12 @@ exports.viewSavedJobDetail = async (req, res, next) => {
       });
       return res.redirect("/jobSeeker/profile");
     }
+
     const jobPost = savedJob.jobDetail.jobId;
     // console.log("jobPost", jobPost);
     // console.log("jobPostId", jobPost._id);
+
+    // display savedjob details
     res.render("jobSeeker/savedJobDetail", {
       pageTitle: savedJob.jobDetail.jobTitle,
       path: "/profile",
@@ -476,8 +514,10 @@ exports.viewSavedJobDetail = async (req, res, next) => {
 
 exports.unSaveJob = async (req, res, next) => {
   const savedJobId = req.params.savedJobId;
-  console.log("savedJobId", savedJobId);
+  // console.log("savedJobId", savedJobId);
+
   try {
+    // find savedjob
     const savedJob = await savedJobs.findById(savedJobId);
     // console.log("savedJob", savedJob);
     if (!savedJob) {
@@ -487,6 +527,8 @@ exports.unSaveJob = async (req, res, next) => {
       });
       return res.redirect("/jobSeeker/profile");
     }
+
+    // remove from saved jobs
     await savedJob.deleteOne();
     res.cookie("successMessage", "Job removed from saved jobs", {
       maxAge: 3000,
@@ -503,7 +545,9 @@ exports.unSaveJob = async (req, res, next) => {
 
 exports.getApplicationForm = async (req, res, next) => {
   const jobPostId = req.params.jobPostId;
+
   try {
+    // find jobdetails
     const jobPost = await jobListing.findById(jobPostId);
     res.render("jobSeeker/applicationform", {
       pageTitle: jobPost.jobDetail.jobTitle,
@@ -521,9 +565,12 @@ exports.applyForJob = async (req, res, next) => {
   const jobPostId = req.params.jobPostId;
   const user = req.user;
   let resume;
+
   try {
     // console.log("jobPostId",jobPostId)
     // console.log("user",user)
+
+    // find jobpost
     const jobPost = await jobListing.findById(jobPostId);
     // console.log("jobPost",jobPost)
     if (!jobPost) {
@@ -534,6 +581,7 @@ exports.applyForJob = async (req, res, next) => {
     const existing = await Application.findOne({
       "user.userId": user._id,
       "jobDetail.jobId": jobPost._id,
+      applicationStatus: { $ne: "Withdrawn" },
     });
 
     if (existing) {
@@ -545,6 +593,7 @@ exports.applyForJob = async (req, res, next) => {
         .redirect("/jobSeeker/allJobs");
     }
 
+    // upload resume
     if (req.files?.resume?.length) {
       const resumePath = `/uploads/resume/${req.files.resume[0].filename}`;
       resume = resumePath;
@@ -567,6 +616,7 @@ exports.applyForJob = async (req, res, next) => {
       applicationStatus: "Applied",
     });
 
+    // save application
     await newApplication.save();
 
     res.cookie("successMessage", "Application submitted successfully.", {
@@ -583,7 +633,9 @@ exports.applyForJob = async (req, res, next) => {
 
 exports.withdrawApplication = async (req, res, next) => {
   const applicationId = req.params.applicationId;
+
   try {
+    // find and update application status
     await Application.findByIdAndUpdate(
       {
         _id: applicationId,
@@ -619,8 +671,12 @@ exports.withdrawApplication = async (req, res, next) => {
 exports.getReviewForm = async (req, res, next) => {
   const jobId = req.params.jobId;
   const userId = req.user._id;
+
   try {
+    // find jobPost
     const jobPost = await jobListing.findById(jobId);
+
+    // check if already reviewd
     const existing = await Review.findOne({ userId, jobId });
     if (existing) {
       res.cookie("errorMessage", "You have already rated this job!", {
@@ -655,7 +711,11 @@ exports.postJobReview = async (req, res, next) => {
       rating: req.body.rating,
       description: req.body.description,
     });
+
+    // save to database
     await newReview.save();
+
+    // calculate average rating
     const reviews = await Review.find({ jobId: jobId });
     const avgRating = parseFloat(
       (
@@ -688,4 +748,22 @@ exports.postJobReview = async (req, res, next) => {
       errors,
     });
   }
+};
+
+exports.viewJobReviews = async (req, res, next) => {
+  const jobId = req.params.jobId;
+
+  // find all reviews for thi job post
+  const reviews = await Review.find({ jobId: jobId })
+    .populate("userId")
+    .sort({ createdAt: -1 });
+  // console.log("reviews", reviews);
+
+  // display reviews
+  return res.render("jobSeeker/viewReviews", {
+    pageTitle: "Reviews",
+    path: "/reviews",
+    reviews,
+    jobId,
+  });
 };

@@ -30,8 +30,11 @@ exports.postRegister = async (req, res, next) => {
   let errors = {};
   const { firstName, lastName, email, phone, password, role, company } =
     req.body;
+
   try {
+    // check for existing user
     const existingUser = await User.findOne({ email: email });
+
     if (existingUser) {
       errors["email"] = "User with same email already exists";
       return res.status(422).render("auth/register", {
@@ -41,6 +44,7 @@ exports.postRegister = async (req, res, next) => {
         formData: req.body,
       });
     } else {
+      // cretae new user
       const newUser = new User({
         firstName,
         lastName,
@@ -51,8 +55,10 @@ exports.postRegister = async (req, res, next) => {
         company: company ? company : undefined,
       });
 
+      // save new user
       await newUser.save();
 
+      // create empty profile
       let profileData = {
         userId: newUser._id,
         profileType: role,
@@ -60,9 +66,13 @@ exports.postRegister = async (req, res, next) => {
       };
 
       const emptyProfile = new Profile(profileData);
+
+      // save profile
       await emptyProfile.save();
 
       newUser.profileId = emptyProfile._id;
+
+      // save profileId in user
       await newUser.save();
 
       res.cookie(
@@ -149,25 +159,7 @@ exports.postLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Step 1: Basic manual checks
-    // if (!email) {
-    //   errors.email = "Email is required";
-    // }
-    // if (!password) {
-    //   errors.password = "Password is required";
-    // }
-
-    // Step 2: If basic checks fail, stop early
-    // if (Object.keys(errors).length > 0) {
-    //   return res.status(401).render("auth/login", {
-    //     pageTitle: "Login",
-    //     path: "/login",
-    //     errors,
-    //     formData: req.body,
-    //   });
-    // }
-
-    // Step 3: Create a temporary user instance to validate schema rules
+    // Create a temporary user instance to validate schema rules
     const tempUser = new User({ email, password });
 
     try {
@@ -185,7 +177,7 @@ exports.postLogin = async (req, res, next) => {
       });
     }
 
-    // Step 4: Proceed with login logic
+    // Proceed with login logic
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -198,6 +190,7 @@ exports.postLogin = async (req, res, next) => {
       });
     }
 
+    // check if user is deActivated by admin
     if (!user.isActive) {
       errors.email =
         "You cannot login right now because admin has deactivated you!";
@@ -209,6 +202,7 @@ exports.postLogin = async (req, res, next) => {
       });
     }
 
+    // match password
     const isMatched = await bcrypt.compare(password, user.password);
     if (!isMatched) {
       errors.password = "Incorrect password!";
@@ -220,7 +214,7 @@ exports.postLogin = async (req, res, next) => {
       });
     }
 
-    // Step 5: Set token and success message
+    // Set token and success message
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -237,6 +231,7 @@ exports.postLogin = async (req, res, next) => {
     });
 
     const userRole = user.role;
+    // redirect based on role
     if (userRole === "jobSeeker") {
       res.cookie("successMessage", "Job seeker login successfull.", {
         maxAge: 3000,
@@ -249,12 +244,6 @@ exports.postLogin = async (req, res, next) => {
         httpOnly: false,
       });
       return res.redirect("/recruiter/jobPosts");
-    } else if (userRole === "admin") {
-      res.cookie("successMessage", "Admin login successfull.", {
-        maxAge: 3000,
-        httpOnly: false,
-      });
-      return res.redirect("/admin/users");
     } else {
       errors.email = "User role is invalid";
       return res.status(401).render("auth/login", {
@@ -299,7 +288,7 @@ exports.adminLogin = async (req, res, next) => {
       });
     }
 
-    // Step 4: Proceed with login logic
+    // Proceed with login logic
     const user = await Admin.findOne({ email });
 
     if (!user) {
@@ -312,17 +301,7 @@ exports.adminLogin = async (req, res, next) => {
       });
     }
 
-    if (!user.isActive) {
-      errors.email =
-        "You cannot login right now because admin has deactivated you!";
-      return res.status(401).render("auth/adminLogin", {
-        pageTitle: "Admin Login",
-        path: "/login",
-        errors,
-        formData: req.body,
-      });
-    }
-
+    // match password
     const isMatched = await bcrypt.compare(password, user.password);
     if (!isMatched) {
       errors.password = "Incorrect password!";
@@ -334,6 +313,7 @@ exports.adminLogin = async (req, res, next) => {
       });
     }
 
+    // match adminSecret
     const matchedAdminSecret = await bcrypt.compare(
       adminSecret,
       user.adminSecret
@@ -387,6 +367,7 @@ exports.adminLogin = async (req, res, next) => {
 
 exports.logout = (req, res, next) => {
   try {
+    // clear cookie on logout
     res.clearCookie("token", {
       path: "/", // it's the same path where you set the cookie
       httpOnly: true,
@@ -423,7 +404,10 @@ exports.getForgotPassword = async (req, res, next) => {
 exports.postForgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
+
+    // check for valid email
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
     if (!emailRegex.test(email)) {
       return res.status(400).render("auth/resetPassword", {
         pageTitle: "Forgot Password",
@@ -432,6 +416,8 @@ exports.postForgotPassword = async (req, res, next) => {
         formData: req.body,
       });
     }
+
+    // find user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).render("auth/resetPassword", {
@@ -441,14 +427,22 @@ exports.postForgotPassword = async (req, res, next) => {
         formData: req.body,
       });
     }
+
+    // set resetToken if user found
     const resetToken = crypto.randomBytes(32).toString("hex");
     // console.log("resetToken", resetToken);
+
     const resetTokenExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+
+    // save resetToken and resetTokenExpiry in database
     user.resetPasswordToken = resetToken;
     user.resetTokenExpiry = resetTokenExpiry;
     await user.save();
 
+    // set reset url
     const resetUrl = `http://localhost:3000/auth/resetPassword/${resetToken}`;
+
+    // send email with reset link
     const msg = {
       from: process.env.EMAIL_FROM,
       to: email,
@@ -483,6 +477,7 @@ exports.postForgotPassword = async (req, res, next) => {
 
 exports.createNewPassword = async (req, res, next) => {
   try {
+    // verify token and find user with valid token
     const resetToken = req.params.resetToken;
     const user = await User.findOne({
       resetPasswordToken: resetToken,
@@ -498,6 +493,7 @@ exports.createNewPassword = async (req, res, next) => {
         errorMessage: "Invalid or expired token!",
       });
     }
+
     return res.render("auth/createNewPassword", {
       pageTitle: "Create New Password",
       path: "/createNewPassword",
@@ -522,6 +518,7 @@ exports.postNewPassword = async (req, res, next) => {
 
     // console.log("resetToken", resetToken);
 
+    // verify token
     const user = await User.findOne({
       resetPasswordToken: resetToken,
       resetTokenExpiry: { $gt: Date.now() },
@@ -537,11 +534,14 @@ exports.postNewPassword = async (req, res, next) => {
       });
     }
 
+    // validate password
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#])[A-Za-z\d@$!%*?&^#]{8,}$/;
+
     if (!passwordRegex.test(newPassword)) {
       errors.newPassword =
         "Password must be at least 8 characters long and include uppercase letters, numbers, and special characters!";
+
       return res.render("auth/createNewPassword", {
         pageTitle: "Create New Password",
         path: "/createNewPassword",
@@ -568,10 +568,15 @@ exports.postNewPassword = async (req, res, next) => {
 
     // console.log("errors",errors)
 
+    // save hashedPassword
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     user.password = hashedPassword;
+
+    // delete resetToken and resetTokenExpiry
     user.resetPasswordToken = undefined;
     user.resetTokenExpiry = undefined;
+
+    // save updated user
     await user.save({ validateBeforeSave: false });
     res.cookie(
       "successMessage",

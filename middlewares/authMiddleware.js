@@ -3,15 +3,18 @@ const User = require("../models/user");
 const Admin = require("../models/admin");
 
 exports.verifyToken = async (req, res, next) => {
-  const token = req.cookies.token;
+  const token = req.cookies.token; // extract token from cookies
 
   if (!token) {
     return res.redirect("/auth/login");
   }
+
   try {
+    // decode token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     // console.log("decoded", decoded);
     let user;
+
     if (decoded.role === "admin") {
       user = await Admin.findById(decoded.id).select("-password -adminSecret");
       if (!user) {
@@ -24,6 +27,7 @@ exports.verifyToken = async (req, res, next) => {
       }
     }
 
+    // attatch user in req
     req.user = user;
     // console.log("req.user", req.user)
     next();
@@ -34,6 +38,7 @@ exports.verifyToken = async (req, res, next) => {
   }
 };
 
+// verify admin role
 exports.isAdmin = (req, res, next) => {
   if (req.user && req.user.role === "admin") return next();
   return res.status(403).render("500", {
@@ -43,6 +48,7 @@ exports.isAdmin = (req, res, next) => {
   });
 };
 
+// verify jobSeeker role
 exports.isJobSeeker = (req, res, next) => {
   if (req.user && req.user.role === "jobSeeker") return next();
   return res.status(403).render("500", {
@@ -52,6 +58,7 @@ exports.isJobSeeker = (req, res, next) => {
   });
 };
 
+// verify recruiter role
 exports.isRecruiter = (req, res, next) => {
   if (req.user && req.user.role === "recruiter") return next();
   return res.status(403).render("500", {
@@ -60,7 +67,3 @@ exports.isRecruiter = (req, res, next) => {
     errorMessage: "Access denied! Only recruiters can access this page.",
   });
 };
-
-// exports.isLoggedIn = (req, res, next) => {
-//   if (req.user) return next();
-// }

@@ -7,6 +7,7 @@ const Profile = require("../models/profile");
 const User = require("../models/user");
 const Application = require("../models/application");
 const Interview = require("../models/interview");
+const Savedjobs = require("../models/savedJobs");
 
 exports.getRecruiterHome = (req, res, next) => {
   res.render("recruiter/home", {
@@ -77,12 +78,16 @@ exports.postAddNewJob = async (req, res, next) => {
         errors["jobDetail.isFeatured.startDate"] = "Start date is required!";
       } else if (!endDate) {
         errors["jobDetail.isFeatured.endDate"] = "End date is required!";
+      } else if (new Date(startDate) <= new Date()) {
+        errors["jobDetail.isFeatured.startDate"] =
+          "Start date must be future date";
       } else if (new Date(endDate) <= new Date(startDate)) {
         errors["jobDetail.isFeatured.endDate"] =
           "End date must be after start date";
       }
     }
 
+    // stop early if any error
     if (Object.keys(errors).length > 0) {
       return res.render("recruiter/jobPosts", {
         pageTitle: "Add new job",
@@ -141,10 +146,9 @@ exports.postAddNewJob = async (req, res, next) => {
     return res.redirect("/recruiter/jobPosts");
   } catch (err) {
     let errorMessage;
+    // extract error messages
     if (err.name === "ValidationError") {
       for (let field in err.errors) {
-        // Use short field names if needed, or use full path
-        // const shortKey = field.split(".").pop();
         errors[field] = err.errors[field].message;
       }
     } else {
@@ -154,6 +158,7 @@ exports.postAddNewJob = async (req, res, next) => {
     console.log("errors", errors);
     // console.log("formData", req.body);
 
+    // render with errors
     return res.render("recruiter/jobPosts", {
       pageTitle: "Add new job",
       path: "/addNewJob",
@@ -263,17 +268,10 @@ exports.deleteJobPost = async (req, res, next) => {
         errorMessage: "Job post not found.",
       });
     }
+    // delete saved jobs with same jobId
+    await Savedjobs.deleteMany({ "jobDetail.jobId": jobPostId });
 
-    // Compare string values of IDs (as Mongoose ObjectId !== String directly)
-    if (!req.user || String(req.user._id) !== String(jobPost.recruiterId)) {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage:
-          "Access denied! You are not authorized to delete this job post.",
-      });
-    }
-
+    // delete job post
     await jobPost.deleteOne();
 
     res.cookie("successMessage", "Job post deleted successfully.", {
@@ -333,14 +331,7 @@ exports.getEditJobPost = async (req, res, next) => {
         errorMessage: "Job post not found.",
       });
     }
-    if (!req.user || String(req.user._id) !== String(jobPost.recruiterId)) {
-      return res.status(403).render("500", {
-        pageTitle: "Unauthorized",
-        path: "/500",
-        errorMessage:
-          "Access denied! You are not authorized to edit this job post.",
-      });
-    }
+
     // console.log("categories", categories)
     return res.render("recruiter/jobPosts", {
       pageTitle: "Edit Job Post",
@@ -376,7 +367,7 @@ exports.getEditJobPost = async (req, res, next) => {
 };
 
 exports.postEditJobPost = async (req, res, next) => {
-  let errors = {}
+  let errors = {};
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 5; // jobs per page
   const skip = (page - 1) * limit;
@@ -400,11 +391,36 @@ exports.postEditJobPost = async (req, res, next) => {
         errors["jobDetail.isFeatured.startDate"] = "Start date is required!";
       } else if (!req.body.endDate) {
         errors["jobDetail.isFeatured.endDate"] = "End date is required!";
+      } else if (new Date(req.body.startDate) < new Date()) {
+        errors["jobDetail.isFeatured.startDate"] =
+          "start date must be future date";
       } else if (new Date(req.body.endDate) <= new Date(req.body.startDate)) {
         errors["jobDetail.isFeatured.endDate"] =
           "End date must be after start date";
       }
     }
+
+    // stop early if any error
+    if (Object.keys(errors).length > 0) {
+      jobPost = await jobListing.findById(jobPostId);
+
+      return res.status(422).render("recruiter/jobPosts", {
+        pageTitle: "Edit job post",
+        path: "/jobPosts",
+        jobPost: jobPost,
+        categories,
+        jobListings,
+        currentPage: page,
+        limit,
+        totalPages,
+        isEditing: true,
+        showForm: true,
+        errors,
+        formData: req.body,
+      });
+    }
+
+    // updated job
     const updatedJobPost = {
       category: req.body.categoryName,
       jobDetail: {
@@ -430,6 +446,9 @@ exports.postEditJobPost = async (req, res, next) => {
               },
       },
     };
+    // console.log("updatedPost",updatedJobPost)
+
+    // find existing job post
     jobPost = await jobListing.findById(jobPostId);
     if (!jobPost) {
       return res.status(404).render("recruiter/jobPosts", {
@@ -442,6 +461,7 @@ exports.postEditJobPost = async (req, res, next) => {
         totalPages,
         isEditing: false,
         showForm: true,
+        formData: req.body,
         errors: {},
         errorMessage: "Job post not found.",
       });
@@ -449,6 +469,7 @@ exports.postEditJobPost = async (req, res, next) => {
 
     // console.log("jobPost:", jobPost);
     // console.log("updatedJobPost:", updatedJobPost);
+    // save updated job post
     await jobListing.findByIdAndUpdate(
       jobPostId,
       { $set: updatedJobPost },
@@ -485,6 +506,7 @@ exports.postEditJobPost = async (req, res, next) => {
         totalPages,
         isEditing: true,
         showForm: true,
+        formData: req.body,
         errors,
         // errorMessage: "Validation failed. Please correct the fields.",
       });
@@ -500,6 +522,7 @@ exports.postEditJobPost = async (req, res, next) => {
       totalPages,
       isEditing: false,
       showForm: false,
+      formData: req.body,
       errorMessage: "An error occurred while updating the job post.",
       errors: {},
     });
@@ -566,6 +589,7 @@ exports.postEditProfile = async (req, res, next) => {
         ? req.body.experience
         : Object.values(req.body.experience);
 
+      // filter experience array where at least one field is present
       const filteredExp = expArray
         .map((exp) => {
           const startDate = exp.startDate ? new Date(exp.startDate) : null;
@@ -627,6 +651,7 @@ exports.postEditProfile = async (req, res, next) => {
         }
       }
 
+      // save new photo
       const photoPath = `/uploads/profilePhoto/${req.files.profilePhoto[0].filename}`;
       profile.profilePhoto = photoPath;
     }
@@ -655,6 +680,7 @@ exports.postEditProfile = async (req, res, next) => {
   } catch (err) {
     // console.log("Error updating profile:", err);
 
+    // if any error occurs do not upload image
     if (req.files?.profilePhoto?.length) {
       const newPhoto = path.join(
         __dirname,
@@ -664,17 +690,6 @@ exports.postEditProfile = async (req, res, next) => {
         req.files.profilePhoto[0].filename
       );
       if (fs.existsSync(newPhoto)) fs.unlinkSync(newPhoto);
-    }
-
-    if (req.files?.resume?.length) {
-      const newResume = path.join(
-        __dirname,
-        "..",
-        "public",
-        "/uploads/resume/",
-        req.files.resume[0].filename
-      );
-      if (fs.existsSync(newResume)) fs.unlinkSync(newResume);
     }
 
     if (err.name === "ValidationError") {
@@ -800,6 +815,7 @@ exports.viewApplications = async (req, res, next) => {
 
     const totalInterviewPage = Math.ceil(totalInterviews / interviewLimit);
 
+    // display scheduled interviews on top
     interviews.sort((a, b) => {
       const order = { Scheduled: 0, Completed: 1, Rejected: 2 };
       return order[a.status] - order[b.status];
@@ -856,6 +872,7 @@ exports.postShortlistUser = async (req, res, next) => {
     application.applicationStatus = "Shortlisted";
     await application.save();
 
+    // schedule interview
     const newInterview = new Interview({
       user: {
         userId: userId,
@@ -868,6 +885,8 @@ exports.postShortlistUser = async (req, res, next) => {
       status: "Scheduled",
       result: undefined,
     });
+
+    // save interview details
     await newInterview.save();
     res.cookie("successMessage", "User shortlisted successfully", {
       maxAge: 3000,
@@ -917,9 +936,9 @@ exports.postInterviewResult = async (req, res, next) => {
     // console.log("action",action)
     if (action === "select") {
       application.applicationStatus = "Selected";
-      interview.result = "Selected";
-      interview.status = "Completed";
-      totalVacancy = totalVacancy > 0 ? (totalVacancy -= 1) : 0;
+      interview.result = "Selected"; // update interview result
+      interview.status = "Completed"; // update status
+      totalVacancy = totalVacancy > 0 ? (totalVacancy -= 1) : 0; // update vacancy
       jobPost.jobDetail.vacancy = totalVacancy;
     } else if (action === "reject") {
       application.applicationStatus = "Not selected";
