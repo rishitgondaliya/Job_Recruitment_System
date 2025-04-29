@@ -204,9 +204,15 @@
                                     <% } %>                                
                                     <td>
                                         <div class="actions">
-                                            <form action="/recruiter/editJobPost/<%= jobPost._id %>" method="GET">
+                                            <% if(jobPost.jobDetail.vacancy !== 0){ %>
+                                              <form action="/recruiter/editJobPost/<%= jobPost._id %>" method="GET">
                                                 <button type="submit" class="edit-btn btn">Edit</button>
-                                            </form>
+                                              </form>
+                                            <% } else{ %>
+                                              <form action="/recruiter/editJobPost/<%= jobPost._id %>" method="GET">
+                                                <button type="submit" class="edit-btn btn" disabled>Edit</button>
+                                              </form>
+                                            <% } %>
                                             <form action="/recruiter/deleteJobPost" method="POST">
                                                 <input type="hidden" name="jobPostId" value="<%= jobPost._id %>">
                                                 <button type="submit" class="delete-btn btn">Delete</button>
