@@ -14,6 +14,14 @@
             display: flex;
             justify-content: space-between;
         }
+        .experience-card .remove-btn {
+            text-align: right;
+        }
+        .experience-card .remove-btn button{
+            margin-top: 0;
+            font-size: 1rem;
+            padding: 3px 6px;
+        }
     </style>
     <%- include('../includes/navigation.ejs') %>
         <div class="profile-container">
@@ -141,7 +149,7 @@
                     </div>
                     <div class="form-input">
                         <label>Grade</label>
-                        <input type="number" name="grade" step="0.01" value="<%= profile.education?.grade || '' %>">
+                        <input type="number" name="grade" step="0.01" min="0.00" value="<%= profile.education?.grade || '' %>">
                         <% if (errors["education.grade"]) { %>
                             <p class="input-error"><%= errors['education.grade'] %></p>
                         <% } %>
@@ -191,7 +199,7 @@
                         <p class="input-error"><%= errors.resume %></p>
                     <% } %>
                     <% if (profile.resume) { %>
-                        <p>Current Resume: <a href="<%= profile.resume %>" class="btn" target="_blank" style="font-size: 1rem; padding: 3px 6px">View</a></p>
+                        <p style="margin-top: 1rem;">Current Resume: <a href="<%= profile.resume %>" class="btn" target="_blank" style="font-size: 1rem; padding: 3px 6px;">View</a></p>
                     <% } %>
                 </section>
 

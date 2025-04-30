@@ -2,8 +2,9 @@ let experienceIndex = parseInt(document.getElementById('experienceIndexHolder')?
 
 function addExperience() {
     const container = document.getElementById('experience-container');
-    const html = `
-    <div class="experience-card">
+    const div = document.createElement('div');
+    div.className = 'experience-card';
+    div.innerHTML = `
         <div class="form-input">
             <label>Position</label>
             <input type="text" name="experience[${experienceIndex}][position]">
@@ -26,8 +27,16 @@ function addExperience() {
             <label>Description</label>
             <textarea name="experience[${experienceIndex}][description]"></textarea>
         </div>
-    </div>
+        <div class="remove-btn">
+            <button type="button" class="btn">Remove</button>
+        </div>
     `;
-    container.insertAdjacentHTML('beforeend', html);
+
+    // Attach event listener to remove button
+    div.querySelector('.remove-btn').addEventListener('click', function() {
+        div.remove();
+    });
+
+    container.appendChild(div);
     experienceIndex++;
 }
