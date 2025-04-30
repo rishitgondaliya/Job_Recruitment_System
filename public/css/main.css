@@ -84,10 +84,9 @@ body {
 }
 
 .center p a {
-  text-decoration: underline;
   text-underline-offset: 4px;
-  font-weight: 600;
-  color: black;
+  font-weight: 500;
+  color: rgb(2, 128, 254);
 }
 
 .input-error {
