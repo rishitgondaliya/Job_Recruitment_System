@@ -556,7 +556,7 @@ exports.getEditProfile = async (req, res, next) => {
 };
 
 exports.postEditProfile = async (req, res, next) => {
-  const errors = {};
+  let errors = {};
   const profileId = req.user.profileId;
   const profile = await Profile.findById(profileId);
   try {
@@ -565,6 +565,21 @@ exports.postEditProfile = async (req, res, next) => {
 
     if (!profile) {
       next({ message: "Profile not found !" });
+    }
+
+    if (
+      req.fileValidationError &&
+      Object.keys(req.fileValidationError).length > 0
+    ) {
+      errors = { ...req.fileValidationError };
+      // console.log("file upload error",errors)
+      return res.status(422).render("recruiter/editProfile", {
+        pageTitle: "Edit Profile",
+        path: "/profile",
+        user: req.user,
+        profile,
+        errors,
+      });
     }
 
     // console.log("profile",profile)
