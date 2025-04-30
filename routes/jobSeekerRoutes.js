@@ -39,7 +39,7 @@ router.get("/applyForjob/:jobPostId", jobSeekerController.getApplicationForm);
 
 router.post(
   "/applyForJob/:jobPostId",
-  upload.fields([{ name: "resume", maxCount: 1 }]),
+  upload.single("resume"),
   jobSeekerController.applyForJob
 );
 
