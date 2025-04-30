@@ -19,7 +19,7 @@
                 <div class="form-input">
                     <label for="pass">Password:</label>
                     <div style="position: relative;">
-                        <input type="password" id="pass" name="password" style="width: 94%;">
+                        <input type="password" id="pass" name="password" style="width: 94%;" value="<%= formData ? formData.password : '' %>">
                         <i id="togglePassword" class="fa fa-eye" style="
                           position: absolute;
                           top: 50%;
@@ -46,7 +46,7 @@
 
                 <div class="form-input admin-secret-key">
                     <label for="adminSecret">Admin Secret Key:</label>
-                    <input type="password" id="adminSecret" name="adminSecret">
+                    <input type="password" id="adminSecret" name="adminSecret" value="<%= formData ? formData.adminSecret : '' %>">
                     <% if (errors && errors.adminSecret) { %>
                         <p class="input-error"><%= errors.adminSecret %></p>
                     <% } %>
