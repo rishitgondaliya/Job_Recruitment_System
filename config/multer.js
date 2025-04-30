@@ -12,26 +12,42 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);
-    const uniqueName = `${file.fieldname}-${req.user.firstName.toLowerCase()}-${Date.now()}${ext}`
+    const uniqueName = `${
+      file.fieldname
+    }-${req.user.firstName.toLowerCase()}-${Date.now()}${ext}`;
     cb(null, uniqueName);
   },
 });
 
 // File filter
-const allowedFileTypes = [
-  "application/pdf",
-  // "application/msword", //.doc
-  // "application/vnd.openxmlformats-officedocument.wordprocessingml.document" //.docx,
-];
+const allowedFileTypes = {
+  resume: ["application/pdf"],
+  profilePhoto: ["image/jpeg", "image/png", "image/webp", "image/jpg"],
+};
+
 const fileFilter = (req, file, cb) => {
-  if (file.fieldname === "profilePhoto") {
-    if (!file.mimetype.startsWith("image/"))
-      return cb(new Error("Only images allowed"), false);
-  } else if (file.fieldname === "resume") {
-    if (!allowedFileTypes.includes(file.mimetype))
-      return cb(new Error("Only PDFs are allowed"), false);
+  if (!req.fileValidationError) {
+    req.fileValidationError = {};
   }
-  cb(null, true);
+
+  if (file.fieldname === "profilePhoto") {
+    if (!allowedFileTypes.profilePhoto.includes(file.mimetype)) {
+      req.fileValidationError.profilePhoto =
+        "Only image files (JPEG, PNG, JPEG, WEBP) are allowed for profile photos.";
+      return cb(null, false);
+    }
+    return cb(null, true);
+  }
+
+  // For resumes, check if it's a PDF
+  if (file.fieldname === "resume") {
+    if (!allowedFileTypes.resume.includes(file.mimetype)) {
+      req.fileValidationError.resume =
+        "Only PDF files are allowed for resumes.";
+      return cb(null, false);
+    }
+    return cb(null, true);
+  }
 };
 
 module.exports = multer({ storage, fileFilter });
