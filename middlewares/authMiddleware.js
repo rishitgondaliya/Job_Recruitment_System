@@ -18,11 +18,13 @@ exports.verifyToken = async (req, res, next) => {
     if (decoded.role === "admin") {
       user = await Admin.findById(decoded.id).select("-password -adminSecret");
       if (!user) {
+        res.clearCookie("token");
         return res.redirect("/auth/admin/login");
       }
     } else {
       user = await User.findById(decoded.id).select("-password");
-      if (!user) {
+      if (!user || !user.isActive) {
+        res.clearCookie("token");
         return res.redirect("/auth/login");
       }
     }
