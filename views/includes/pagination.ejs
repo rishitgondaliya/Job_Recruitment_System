@@ -6,7 +6,8 @@
     (typeof selectedExperience !== 'undefined' && selectedExperience ? `&experience=${selectedExperience}` : '') +
     (typeof selectedSalary !== 'undefined' && selectedSalary ? `&salary=${selectedSalary}` : '') +
     (typeof experience !== 'undefined' && experience ? `&experience=${experience}` : '') +
-    (typeof skills !== 'undefined' && skills ? `&skills=${skills}` : '');
+    (typeof skills !== 'undefined' && skills ? `&skills=${skills}` : '') +
+    (typeof searchQuery !== 'undefined' && searchQuery ? `&search=${searchQuery}` : '');
 %>
 
 <div class="pagination">
