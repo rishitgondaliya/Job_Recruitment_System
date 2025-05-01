@@ -21,62 +21,70 @@ const {
 } = require("./middlewares/authMiddleware");
 
 const app = express();
+
+// Load environment variables from .env file
 dotenv.config();
 
-// Middleware
+// Middleware to handle CORS and cookies
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(cookieParser());
+
+// Middleware to parse incoming request bodies
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, "public")));
 
-// View Engine
+// Set EJS as the view engine
 app.set("view engine", "ejs");
 app.set("views", "views");
 
-// Set req.user via token for all routes (global use)
+// Global Middleware to Set req.user from JWT Token in Cookies
 app.use(async (req, res, next) => {
   const token = req.cookies.token;
 
-  if (!token) {
-    return next();
-  }
+  if (!token) return next(); // No token, skip the user lookup
 
   try {
-    let user;
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let user;
+
+    // Find user based on the role in the token (either Admin or User)
     if (decoded.role === "admin") {
       user = await Admin.findById(decoded.id).select("-password -adminSecret");
     } else {
       user = await User.findById(decoded.id).select("-password");
     }
+
     if (user) {
-      req.user = user;
+      req.user = user; // Attach user to the request object
     }
-    // console.log("user", user)
   } catch (err) {
-    console.error("Token verification failed:", err.message);
+    console.error("Token verification failed:", err.message); // Log any token verification errors
   }
-  next();
+
+  next(); // Proceed to the next middleware or route handler
 });
 
-// Set local variables for EJS
+// Middleware to Set Local Variables for EJS Templates
 app.use((req, res, next) => {
+  // Set values for EJS templates
   res.locals.isAuthenticated = !!req.user;
   res.locals.userRole = req.user ? req.user.role : "";
   res.locals.successMessage = req.cookies.successMessage || "";
   res.locals.editSuccess = req.cookies.editSuccess || "";
   res.locals.errorMessage = req.cookies.errorMessage || "";
 
+  // Clear cookies after they are used
   res.clearCookie("successMessage");
   res.clearCookie("errorMessage");
   res.clearCookie("editSuccess");
 
-  console.log("isAuthenticated = ", res.locals.isAuthenticated);
-
   next();
 });
 
+// Prevent Caching for Sensitive Pages
 app.use((req, res, next) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   next();
@@ -93,56 +101,64 @@ app.get("/", (req, res) => {
       return res.redirect("/jobSeeker/home");
     }
   }
+
+  // Clear token cookie if user is not logged in
   res.clearCookie("token", {
-    path: "/", // it's the same path where you set the cookie
+    path: "/", // Cookie path
     httpOnly: true,
     secure: false,
-    sameSite: "Lax",
+    sameSite: "Lax", // Controls cross-site cookie sharing
   });
+
   res.render("home", { pageTitle: "Home" });
 });
 
-// Routes
-app.use("/auth", authRoutes);
-app.use("/admin", verifyToken, isAdmin, adminRoutes);
-app.use("/jobSeeker", verifyToken, isJobSeeker, jobSeekerRoutes);
-app.use("/recruiter", verifyToken, isRecruiter, recruiterRoutes);
+app.use("/auth", authRoutes); // authentication routes
+app.use("/admin", verifyToken, isAdmin, adminRoutes); // Admin routes
+app.use("/jobSeeker", verifyToken, isJobSeeker, jobSeekerRoutes); // Job Seeker routes
+app.use("/recruiter", verifyToken, isRecruiter, recruiterRoutes); // Recruiter routes
 
-// Error Handler
+// Global Error Handler - Catches unhandled errors and renders an error page
 app.use((error, req, res, next) => {
   console.error("Server Error:", error);
-  const message = error.message || "Something went wrong";
-  res
-    .status(500)
-    .render("500", { pageTitle: "Error", path: "/", errorMessage: message });
+  const errorMessage = error.message || "Something went wrong";
+  const statusCode = error.statusCode || 500;
+
+  res.status(statusCode).render("500", {
+    pageTitle: "Error",
+    path: "/",
+    errorMessage: errorMessage,
+  });
 });
 
-// DB Connect & Start
-
+// Database Connection & Server Startup
 if (require.main === module) {
   mongoose
     .connect(process.env.MONGO_URI)
     .then(async () => {
-      console.log("Database connected successfully.");
+      console.log("✅ Database connected successfully.");
 
-      // ✅ Check if an admin exists
+      // Check if the admin exists, create one if necessary
       const existingAdmin = await Admin.findOne();
       if (!existingAdmin) {
         await Admin.create({
           firstName: "Super",
           lastName: "Admin",
-          email: "admin@example.com",
+          email: process.env.ADMIN_EMAIL,
           phone: "9879876543",
-          password: "@Admin123",
+          password: process.env.ADMIN_PASSWORD,
           role: "admin",
-          adminSecret: process.env.ADMIN_SECRET || "supersecret", // Optional extra field
+          adminSecret: process.env.ADMIN_SECRET || "supersecret",
         });
 
-        console.log(`✅ Default admin created: admin@example.com / Super Admin / Password: @Admin123 / Admin secret: ${process.env.ADMIN_SECRET}`);
+        console.log("✅ Default admin created: Super Admin");
+        console.log("Admin email:", process.env.ADMIN_EMAIL);
+        console.log("Admin password:", process.env.ADMIN_PASSWORD);
+        console.log("Admin secret:", process.env.ADMIN_SECRET);
       }
 
+      // Start the server
       const PORT = process.env.PORT || 3006;
-
       app.listen(PORT, () => {
         console.log(`✅ Server is running on http://localhost:${PORT}/`);
       });
@@ -152,14 +168,15 @@ if (require.main === module) {
     });
 }
 
+// Graceful Shutdown on SIGINT and SIGTERM (for clean server shutdown)
 process.on("SIGINT", async () => {
   console.log("Stopping server...");
   await mongoose.disconnect();
-  process.exit(0);
+  process.exit(0); // Exit the process successfully
 });
 
 process.on("SIGTERM", async () => {
   console.log("Process terminated.");
   await mongoose.disconnect();
-  process.exit(0);
+  process.exit(0); // Exit the process successfully
 });
