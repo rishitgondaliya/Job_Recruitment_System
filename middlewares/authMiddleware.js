@@ -2,19 +2,20 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const Admin = require("../models/admin");
 
+// Verify token
 exports.verifyToken = async (req, res, next) => {
-  const token = req.cookies.token; // extract token from cookies
+  const token = req.cookies.token; // Extract token from cookies
 
   if (!token) {
     return res.redirect("/auth/login");
   }
 
   try {
-    // decode token
+    // Decode the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // console.log("decoded", decoded);
-    let user;
 
+    // Find the user or admin based on the decoded role
+    let user;
     if (decoded.role === "admin") {
       user = await Admin.findById(decoded.id).select("-password -adminSecret");
       if (!user) {
@@ -29,9 +30,8 @@ exports.verifyToken = async (req, res, next) => {
       }
     }
 
-    // attatch user in req
+    // Attach user to the request object
     req.user = user;
-    // console.log("req.user", req.user)
     next();
   } catch (err) {
     console.error("JWT verification failed:", err);
@@ -40,32 +40,25 @@ exports.verifyToken = async (req, res, next) => {
   }
 };
 
-// verify admin role
-exports.isAdmin = (req, res, next) => {
-  if (req.user && req.user.role === "admin") return next();
-  return res.status(403).render("500", {
-    pageTitle: "Forbidden",
-    path: "/500",
-    errorMessage: "Access denied! Only admin can access this page.",
-  });
+// General function to verify role
+exports.verifyRole = (role) => {
+  return (req, res, next) => {
+    if (req.user && req.user.role === role) {
+      return next();
+    }
+    return res.status(403).render("500", {
+      pageTitle: "Forbidden",
+      path: "/500",
+      errorMessage: `Access denied! Only ${role}s can access this page.`,
+    });
+  };
 };
 
-// verify jobSeeker role
-exports.isJobSeeker = (req, res, next) => {
-  if (req.user && req.user.role === "jobSeeker") return next();
-  return res.status(403).render("500", {
-    pageTitle: "Forbidden",
-    path: "/500",
-    errorMessage: "Access denied! Only job seeker can access this page.",
-  });
-};
+// Verify admin role
+exports.isAdmin = exports.verifyRole("admin");
 
-// verify recruiter role
-exports.isRecruiter = (req, res, next) => {
-  if (req.user && req.user.role === "recruiter") return next();
-  return res.status(403).render("500", {
-    pageTitle: "Forbidden",
-    path: "/500",
-    errorMessage: "Access denied! Only recruiters can access this page.",
-  });
-};
+// Verify jobSeeker role
+exports.isJobSeeker = exports.verifyRole("jobSeeker");
+
+// Verify recruiter role
+exports.isRecruiter = exports.verifyRole("recruiter");
