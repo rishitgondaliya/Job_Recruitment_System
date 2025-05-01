@@ -35,7 +35,7 @@ router.get(
 
 router.post("/profile/savedJobs/:savedJobId", jobSeekerController.unSaveJob);
 
-router.get("/applyForjob/:jobPostId", jobSeekerController.getApplicationForm);
+router.get("/applyForJob/:jobPostId", jobSeekerController.getApplicationForm);
 
 router.post(
   "/applyForJob/:jobPostId",
