@@ -22,6 +22,13 @@
             font-size: 1rem;
             padding: 3px 6px;
         }
+        form .delete-btn {
+            border-color: rgb(249, 44, 44);
+        }
+        form .delete-btn:hover{
+            color: white;
+            background-color: rgb(235, 62, 62);
+        }
     </style>
     <%- include('../includes/navigation.ejs') %>
         <div class="profile-container">
@@ -53,7 +60,7 @@
                         <button type="submit" class="save-btn">✅</button>
                     </div>
                     <div class="form-input">
-                        <textarea name="about" rows="4"><%= profile.about || '' %></textarea>
+                        <textarea name="about" rows="4"><%= profile.about || formData.about || '' %></textarea>
                         <% if (errors.about) { %>
                             <p class="input-error"><%= errors.about %></p>
                         <% } %>
@@ -65,61 +72,68 @@
                         <h3>Experience</h3>
                         <button type="submit" class="save-btn">✅</button>
                     </div>
+
                     <% 
-                      let experienceList = (profile.experience && profile.experience.length > 0) 
-                        ? [...profile.experience].sort((a, b) => {
+                        let experienceList = 
+                            (profile.experience && profile.experience.length > 0) 
+                            ? [...profile.experience] 
+                            : (formData.experience && formData.experience.length > 0) 
+                                ? [...formData.experience] 
+                                : [{}]; 
+
+                        experienceList.sort((a, b) => {
                             const dateA = new Date(a.endDate || a.startDate || 0);
                             const dateB = new Date(b.endDate || b.startDate || 0);
                             return dateB - dateA; // descending
-                          }) 
-                        : [{}]; 
+                        })
                     %>
+
                     <input type="hidden" id="experienceIndexHolder" value="<%= experienceList.length %>">
                     <% experienceList.forEach((exp, index) => { %>
-                      <div class="experience-card">
-                        <div class="form-input">
-                          <label>Position</label>
-                          <input type="text" name="experience[<%= index %>][position]" value="<%= exp.position || '' %>">
-                          <% if (errors[`experience.${index}.position`]) { %>
-                            <p class="input-error"><%= errors[`experience.${index}.position`] %></p>
-                          <% } %>
+                        <div class="experience-card">
+                            <div class="form-input">
+                                <label>Position</label>
+                                <input type="text" name="experience[<%= index %>][position]" value="<%= exp.position || '' %>">
+                                <% if (errors[`experience.${index}.position`]) { %>
+                                    <p class="input-error"><%= errors[`experience.${index}.position`] %></p>
+                                <% } %>
+                            </div>
+                            <div class="form-input">
+                                <label>Company</label>
+                                <input type="text" name="experience[<%= index %>][company]" value="<%= exp.company || '' %>">
+                                <% if (errors[`experience.${index}.company`]) { %>
+                                    <p class="input-error"><%= errors[`experience.${index}.company`] %></p>
+                                <% } %>
+                            </div>
+                            <div class="input-group">
+                                <div class="form-input">
+                                    <label>Start Date</label>
+                                    <input type="date" name="experience[<%= index %>][startDate]" value="<%= exp.startDate ? new Date(exp.startDate).toISOString().split('T')[0] : '' %>">
+                                    <% if (errors[`experience.${index}.startDate`]) { %>
+                                        <p class="input-error"><%= errors[`experience.${index}.startDate`] %></p>
+                                    <% } %>
+                                </div>
+                                <div class="form-input">
+                                    <label>End Date</label>
+                                    <input type="date" name="experience[<%= index %>][endDate]" value="<%= exp.endDate && !isNaN(new Date(exp.endDate)) ? new Date(exp.endDate).toISOString().split('T')[0] : '' %>">
+                                    <% if (errors[`experience.${index}.endDate`]) { %>
+                                        <p class="input-error"><%= errors[`experience.${index}.endDate`] %></p>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <div class="form-input">
+                                <label>Description</label>
+                                <textarea name="experience[<%= index %>][description]"><%= exp.description || '' %></textarea>
+                                <% if (errors[`experience.${index}.description`]) { %>
+                                    <p class="input-error"><%= errors[`experience.${index}.description`] %></p>
+                                <% } %>
+                            </div>
                         </div>
-                        <div class="form-input">
-                          <label>Company</label>
-                          <input type="text" name="experience[<%= index %>][company]" value="<%= exp.company || '' %>">
-                          <% if (errors[`experience.${index}.company`]) { %>
-                            <p class="input-error"><%= errors[`experience.${index}.company`] %></p>
-                          <% } %>
-                        </div>
-                        <div class="input-group">
-                          <div class="form-input">
-                            <label>Start Date</label>
-                            <input type="date" name="experience[<%= index %>][startDate]" value="<%= exp.startDate ? new Date(exp.startDate).toISOString().split('T')[0] : '' %>">
-                            <% if (errors[`experience.${index}.startDate`]) { %>
-                                <p class="input-error"><%= errors[`experience.${index}.startDate`] %></p>
-                              <% } %>
-                          </div>
-                          <div class="form-input">
-                            <label>End Date</label>
-                            <input type="date" name="experience[<%= index %>][endDate]" value="<%= exp.endDate ? new Date(exp.endDate).toISOString().split('T')[0] : '' %>">
-                            <% if (errors[`experience.${index}.endDate`]) { %>
-                                <p class="input-error"><%= errors[`experience.${index}.endDate`] %></p>
-                              <% } %>
-                          </div>
-                        </div>
-                        <div class="form-input">
-                          <label>Description</label>
-                          <textarea name="experience[<%= index %>][description]"><%= exp.description || '' %></textarea>
-                          <% if (errors[`experience.${index}.description`]) { %>
-                            <p class="input-error"><%= errors[`experience.${index}.description`] %></p>
-                          <% } %>
-                        </div>
-                      </div>
                     <% }) %>
-                  
+
                     <div id="experience-container"></div>
                     <button type="button" class="btn" onclick="addExperience()" style="font-size: 1rem;">+ Add Experience</button>
-                </section>                  
+                </section>
 
                 <section>
                     <div class="title-group">
@@ -156,15 +170,15 @@
                     </div>
                     <div class="input-group">
                         <div class="form-input">
-                            <label for="startYear">Starting Year</label>
+                            <label for="startYear">Starting Date</label>
                             <input type="date" name="startYear" value="<%= profile.education.startYear ? new Date(profile.education.startYear).toISOString().split('T')[0] : '' %>">
                             <% if (errors["education.startYear"]) { %>
                                 <p class="input-error"><%= errors['education.startYear'] %></p>
                             <% } %>
                         </div>
                         <div class="form-input" style="margin-left: 1rem;">
-                            <label for="passingYear">Passing Year</label>
-                            <input type="date" name="passingYear" value="<%= profile.education.passingYear ? new Date(profile.education.passingYear).toISOString().split('T')[0] : '' %>">
+                            <label for="passingYear">Passing Date   </label>
+                            <input type="date" name="passingYear" value="<%= profile.education.passingYear ? new Date(profile.education.passingYear).toISOString().split('T')[0] : null %>">
                             <% if (errors["education.passingYear"]) { %>
                                 <p class="input-error"><%= errors['education.passingYear'] %></p>
                             <% } %>
@@ -205,6 +219,7 @@
 
                 <div style="text-align: center; margin-top: 2rem;">
                     <button type="submit" class="btn">Save Changes</button>
+                    <a href="/jobSeeker/profile" class="delete-btn btn">Cancel</a>
                 </div>
             </form>
         </div>

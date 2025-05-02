@@ -14,6 +14,13 @@
             display: flex;
             justify-content: space-between;
         }
+        form .delete-btn {
+            border-color: rgb(249, 44, 44);
+        }
+        form .delete-btn:hover{
+            color: white;
+            background-color: rgb(235, 62, 62);
+        }
     </style>
 
     <%- include('../includes/navigation.ejs') %>
@@ -47,7 +54,7 @@
                         <button type="submit" class="save-btn">✅</button>
                     </div>
                     <div class="form-input">
-                        <textarea name="about" placeholder="Write something about you..." rows="4"><%= profile.about || '' %></textarea>
+                        <textarea name="about" placeholder="Write something about you..." rows="4"><%= profile.about || formData.about || '' %></textarea>
                         <% if (errors.about) { %>
                             <p class="input-error"><%= errors.about %></p>
                         <% } %>
@@ -62,28 +69,28 @@
                     <div class="company-details">
                         <div class="form-input">
                             <label for="companyName">Name</label>
-                            <input type="text" name="companyName" value="<%= profile.companyName %>">
+                            <input type="text" name="companyName" value="<%= profile.companyName || formData.companyName %>">
                             <% if (errors.companyName) { %>
                                 <p class="input-error"><%= errors.companyName %></p>
                             <% } %>
                         </div>
                         <div class="form-input">
                             <label for="position">Your Job Position</label>
-                            <input type="text" name="position" placeholder="ex. software engineer" value="<%= profile.position %>">
+                            <input type="text" name="position" placeholder="ex. software engineer" value="<%= profile.position || formData.position %>">
                             <% if (errors.position) { %>
                                 <p class="input-error"><%= errors.position %></p>
                             <% } %>    
                         </div>
                         <div class="form-input">
                             <label for="industryType">Industry Type</label>
-                            <input type="text" name="industryType" placeholder="ex. IT, Marketing.." value="<%= profile.industryType %>">
+                            <input type="text" name="industryType" placeholder="ex. IT, Marketing.." value="<%= profile.industryType || formData.industryType %>">
                             <% if (errors.industryType) { %>
                                 <p class="input-error"><%= errors.industryType %></p>
                             <% } %>    
                         </div>
                         <div class="form-input">
                             <label for="companyWebsite">Website</label>
-                            <input type="text" name="companyWebsite" placeholder="www.myCompany.com" value="<%= profile.companyWebsite %>">
+                            <input type="text" name="companyWebsite" placeholder="www.myCompany.com" value="<%= profile.companyWebsite || formData.companyWebsite %>">
                             <% if (errors.companyWebsite) { %>
                                 <p class="input-error"><%= errors.companyWebsite %></p>
                             <% } %>    
@@ -97,15 +104,21 @@
                         <button type="submit" class="save-btn">✅</button>
                     </div>
                     <% 
-                      let experienceList = (profile.experience && profile.experience.length > 0) 
-                        ? [...profile.experience].sort((a, b) => {
+                        let experienceList = 
+                            (profile.experience && profile.experience.length > 0) 
+                            ? [...profile.experience] 
+                            : (formData.experience && formData.experience.length > 0) 
+                                ? [...formData.experience] 
+                                : [{}]; 
+
+                        experienceList.sort((a, b) => {
                             const dateA = new Date(a.endDate || a.startDate || 0);
                             const dateB = new Date(b.endDate || b.startDate || 0);
                             return dateB - dateA; // descending
-                          }) 
-                        : [{}]; 
+                        }) 
                     %>
                     <input type="hidden" id="experienceIndexHolder" value="<%= experienceList.length %>">
+
                     <% experienceList.forEach((exp, index) => { %>
                       <div class="experience-card">
                         <div class="form-input">
@@ -219,6 +232,7 @@
 
                 <div style="text-align: center; margin-top: 2rem;">
                     <button type="submit" class="btn">Save Changes</button>
+                    <a href="/jobSeeker/profile" class="delete-btn btn">Cancel</a>
                 </div>
             </form>
         </div>

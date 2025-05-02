@@ -226,7 +226,18 @@
                   <% } %>
                   <% interviews.forEach((interview) => { %>
                     <% if((application.applicationStatus === "Shortlisted") && (application._id.toString() === interview.applicationId.toString())){ %>
-                      <p>Interview on <%= interview.interviewDate.toLocaleDateString() %></p>
+                      <p style="margin-bottom: 0.75rem;">Your interview is scheduled on : 
+                        <strong>
+                          <%= 
+                            interview.interviewDate.toLocaleDateString(undefined, {
+                              weekday: "long",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            }) 
+                          %>
+                        </strong>
+                      </p>
                     <% } %>
                   <% }) %>
                 </li>
