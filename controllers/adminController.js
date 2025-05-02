@@ -10,29 +10,34 @@ exports.getAdminHome = (req, res, next) => {
 };
 
 exports.getUsers = async (req, res) => {
-  // pagination
-  const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1;
-  const recruiterPage = parseInt(req.query.recruiterPage) || 1;
-  const userLimit = parseInt(req.query.userLimit) || 5;
-
-  const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
-  const recruiterSkip = (recruiterPage - 1) * userLimit;
-
-  const jobSeekers = await User.find({ role: "jobSeeker" })
-    .skip(jobSeekerSkip)
-    .limit(userLimit);
-
-  const recruiters = await User.find({ role: "recruiter" })
-    .skip(recruiterSkip)
-    .limit(userLimit);
-
-  const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
-  const totalRecruiters = await User.countDocuments({ role: "recruiter" });
-
-  const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
-  const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
-
   try {
+    // Pagination query parameters
+    const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1; // Default to page 1 if not provided
+    const recruiterPage = parseInt(req.query.recruiterPage) || 1; // Default to page 1 if not provided
+    const userLimit = parseInt(req.query.userLimit) || 5; // Default to 5 users per page if not provided
+
+    // Skip calculation for pagination
+    const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
+    const recruiterSkip = (recruiterPage - 1) * userLimit;
+
+    // Fetch Job Seekers and Recruiters with pagination
+    const jobSeekers = await User.find({ role: "jobSeeker" })
+      .skip(jobSeekerSkip)
+      .limit(userLimit);
+
+    const recruiters = await User.find({ role: "recruiter" })
+      .skip(recruiterSkip)
+      .limit(userLimit);
+
+    // Fetch the total count for both roles
+    const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
+    const totalRecruiters = await User.countDocuments({ role: "recruiter" });
+
+    // Calculate total pages for Job Seekers and Recruiters
+    const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
+    const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
+
+    // Render the page with necessary data
     res.render("admin/users", {
       pageTitle: "Users",
       path: "/users",
@@ -45,25 +50,29 @@ exports.getUsers = async (req, res) => {
       totalRecruiterPages,
     });
   } catch (err) {
+    // Log error and render the page with error message
     console.error("Error fetching users:", err);
-    res.render("admin/users", {
+
+    // Render with error message if there's an issue
+    return res.render("admin/users", {
       pageTitle: "Users",
       path: "/users",
-      jobSeekers,
-      recruiters,
-      userLimit,
-      jobSeekerPage,
-      recruiterPage,
-      totalJobSeekerPages,
-      totalRecruiterPages,
+      jobSeekers: [], // Empty arrays in case of error to avoid sending incomplete data
+      recruiters: [],
+      userLimit: req.query.userLimit || 5,
+      jobSeekerPage: req.query.jobSeekerPage || 1,
+      recruiterPage: req.query.recruiterPage || 1,
+      totalJobSeekerPages: 0,
+      totalRecruiterPages: 0,
       errorMessage: "Cannot fetch users, please try again",
     });
   }
 };
 
 exports.getAddCategory = async (req, res) => {
-  const categories = await Category.find().select("name");
   try {
+    const categories = await Category.find().select("name");
+
     return res.render("admin/jobCategories", {
       pageTitle: "Add Category",
       path: "/jobCategories",
@@ -80,37 +89,46 @@ exports.getAddCategory = async (req, res) => {
 };
 
 exports.postAddCategory = async (req, res) => {
-  let errors = {};
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5;
-  const skip = (page - 1) * limit;
-  const categories = await Category.find()
-    .select("name")
-    .skip(skip)
-    .limit(limit);
-  const totalCategories = await Category.countDocuments();
-  const totalPages = Math.ceil(totalCategories / limit);
+  const errors = {}; // Object to hold any validation or error messages
+  const page = parseInt(req.query.page) || 1; // Default page is 1 if not provided
+  const limit = parseInt(req.query.limit) || 5; // Default limit is 5 if not provided
+  const skip = (page - 1) * limit; // Skip value for pagination
+  let categories;
+  let totalCategories;
+  let totalPages;
+
   try {
+    // Fetching categories for pagination
+    categories = await Category.find().select("name").skip(skip).limit(limit);
+
+    // Fetching the total number of categories for pagination
+    totalCategories = await Category.countDocuments();
+    totalPages = Math.ceil(totalCategories / limit); // Total pages calculation
+
+    // Creating a new category
     const category = new Category({ name: req.body.name });
-    await category.save();
+    await category.save(); // Save category to the database
+
     res.cookie("successMessage", "Job category added successfully", {
       maxAge: 3000,
       httpOnly: false,
     });
+
     return res.redirect("/admin/jobCategories");
   } catch (err) {
-    console.error("Raw error:", err); // Log full error object first
-
-    // prevent duplicate entry
-    if (err.cause && err.cause.code === 11000) {
+    // Check for duplicate entry error (MongoDB specific)
+    if (err.code === 11000) {
       errors.name = "Job category already exists!";
-    } else if (err.name === "ValidationError") {
+    }
+    // Check for validation errors
+    else if (err.name === "ValidationError") {
       for (let field in err.errors) {
         errors[field] = err.errors[field].message; // Extract validation error messages
       }
     }
 
     console.error("Formatted error:", errors);
+    // Re-render the page with error messages and previous data
     return res.render("admin/jobCategories", {
       pageTitle: "Add Category",
       path: "/jobCategories",
@@ -118,10 +136,10 @@ exports.postAddCategory = async (req, res) => {
       currentPage: page,
       limit,
       totalPages,
-      errors: errors,
+      errors,
       isEditing: false,
       showForm: true,
-      oldInput: req.body,
+      oldInput: req.body, // Re-populate the form with old input
     });
   }
 };
@@ -130,13 +148,16 @@ exports.getJobCategories = async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
-  const categories = await Category.find()
-    .select("name")
-    .skip(skip)
-    .limit(limit);
-  const totalCategories = await Category.countDocuments();
-  const totalPages = Math.ceil(totalCategories / limit);
   try {
+    const categories = await Category.find()
+      .select("name")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const totalCategories = await Category.countDocuments();
+    const totalPages = Math.ceil(totalCategories / limit);
+
     res.render("admin/jobCategories", {
       pageTitle: "Job Categories",
       path: "/jobCategories",
@@ -160,17 +181,17 @@ exports.getEditCategory = async (req, res, next) => {
   const limit = parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
 
-  const categories = await Category.find()
-    .select("name")
-    .skip(skip)
-    .limit(limit);
-
-  const totalCategories = await Category.countDocuments();
-  const totalPages = Math.ceil(totalCategories / limit);
-
   try {
+    const categories = await Category.find()
+      .select("name")
+      .skip(skip)
+      .limit(limit);
+
+    const totalCategories = await Category.countDocuments();
+    const totalPages = Math.ceil(totalCategories / limit);
+
     const category = await Category.findById(req.params.categoryId);
-    // console.log("id", req.params.categoryId);
+
     if (!category) {
       return res.status(404).render("admin/jobCategories", {
         pageTitle: "Job Categories",
@@ -209,20 +230,17 @@ exports.postEditCategory = async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
-
-  const categories = await Category.find()
-    .select("name")
-    .skip(skip)
-    .limit(limit);
-
-  const totalCategories = await Category.countDocuments();
-  const totalPages = Math.ceil(totalCategories / limit);
-
   const categoryId = req.params.categoryId;
-  const category = await Category.findById(categoryId);
+  let categories;
+  let category;
 
   try {
-    // console.log(categoryId, "categoryId");
+    categories = await Category.find().select("name").skip(skip).limit(limit);
+
+    const totalCategories = await Category.countDocuments();
+    const totalPages = Math.ceil(totalCategories / limit);
+
+    category = await Category.findById(categoryId);
     if (!category) {
       return res.status(404).render("admin/jobCategories", {
         pageTitle: "Job Categories",
@@ -247,6 +265,7 @@ exports.postEditCategory = async (req, res, next) => {
       maxAge: 3000,
       httpOnly: false,
     });
+
     return res.redirect("/admin/jobCategories");
   } catch (err) {
     let errors = {};
@@ -256,6 +275,7 @@ exports.postEditCategory = async (req, res, next) => {
         errors[field] = err.errors[field].message; // Extract validation error messages
       }
     }
+
     return res.render("admin/jobCategories", {
       pageTitle: "Edit Category",
       path: "/jobCategories",
@@ -276,25 +296,25 @@ exports.deleteCategory = async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
-
-  const categories = await Category.find()
-    .select("name")
-    .skip(skip)
-    .limit(limit);
-
-  const totalCategories = await Category.countDocuments();
-  const totalPages = Math.ceil(totalCategories / limit);
+  const categoryId = req.body.categoryId;
+  let categories;
+  let totalPages;
 
   try {
-    // delete category
-    const categoryId = req.body.categoryId;
+    categories = await Category.find().select("name").skip(skip).limit(limit);
+
+    const totalCategories = await Category.countDocuments();
+    totalPages = Math.ceil(totalCategories / limit);
+
+    // delete category from database
     await Category.findByIdAndDelete(categoryId);
 
     res.cookie("successMessage", "Job Category deleted successfully", {
       maxAge: 3000,
       httpOnly: false,
     });
-    res.redirect("/admin/jobCategories");
+
+    return res.redirect("/admin/jobCategories");
   } catch (err) {
     console.error("Error deleting category:", err);
 
@@ -322,23 +342,27 @@ exports.deactivateUser = async (req, res, next) => {
   const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
   const recruiterSkip = (recruiterPage - 1) * userLimit;
 
-  const jobSeekers = await User.find({ role: "jobSeeker" })
-    .skip(jobSeekerSkip)
-    .limit(userLimit);
+  const userId = req.body.userId;
 
-  const recruiters = await User.find({ role: "recruiter" })
-    .skip(recruiterSkip)
-    .limit(userLimit);
-
-  const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
-  const totalRecruiters = await User.countDocuments({ role: "recruiter" });
-
-  const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
-  const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
+  let jobSeekers;
+  let recruiters;
+  let totalJobSeekerPages;
+  let totalRecruiterPages;
 
   try {
-    const userId = req.body.userId;
-    // console.log(userId);
+    jobSeekers = await User.find({ role: "jobSeeker" })
+      .skip(jobSeekerSkip)
+      .limit(userLimit);
+
+    recruiters = await User.find({ role: "recruiter" })
+      .skip(recruiterSkip)
+      .limit(userLimit);
+
+    const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
+    const totalRecruiters = await User.countDocuments({ role: "recruiter" });
+
+    totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
+    totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
 
     // update user
     const user = await User.findByIdAndUpdate(userId, { isActive: false });
@@ -362,6 +386,7 @@ exports.deactivateUser = async (req, res, next) => {
       maxAge: 3000,
       httpOnly: false,
     });
+
     return res.redirect("/admin/users");
   } catch (err) {
     console.error("Error deactivating user:", err);
@@ -389,23 +414,27 @@ exports.activateUser = async (req, res, next) => {
   const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
   const recruiterSkip = (recruiterPage - 1) * userLimit;
 
-  const jobSeekers = await User.find({ role: "jobSeeker" })
-    .skip(jobSeekerSkip)
-    .limit(userLimit);
+  const userId = req.body.userId;
 
-  const recruiters = await User.find({ role: "recruiter" })
-    .skip(recruiterSkip)
-    .limit(userLimit);
-
-  const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
-  const totalRecruiters = await User.countDocuments({ role: "recruiter" });
-
-  const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
-  const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
+  let jobSeekers;
+  let recruiters;
+  let totalJobSeekerPages;
+  let totalRecruiterPages;
 
   try {
-    const userId = req.body.userId;
-    // console.log(userId);
+    jobSeekers = await User.find({ role: "jobSeeker" })
+      .skip(jobSeekerSkip)
+      .limit(userLimit);
+
+    recruiters = await User.find({ role: "recruiter" })
+      .skip(recruiterSkip)
+      .limit(userLimit);
+
+    const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
+    const totalRecruiters = await User.countDocuments({ role: "recruiter" });
+
+    totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
+    totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
 
     // update user
     const user = await User.findByIdAndUpdate(userId, { isActive: true });
@@ -429,6 +458,7 @@ exports.activateUser = async (req, res, next) => {
       maxAge: 3000,
       httpOnly: false,
     });
+
     return res.redirect("/admin/users");
   } catch (err) {
     console.error("Error activating user:", err);
@@ -456,22 +486,27 @@ exports.deleteUser = async (req, res, next) => {
   const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
   const recruiterSkip = (recruiterPage - 1) * userLimit;
 
-  const jobSeekers = await User.find({ role: "jobSeeker" })
-    .skip(jobSeekerSkip)
-    .limit(userLimit);
+  const userId = req.body.userId;
 
-  const recruiters = await User.find({ role: "recruiter" })
-    .skip(recruiterSkip)
-    .limit(userLimit);
-
-  const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
-  const totalRecruiters = await User.countDocuments({ role: "recruiter" });
-
-  const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
-  const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
+  let jobSeekers;
+  let recruiters;
+  let totalJobSeekerPages;
+  let totalRecruiterPages;
 
   try {
-    const userId = req.body.userId;
+    jobSeekers = await User.find({ role: "jobSeeker" })
+      .skip(jobSeekerSkip)
+      .limit(userLimit);
+
+    recruiters = await User.find({ role: "recruiter" })
+      .skip(recruiterSkip)
+      .limit(userLimit);
+
+    const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
+    const totalRecruiters = await User.countDocuments({ role: "recruiter" });
+
+    totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
+    totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
 
     // delete user
     const user = await User.findByIdAndDelete(userId);
@@ -497,6 +532,7 @@ exports.deleteUser = async (req, res, next) => {
       maxAge: 3000,
       httpOnly: false,
     });
+
     return res.redirect("/admin/users");
   } catch (err) {
     console.error("Error deleting user:", err);

@@ -12,7 +12,7 @@ dotenv.config();
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-exports.getRegister = async (req, res) => {
+exports.getRegister = async (req, res, next) => {
   try {
     res.status(422).render("auth/register", {
       pageTitle: "Register",
@@ -29,7 +29,7 @@ exports.getRegister = async (req, res) => {
 exports.postRegister = async (req, res, next) => {
   let errors = {};
   const { firstName, lastName, email, phone, password, role, company } =
-    req.body;
+    req.body; // extract form data
 
   try {
     // check for existing user
@@ -83,7 +83,7 @@ exports.postRegister = async (req, res, next) => {
           httpOnly: true,
         }
       );
-      res.redirect("/auth/login");
+      return res.redirect("/auth/login");
     }
   } catch (err) {
     if (err.name === "ValidationError") {
@@ -93,7 +93,7 @@ exports.postRegister = async (req, res, next) => {
     } else if (err.message?.includes("Password must have at least")) {
       errors["password"] = err.message;
     }
-    console.log("errors", errors);
+    // console.log("errors", errors);
     return res.status(422).render("auth/register", {
       pageTitle: "Register",
       path: "/register",
@@ -136,7 +136,6 @@ exports.getAdminLogin = async (req, res) => {
     // If user is already logged in
     if (req.user) {
       const userRole = req.user.role;
-      console.log("Logged-in user role:", userRole);
       return res.redirect("/admin/users");
     }
 
@@ -154,10 +153,10 @@ exports.getAdminLogin = async (req, res) => {
 };
 
 exports.postLogin = async (req, res, next) => {
-  let errors = {};
+  let errors = {}; // errors object
 
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body; // extract form data
 
     // Create a temporary user instance to validate schema rules
     const tempUser = new User({ email, password });
@@ -182,7 +181,7 @@ exports.postLogin = async (req, res, next) => {
 
     if (!user) {
       errors.email = "User not found!";
-      return res.status(401).render("auth/login", {
+      return res.status(404).render("auth/login", {
         pageTitle: "Login",
         path: "/login",
         errors,
@@ -259,15 +258,15 @@ exports.postLogin = async (req, res, next) => {
       maxAge: 3000,
       httpOnly: false,
     });
-    res.redirect("/auth/login");
+    return res.redirect("/auth/login");
   }
 };
 
 exports.adminLogin = async (req, res, next) => {
-  let errors = {};
+  let errors = {}; /// errors object
 
   try {
-    const { email, password, adminSecret } = req.body;
+    const { email, password, adminSecret } = req.body; // extract form data
 
     // Create a temporary admin instance to validate schema rules
     const tempUser = new Admin({ email, password, adminSecret });
@@ -292,7 +291,7 @@ exports.adminLogin = async (req, res, next) => {
     const user = await Admin.findOne({ email });
 
     if (!user) {
-      errors.email = "User not found!";
+      errors.email = "Admin not found!";
       return res.status(401).render("auth/adminLogin", {
         pageTitle: "Admin Login",
         path: "/login",
@@ -361,7 +360,7 @@ exports.adminLogin = async (req, res, next) => {
       maxAge: 3000,
       httpOnly: false,
     });
-    res.redirect("/auth/admin/login");
+    return res.redirect("/auth/admin/login");
   }
 };
 
@@ -380,7 +379,7 @@ exports.logout = (req, res, next) => {
       httpOnly: false,
     });
 
-    res.redirect("/");
+    return res.redirect("/");
   } catch (err) {
     console.error("Logout error:", err);
     next({ message: "Something went wrong. Please try again later." });
@@ -430,7 +429,6 @@ exports.postForgotPassword = async (req, res, next) => {
 
     // set resetToken if user found
     const resetToken = crypto.randomBytes(32).toString("hex");
-    // console.log("resetToken", resetToken);
 
     const resetTokenExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes from now
 
@@ -448,7 +446,7 @@ exports.postForgotPassword = async (req, res, next) => {
       to: email,
       subject: "Reset Password",
       text: "Click the link below to reset your password.",
-      html: `Click <a href="${resetUrl}">here</a> to reset your password.`,
+      html: `<a href="${resetUrl}">Click here</a> to reset your password.`,
     };
 
     try {
@@ -484,8 +482,6 @@ exports.createNewPassword = async (req, res, next) => {
       resetTokenExpiry: { $gt: Date.now() },
     });
 
-    // console.log("user in createNew",user)
-
     if (!user) {
       return res.render("500", {
         pageTitle: "Error",
@@ -511,12 +507,8 @@ exports.createNewPassword = async (req, res, next) => {
 
 exports.postNewPassword = async (req, res, next) => {
   try {
-    const { newPassword, confirmPassword, userId, resetToken } = req.body;
-    const errors = {};
-
-    console.log("req.body", req.body);
-
-    // console.log("resetToken", resetToken);
+    const { newPassword, confirmPassword, userId, resetToken } = req.body; // extract form data
+    const errors = {}; // errors object
 
     // verify token
     const user = await User.findOne({
@@ -525,7 +517,6 @@ exports.postNewPassword = async (req, res, next) => {
       _id: userId,
     });
 
-    // console.log("user in post new", user);
     if (!user) {
       return res.render("500", {
         pageTitle: "Error",
@@ -565,8 +556,6 @@ exports.postNewPassword = async (req, res, next) => {
         confirmPassword,
       });
     }
-
-    // console.log("errors",errors)
 
     // save hashedPassword
     const hashedPassword = await bcrypt.hash(newPassword, 12);

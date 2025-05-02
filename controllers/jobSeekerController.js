@@ -13,12 +13,13 @@ exports.getJobSeekerHome = async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 5; // jobs per page
   const skip = (page - 1) * limit;
-  // const featuredJobs = await featuredJob.find()
+
   try {
     const totalFeaturedJobs = await jobListing.countDocuments({
       "jobDetail.isFeatured.status": "Yes",
       "jobDetail.isFeatured.endDate": { $gte: new Date() },
     });
+
     const featuredJobs = await jobListing
       .find({
         "jobDetail.isFeatured.status": "Yes",
@@ -26,8 +27,8 @@ exports.getJobSeekerHome = async (req, res, next) => {
       })
       .skip(skip)
       .limit(limit);
+
     const totalPages = Math.ceil(totalFeaturedJobs / limit);
-    // console.log('featuredJobs',featuredJobs)
 
     res.render("jobSeeker/home", {
       pageTitle: "Home | Job Seeker",
@@ -38,8 +39,8 @@ exports.getJobSeekerHome = async (req, res, next) => {
       totalPages,
     });
   } catch (error) {
-    console.log(error);
-    next({ message: "Something went wrong. Please try again later." });
+    console.log("error",error);
+    next(error);
   }
 };
 
@@ -96,7 +97,6 @@ exports.getAllJobs = async (req, res, next) => {
       ];
     }
 
-    // console.log("filter",filter)
     // check if user having any saved jobs
     const savedJobsId = await savedJobs
       .find({ "user.userId": req.user._id })
@@ -105,14 +105,12 @@ exports.getAllJobs = async (req, res, next) => {
     const totalJobs = await jobListing.countDocuments(filter);
     const totalPages = Math.ceil(totalJobs / limit);
 
-    // console.log("totalJobs",totalJobs,"totalPages",totalPages)
     const jobPosts = await jobListing
       .find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    // console.log("jobPosts",jobPosts)
     const categories = await Category.find();
 
     res.render("jobSeeker/allJobs", {
@@ -141,9 +139,8 @@ exports.getAllJobs = async (req, res, next) => {
 };
 
 exports.postSaveJobPost = async (req, res, next) => {
-  const jobPostId = req.body.jobPostId;
-
   try {
+    const jobPostId = req.body.jobPostId;
     const jobPost = await jobListing.findById(jobPostId);
     const categories = await Category.find().select("name");
 
@@ -174,11 +171,13 @@ exports.postSaveJobPost = async (req, res, next) => {
       return res.redirect("/jobSeeker/allJobs"); //
     }
 
+    // create user detail object
     const user = {
       userId: req.user._id,
       name: req.user.firstName + " " + req.user.lastName,
     };
 
+    // job detail
     const jobDetail = {
       jobId: jobPost._id,
       jobTitle: jobPost.jobDetail.jobTitle,
@@ -206,17 +205,17 @@ exports.postSaveJobPost = async (req, res, next) => {
 };
 
 exports.getJobDetails = async (req, res, next) => {
-  const jobPostId = req.params.jobPostId;
-
   try {
+    const jobPostId = req.params.jobPostId;
     // find jobpost
     const jobPost = await jobListing.findById(jobPostId);
+
     const savedJob = await savedJobs.findOne({
       "user.userId": req.user._id,
       "jobDetail.jobId": jobPostId,
     });
 
-    const allJobs = await jobListing.find({}, "_id").sort({ updatedAt: -1 });
+    const allJobs = await jobListing.find({}, "_id").sort({ createdAt: -1 });
     const jobIndex = allJobs.findIndex((j) => j._id.toString() === jobPostId);
     const prevJobId = jobIndex > 0 ? allJobs[jobIndex - 1]._id : null;
     const nextJobId =
@@ -231,7 +230,6 @@ exports.getJobDetails = async (req, res, next) => {
       });
     }
 
-    // console.log("jobPost",jobPost)
     // display jobDetails
     res.render("jobSeeker/jobDetail", {
       pageTitle: jobPost.jobDetail.jobTitle,
@@ -249,9 +247,8 @@ exports.getJobDetails = async (req, res, next) => {
 };
 
 exports.getJobSeekerProfile = async (req, res, next) => {
-  const user = req.user;
-
   try {
+    const user = req.user;
     // find userProfile
     const userProfile = await Profile.findById(user.profileId);
 
@@ -268,7 +265,6 @@ exports.getJobSeekerProfile = async (req, res, next) => {
       "user.userId": user._id,
       status: "Scheduled",
     });
-    // console.log("userProfile",userProfile)
 
     // display profile with all data
     res.render("jobSeeker/profile", {
@@ -297,6 +293,7 @@ exports.getEditProfile = async (req, res, next) => {
       user,
       profile: userProfile,
       errors: {},
+      formData: {},
     });
   } catch (error) {
     console.log(error);
@@ -306,14 +303,19 @@ exports.getEditProfile = async (req, res, next) => {
 
 exports.postEditProfile = async (req, res, next) => {
   let errors = {};
-  const profileId = req.user.profileId;
   let profile;
   try {
+    const profileId = req.user.profileId;
+
+    // Find user profile
     profile = await Profile.findById(profileId);
     if (!profile) return next({ message: "Profile not found!" });
 
     // Check for file validation errors first
-    if (req.fileValidationError && Object.keys(req.fileValidationError).length > 0) {
+    if (
+      req.fileValidationError &&
+      Object.keys(req.fileValidationError).length > 0
+    ) {
       errors = { ...req.fileValidationError };
 
       return res.status(422).render("jobSeeker/editProfile", {
@@ -322,11 +324,43 @@ exports.postEditProfile = async (req, res, next) => {
         user: req.user,
         profile,
         errors,
+        formData: req.body,
       });
     }
 
     // Update About
     profile.about = req.body.about?.trim() || "";
+
+    // Update Education
+    const { startYear, passingYear } = req.body;
+
+    if (startYear && !passingYear) {
+      errors["education.passingYear"] = "Passing date is required";
+    } else if (startYear && passingYear) {
+      const start = new Date(startYear);
+      const passing = new Date(passingYear);
+
+      const difference = (passing - start) / (1000 * 3600 * 24);
+
+      if (start >= new Date()) {
+        errors["education.startYear"] = "Start date can not be future date.";
+      }
+
+      if (difference < 300) {
+        errors["education.passingYear"] =
+          "Difference between starting and passing dates must be at least 10 months.";
+      }
+      if (Object.keys(errors).length > 0) {
+        return res.status(422).render("jobSeeker/editProfile", {
+          pageTitle: "Edit Profile",
+          path: "/profile",
+          user: req.user,
+          profile, // Passing the form data to retain input values
+          errors,
+          formData: req.body,
+        });
+      }
+    }
 
     // Update Education
     profile.education = {
@@ -341,21 +375,31 @@ exports.postEditProfile = async (req, res, next) => {
     // Update Experience
     let totalMonths = 0;
     if (req.body.experience) {
+      // Ensure 'experience' is always treated as an array
       const expArray = Array.isArray(req.body.experience)
         ? req.body.experience
         : Object.values(req.body.experience);
 
+      // Process the experience data and calculate total experience in months
       const filteredExp = expArray
-        .map((exp) => {
+        .map((exp, index) => {
+          // Parse start and end dates
           const startDate = exp.startDate ? new Date(exp.startDate) : null;
-          const endDate = exp.endDate ? new Date(exp.endDate) : new Date();
+          const endDate = exp.endDate ? new Date(exp.endDate) : new Date(); // Default to current date if no end date
 
+          // Validate Start Date
+          if (!startDate || isNaN(startDate)) {
+            errors[`experience.${index}.startDate`] =
+              "Start date is required and must be valid.";
+          }
+          // Calculate months of experience if startDate and endDate are valid
           if (startDate && endDate && startDate < endDate) {
             const years = endDate.getFullYear() - startDate.getFullYear();
             const months = endDate.getMonth() - startDate.getMonth();
-            totalMonths += years * 12 + months;
+            totalMonths += years * 12 + months; // Add calculated months to totalMonths
           }
 
+          // Return the filtered and sanitized experience object
           return {
             company: exp.company?.trim() || undefined,
             position: exp.position?.trim() || undefined,
@@ -364,18 +408,33 @@ exports.postEditProfile = async (req, res, next) => {
             description: exp.description?.trim() || undefined,
           };
         })
-        .filter(
-          (exp) =>
-            exp.company ||
-            exp.position ||
-            exp.startDate ||
-            exp.endDate ||
-            exp.description
-        );
+        .filter((exp) => {
+          // Only keep the experience entries with at least one non-empty field
+          return (
+            exp &&
+            (exp.company ||
+              exp.position ||
+              exp.startDate ||
+              exp.endDate ||
+              exp.description)
+          );
+        });
+      if (Object.keys(errors).length > 0) {
+        return res.status(422).render("jobSeeker/editProfile", {
+          pageTitle: "Edit Profile",
+          path: "/profile",
+          user: req.user,
+          profile, // Passing the form data to retain input values
+          errors,
+          formData: req.body,
+        });
+      }
 
+      // If there are valid experience entries, update profile.experience and totalExperience
       profile.experience = filteredExp.length > 0 ? filteredExp : undefined;
-      profile.totalExperience = totalMonths;
+      profile.totalExperience = totalMonths; // Set total experience in months
     } else {
+      // If no experience provided, clear the experience and totalExperience fields
       profile.experience = undefined;
       profile.totalExperience = undefined;
     }
@@ -383,46 +442,47 @@ exports.postEditProfile = async (req, res, next) => {
     // Update Skills
     if (req.body.skills) {
       profile.skills = req.body.skills
-        .split(",")
-        .map((skill) => skill.trim())
-        .filter((skill) => skill);
+        .split(",") // Split the input string by commas
+        .map((skill) => skill.trim()) // Trim each skill to remove leading/trailing spaces
+        .filter((skill) => skill.length > 0); // Filter out empty strings (if any)
     }
+
+    // Helper function to delete old files
+    const deleteOldFile = (filePath) => {
+      if (filePath) {
+        const fullPath = path.join(__dirname, "..", "public", filePath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath); // Remove the old file
+        }
+      }
+    };
 
     // Upload Profile Photo
     if (req.files?.profilePhoto?.length) {
-      if (profile.profilePhoto) {
-        const oldPhotoPath = path.join(
-          __dirname,
-          "..",
-          "public",
-          profile.profilePhoto
-        );
-        if (fs.existsSync(oldPhotoPath)) fs.unlinkSync(oldPhotoPath);
-      }
+      // Delete the old profile photo if it exists
+      deleteOldFile(profile.profilePhoto);
 
+      // Save the new profile photo path
       const photoPath = `/uploads/profilePhoto/${req.files.profilePhoto[0].filename}`;
       profile.profilePhoto = photoPath;
     }
 
     // Upload Resume
     if (req.files?.resume?.length) {
-      if (profile.resume) {
-        const oldResumePath = path.join(
-          __dirname,
-          "..",
-          "public",
-          profile.resume
-        );
-        if (fs.existsSync(oldResumePath)) fs.unlinkSync(oldResumePath);
-      }
+      // Delete the old resume if it exists
+      deleteOldFile(profile.resume);
 
+      // Save the new resume path
       const resumePath = `/uploads/resume/${req.files.resume[0].filename}`;
       profile.resume = resumePath;
     }
 
     await profile.save();
 
-    res.cookie("successMessage", "Profile updated successfully!");
+    res.cookie("successMessage", "Profile updated successfully!", {
+      maxAge: 3000,
+      httpOnly: false,
+    });
     res.redirect("/jobSeeker/profile");
   } catch (err) {
     console.log("Error updating profile:", err);
@@ -462,20 +522,18 @@ exports.postEditProfile = async (req, res, next) => {
       user: req.user,
       profile,
       errors,
+      formData: req.body,
     });
   }
 };
 
 exports.viewSavedJobDetail = async (req, res, next) => {
-  const savedJobId = req.params.savedJobId;
-  // console.log("savedJobId", savedJobId);
-
   try {
+    const savedJobId = req.params.savedJobId;
     // find saved job
     const savedJob = await savedJobs
       .findById(savedJobId)
       .populate("jobDetail.jobId");
-    // console.log("savedJob",savedJob)
 
     if (!savedJob) {
       res.cookie("errorMessage", "Job not found", {
@@ -486,8 +544,6 @@ exports.viewSavedJobDetail = async (req, res, next) => {
     }
 
     const jobPost = savedJob.jobDetail.jobId;
-    // console.log("jobPost", jobPost);
-    // console.log("jobPostId", jobPost._id);
 
     // display savedjob details
     res.render("jobSeeker/savedJobDetail", {
@@ -503,13 +559,10 @@ exports.viewSavedJobDetail = async (req, res, next) => {
 };
 
 exports.unSaveJob = async (req, res, next) => {
-  const savedJobId = req.params.savedJobId;
-  // console.log("savedJobId", savedJobId);
-
   try {
+    const savedJobId = req.params.savedJobId;
     // find savedjob
     const savedJob = await savedJobs.findById(savedJobId);
-    // console.log("savedJob", savedJob);
     if (!savedJob) {
       res.cookie("errorMessage", "Job not found", {
         maxAge: 3000,
@@ -524,6 +577,7 @@ exports.unSaveJob = async (req, res, next) => {
       maxAge: 3000,
       httpOnly: false,
     });
+
     return res.redirect("/jobSeeker/profile");
   } catch (error) {
     console.log(error);
@@ -534,12 +588,12 @@ exports.unSaveJob = async (req, res, next) => {
 };
 
 exports.getApplicationForm = async (req, res, next) => {
-  const jobPostId = req.params.jobPostId;
-
   try {
+    const jobPostId = req.params.jobPostId;
     // find jobdetails
     const jobPost = await jobListing.findById(jobPostId);
-    res.render("jobSeeker/applicationform", {
+
+    res.render("jobSeeker/applicationForm", {
       pageTitle: jobPost.jobDetail.jobTitle,
       path: "/applyForJob",
       job: jobPost,
@@ -552,17 +606,13 @@ exports.getApplicationForm = async (req, res, next) => {
 };
 
 exports.applyForJob = async (req, res, next) => {
-  const jobPostId = req.params.jobPostId;
-  const user = req.user;
   let resume;
-
   try {
-    // console.log("jobPostId",jobPostId)
-    // console.log("user",user)
+    const jobPostId = req.params.jobPostId;
+    const user = req.user;
 
     // find jobpost
     const jobPost = await jobListing.findById(jobPostId);
-    // console.log("jobPost",jobPost)
     if (!jobPost) {
       return res.status(404).json({ message: "Job not found" });
     }
@@ -582,12 +632,13 @@ exports.applyForJob = async (req, res, next) => {
       return res.redirect("/jobSeeker/allJobs");
     }
 
-    console.log("req.file", req.file);
-
     // upload resume
-    if (req.fileValidationError) {
+    if (
+      req.fileValidationError &&
+      Object.keys(req.fileValidationError).length > 0
+    ) {
       return res
-        .cookie("errorMessage", req.fileValidationError, {
+        .cookie("errorMessage", req.fileValidationError.resume, {
           maxAge: 3000,
           httpOnly: false,
         })
@@ -610,7 +661,6 @@ exports.applyForJob = async (req, res, next) => {
 
     // Set resume path if file was uploaded successfully
     resume = `/uploads/resume/${req.file.filename}`;
-    console.log("Resume saved successfully at:", resume);
 
     // Create a new application
     const newApplication = new Application({
@@ -639,33 +689,33 @@ exports.applyForJob = async (req, res, next) => {
 
     return res.redirect("/jobSeeker/profile");
   } catch (err) {
-    console.error(err);
+    console.log(err);
     next({ message: "Something went wrong. Please try again later." });
   }
 };
 
 exports.withdrawApplication = async (req, res, next) => {
-  const applicationId = req.params.applicationId;
-
   try {
-    // find and update application status
-    await Application.findByIdAndUpdate(
-      {
-        _id: applicationId,
-      },
-      {
-        $set: {
-          applicationStatus: "Withdrawn",
-        },
-      },
-      {
-        new: true,
+    const applicationId = req.params.applicationId;
+    const application = await Application.findById(applicationId);
+
+    // update application status
+    application.applicationStatus = "Withdrawn";
+    const resumePath = application.resumeLink;
+    if (resumePath) {
+      const fullPath = path.join(__dirname, "..", "public", resumePath);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath); // Remove the old file
       }
-    );
+    }
+
+    await application.save();
+
     res.cookie("successMessage", "Application withdrawn successfully.", {
       maxAge: 3000,
       httpOnly: false,
     });
+
     return res.redirect("/jobSeeker/profile");
   } catch (err) {
     console.log(err);
@@ -682,10 +732,9 @@ exports.withdrawApplication = async (req, res, next) => {
 };
 
 exports.getReviewForm = async (req, res, next) => {
-  const jobId = req.params.jobId;
-  const userId = req.user._id;
-
   try {
+    const jobId = req.params.jobId;
+    const userId = req.user._id;
     // find jobPost
     const jobPost = await jobListing.findById(jobId);
 
@@ -698,6 +747,7 @@ exports.getReviewForm = async (req, res, next) => {
       });
       return res.redirect(`/jobSeeker/allJobs/${jobId}`);
     }
+
     res.render("jobSeeker/reviewJob", {
       pageTitle: "Review job",
       path: "/reviewJob",
@@ -712,11 +762,12 @@ exports.getReviewForm = async (req, res, next) => {
 };
 
 exports.postJobReview = async (req, res, next) => {
-  const jobId = req.params.jobId;
-  const userId = req.user._id;
   let jobPost;
-  // console.log("jobPostId",jobId)
+  let userId;
   try {
+    const jobId = req.params.jobId;
+    userId = req.user._id;
+
     jobPost = await jobListing.findById(jobId);
     const newReview = new Review({
       userId: userId,
@@ -736,7 +787,6 @@ exports.postJobReview = async (req, res, next) => {
       ).toFixed(1)
     );
 
-    console.log("avgRating", avgRating);
     await jobListing.updateOne(
       { _id: jobId },
       { "jobDetail.avgRating": avgRating }
@@ -744,15 +794,13 @@ exports.postJobReview = async (req, res, next) => {
     // jobPost.jobDetail.avgRating = avgRating;
     // await jobPost.save({ validateBeforeSave: false });
 
-    // console.log("newReview",newReview)
     return res.redirect(`/jobSeeker/allJobs/${jobId}`);
   } catch (err) {
-    // console.log(err);
     let errors = {};
     for (let field in err.errors) {
       errors[field] = err.errors[field].message;
     }
-    console.log("errors", errors);
+
     res.render("jobSeeker/reviewJob", {
       pageTitle: "Review job",
       path: "/reviewJob",
@@ -764,19 +812,23 @@ exports.postJobReview = async (req, res, next) => {
 };
 
 exports.viewJobReviews = async (req, res, next) => {
-  const jobId = req.params.jobId;
+  try {
+    const jobId = req.params.jobId;
 
-  // find all reviews for thi job post
-  const reviews = await Review.find({ jobId: jobId })
-    .populate("userId")
-    .sort({ createdAt: -1 });
-  // console.log("reviews", reviews);
+    // find all reviews for thi job post
+    const reviews = await Review.find({ jobId: jobId })
+      .populate("userId")
+      .sort({ createdAt: -1 });
 
-  // display reviews
-  return res.render("jobSeeker/viewReviews", {
-    pageTitle: "Reviews",
-    path: "/reviews",
-    reviews,
-    jobId,
-  });
+    // display reviews
+    return res.render("jobSeeker/viewReviews", {
+      pageTitle: "Reviews",
+      path: "/reviews",
+      reviews,
+      jobId,
+    });
+  } catch (error) {
+    console.log(error);
+    next({ message: "something went wrong." });
+  }
 };
