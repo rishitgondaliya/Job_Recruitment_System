@@ -116,7 +116,7 @@
                                 <form action="/jobSeeker/profile/savedJobs/<%= savedJob._id %>" method="POST">
                                     <button type="submit" class="delete-btn btn">Unsave</button>
                                 </form>
-                                <form action="/jobSeeker/reviewJob/<%= jobPost._id %>" method="POST">
+                                <form action="/jobSeeker/reviewJob/<%= jobPost._id %>" method="GET">
                                     <button type="submit" class="review-btn btn">Rate this job</button>
                                 </form>
                                 <form action="/jobSeeker/reviews/<%= jobPost._id %>" method="GET">
