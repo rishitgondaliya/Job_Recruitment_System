@@ -4,6 +4,7 @@ function addExperience() {
     const container = document.getElementById('experience-container');
     const div = document.createElement('div');
     div.className = 'experience-card';
+
     div.innerHTML = `
         <div class="form-input">
             <label>Position</label>
@@ -35,8 +36,17 @@ function addExperience() {
     // Attach event listener to remove button
     div.querySelector('.remove-btn').addEventListener('click', function() {
         div.remove();
+        // After removing, update the experience index holder to reflect the new total count
+        experienceIndex--;
+        document.getElementById('experienceIndexHolder').value = experienceIndex;
     });
 
+    // Append the new experience card to the container
     container.appendChild(div);
+
+    // Increment the experience index for the next addition
     experienceIndex++;
+    
+    // Update the experience index holder
+    document.getElementById('experienceIndexHolder').value = experienceIndex;
 }
