@@ -151,7 +151,11 @@
                                             Not Selected
                                         <% } else { %>
                                             <form action="/recruiter/select/<%= interview.applicationId %>" method="GET">
+                                              <% if(interview.interviewDate !== new Date()){ %>
+                                                <button type="submit" class="btn shortlist-btn" disabled>Result</button>
+                                              <% } else{ %>
                                                 <button type="submit" class="btn shortlist-btn">Result</button>
+                                              <% } %>
                                             </form>
                                         <% } %>
                                     </td>
