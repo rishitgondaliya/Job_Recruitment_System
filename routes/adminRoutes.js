@@ -6,7 +6,9 @@ const router = express.Router();
 
 router.get("/home", adminController.getAdminHome);
 
-router.get("/users", adminController.getUsers);
+router.get("/jobSeekers", adminController.getJobSeekers);
+
+router.get("/recruiters", adminController.getRecruiters);
 
 router.get("/jobCategories", adminController.getJobCategories);
 
@@ -20,10 +22,12 @@ router.post("/editCategory/:categoryId", adminController.postEditCategory);
 
 router.post("/deleteCategory", adminController.deleteCategory);
 
-router.post("/deactivate", adminController.deactivateUser);
+router.post("/deactivate/:role", adminController.deactivateUser);
 
-router.post("/activate", adminController.activateUser);
+router.post("/activate/:role", adminController.activateUser);
 
-router.post("/delete", adminController.deleteUser);
+router.post("/delete/:role", adminController.deleteUser);
+
+router.get("/viewUserProfile/:userId", adminController.viewUserProfile)
 
 module.exports = router;
