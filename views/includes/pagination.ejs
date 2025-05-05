@@ -11,7 +11,7 @@
 %>
 
 <div class="pagination">
-  <% if (totalPages > 1) { %>
+  <% if (totalPages >= 1) { %>
     <ul class="pagination-list">
       <% if (currentPage > 1) { %>
         <a href="?page=<%= currentPage - 1 %>&<%= queryString %>">
@@ -19,7 +19,7 @@
         </a>
       <% } %>
 
-      <% if (currentPage !== 1) { %>
+      <% if (currentPage > 2) { %>
         <a href="?page=1&<%= queryString %>">
           <li>1</li>
         </a>
@@ -27,7 +27,7 @@
 
       <span> Page <%= currentPage %> of <%= totalPages %> </span>
 
-      <% if (currentPage !== totalPages) { %>
+      <% if (currentPage < (totalPages - 1)) { %>
         <a href="?page=<%= totalPages %>&<%= queryString %>">
           <li><%= totalPages %></li>
         </a>
