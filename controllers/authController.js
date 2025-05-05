@@ -135,8 +135,7 @@ exports.getAdminLogin = async (req, res) => {
   try {
     // If user is already logged in
     if (req.user) {
-      const userRole = req.user.role;
-      return res.redirect("/admin/users");
+      return res.redirect("/admin/jobSeekers");
     }
 
     // If not logged in, show login page
@@ -353,7 +352,7 @@ exports.adminLogin = async (req, res, next) => {
       httpOnly: false,
     });
     // console.log("user", req.user);
-    return res.redirect("/admin/users");
+    return res.redirect("/admin/jobSeekers");
   } catch (error) {
     console.error("Error while logging in:", error);
     res.cookie("errorMessage", "Error while logging in", {

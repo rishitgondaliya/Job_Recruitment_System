@@ -1,6 +1,9 @@
 const User = require("../models/user");
 const Profile = require("../models/profile");
 const Category = require("../models/jobCategory");
+const Application = require("../models/application");
+const savedJobs = require("../models/savedJobs");
+const Interview = require("../models/interview");
 
 exports.getAdminHome = (req, res, next) => {
   return res.render("admin/home", {
@@ -9,74 +12,170 @@ exports.getAdminHome = (req, res, next) => {
   });
 };
 
-exports.getUsers = async (req, res) => {
+exports.getJobSeekers = async (req, res) => {
+  const { search } = req.query;
   try {
+    const filter = { role: "jobSeeker" };
     // Pagination query parameters
     const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1; // Default to page 1 if not provided
-    const recruiterPage = parseInt(req.query.recruiterPage) || 1; // Default to page 1 if not provided
-    const userLimit = parseInt(req.query.userLimit) || 5; // Default to 5 users per page if not provided
+    let userLimit = parseInt(req.query.userLimit) || 5; // Default to 5 users per page if not provided
+    let jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
+
+    // Check if the limit is set to "All"
+    if (req.query.userLimit === "All") {
+      userLimit = Number.MAX_SAFE_INTEGER; // This ensures you fetch all items (or you could set another large number if you want).
+      jobSeekerSkip = 0; // No need to skip any items when there's no pagination.
+    }
 
     // Skip calculation for pagination
-    const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
-    const recruiterSkip = (recruiterPage - 1) * userLimit;
+
+    if (search) {
+      filter.$or = [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+      if (search.toLowerCase() === "active") {
+        filter.$or.push({ isActive: true }); // Search for active users
+      } else if (search.toLowerCase() === "inactive") {
+        filter.$or.push({ isActive: false }); // Search for inactive users
+      }
+    }
 
     // Fetch Job Seekers and Recruiters with pagination
-    const jobSeekers = await User.find({ role: "jobSeeker" })
+    const jobSeekers = await User.find(filter)
       .skip(jobSeekerSkip)
       .limit(userLimit);
 
-    const recruiters = await User.find({ role: "recruiter" })
-      .skip(recruiterSkip)
-      .limit(userLimit);
-
     // Fetch the total count for both roles
-    const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
-    const totalRecruiters = await User.countDocuments({ role: "recruiter" });
+    const totalJobSeekers = await User.countDocuments(filter);
 
     // Calculate total pages for Job Seekers and Recruiters
-    const totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
-    const totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
+    const totalJobSeekerPages =
+      userLimit === Number.MAX_SAFE_INTEGER
+        ? 1
+        : Math.ceil(totalJobSeekers / userLimit); // Only 1 page if "All";
 
     // Render the page with necessary data
-    res.render("admin/users", {
-      pageTitle: "Users",
-      path: "/users",
+    res.render("admin/jobSeekers", {
+      pageTitle: "View Job Seekers",
+      path: "/jobSeekers",
       jobSeekers,
-      recruiters,
       userLimit,
       jobSeekerPage,
-      recruiterPage,
       totalJobSeekerPages,
-      totalRecruiterPages,
+      searchQuery: search || "",
     });
   } catch (err) {
     // Log error and render the page with error message
-    console.error("Error fetching users:", err);
+    console.error("Error fetching jobSeekers:", err);
 
     // Render with error message if there's an issue
-    return res.render("admin/users", {
-      pageTitle: "Users",
-      path: "/users",
+    return res.render("admin/jobSeekers", {
+      pageTitle: "View Job Seekers",
+      path: "/jobSeekers",
       jobSeekers: [], // Empty arrays in case of error to avoid sending incomplete data
-      recruiters: [],
       userLimit: req.query.userLimit || 5,
       jobSeekerPage: req.query.jobSeekerPage || 1,
-      recruiterPage: req.query.recruiterPage || 1,
       totalJobSeekerPages: 0,
+      searchQuery: search || "",
+      errorMessage: "Cannot fetch job seekers, please try again",
+    });
+  }
+};
+
+exports.getRecruiters = async (req, res) => {
+  const { search } = req.query;
+  try {
+    const filter = { role: "recruiter" };
+    // Pagination query parameters
+    let recruiterPage = parseInt(req.query.recruiterPage) || 1; // Default to page 1 if not provided
+    let userLimit = parseInt(req.query.userLimit) || 5; // Default to 5 users per page if not provided
+
+    // Skip calculation for pagination
+    let recruiterSkip = (recruiterPage - 1) * userLimit;
+
+    if (req.query.userLimit === "All") {
+      recruiterSkip = 0;
+      userLimit = Number.MAX_SAFE_INTEGER;
+    }
+
+    if (search) {
+      filter.$or = [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+      if (search.toLowerCase() === "active") {
+        filter.$or.push({ isActive: true });
+      } else if (search.toLowerCase() === "inActive") {
+        filter.$or.push({ isActive: false });
+      }
+    }
+
+    // Fetch Recruiters with pagination
+    const recruiters = await User.find(filter)
+      .skip(recruiterSkip)
+      .limit(userLimit);
+
+    // Fetch the total count for recruiters
+    const totalRecruiters = await User.countDocuments(filter);
+
+    // Calculate total pages for Recruiters
+    const totalRecruiterPages =
+      userLimit === "All" ? 1 : Math.ceil(totalRecruiters / userLimit);
+
+    // Render the page with necessary data
+    res.render("admin/recruiters", {
+      pageTitle: "View Recruiters",
+      path: "/recruiters",
+      recruiters,
+      userLimit,
+      recruiterPage,
+      totalRecruiterPages,
+      searchQuery: search || "",
+    });
+  } catch (err) {
+    // Log error and render the page with error message
+    console.error("Error fetching recruiters:", err);
+
+    // Render with error message if there's an issue
+    return res.render("admin/recruiters", {
+      pageTitle: "View Recruiters",
+      path: "/recruiters",
+      recruiters: [],
+      userLimit: req.query.userLimit || 5,
+      recruiterPage: req.query.recruiterPage || 1,
       totalRecruiterPages: 0,
-      errorMessage: "Cannot fetch users, please try again",
+      searchQuery: search || "",
+      errorMessage: "Cannot fetch recruiters, please try again",
     });
   }
 };
 
 exports.getAddCategory = async (req, res) => {
+  const page = parseInt(req.query.page) || 1; // Default page is 1 if not provided
+  const limit = parseInt(req.query.limit) || 5; // Default limit is 5 if not provided
+  const skip = (page - 1) * limit;
+  let categories;
+  let totalCategories;
+  let totalPages;
+
   try {
-    const categories = await Category.find().select("name");
+    // Fetching categories for pagination
+    categories = await Category.find().select("name").skip(skip).limit(limit);
+
+    // Fetching the total number of categories for pagination
+    totalCategories = await Category.countDocuments();
+    totalPages = Math.ceil(totalCategories / limit); // Total pages calculation
 
     return res.render("admin/jobCategories", {
       pageTitle: "Add Category",
       path: "/jobCategories",
       categories,
+      currentPage: page,
+      totalPages,
+      limit,
       errors: {},
       isEditing: false,
       showForm: true,
@@ -127,7 +226,7 @@ exports.postAddCategory = async (req, res) => {
       }
     }
 
-    console.error("Formatted error:", errors);
+    // console.error("Formatted error:", errors);
     // Re-render the page with error messages and previous data
     return res.render("admin/jobCategories", {
       pageTitle: "Add Category",
@@ -146,8 +245,15 @@ exports.postAddCategory = async (req, res) => {
 
 exports.getJobCategories = async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5;
-  const skip = (page - 1) * limit;
+  let limit = parseInt(req.query.limit) || 5;
+  let skip = (page - 1) * limit;
+
+  // Check if the limit is set to "All"
+  if (req.query.limit === "All") {
+    limit = Number.MAX_SAFE_INTEGER; // This ensures you fetch all items (or you could set another large number if you want).
+    skip = 0; // No need to skip any items when there's no pagination.
+  }
+
   try {
     const categories = await Category.find()
       .select("name")
@@ -156,7 +262,10 @@ exports.getJobCategories = async (req, res, next) => {
       .sort({ createdAt: -1 });
 
     const totalCategories = await Category.countDocuments();
-    const totalPages = Math.ceil(totalCategories / limit);
+    const totalPages =
+      limit === Number.MAX_SAFE_INTEGER
+        ? 1
+        : Math.ceil(totalCategories / limit); // Only 1 page if "All"
 
     res.render("admin/jobCategories", {
       pageTitle: "Job Categories",
@@ -233,12 +342,13 @@ exports.postEditCategory = async (req, res, next) => {
   const categoryId = req.params.categoryId;
   let categories;
   let category;
+  let totalPages;
 
   try {
     categories = await Category.find().select("name").skip(skip).limit(limit);
 
     const totalCategories = await Category.countDocuments();
-    const totalPages = Math.ceil(totalCategories / limit);
+    totalPages = Math.ceil(totalCategories / limit);
 
     category = await Category.findById(categoryId);
     if (!category) {
@@ -335,14 +445,16 @@ exports.deleteCategory = async (req, res, next) => {
 };
 
 exports.deactivateUser = async (req, res, next) => {
-  const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1;
-  const recruiterPage = parseInt(req.query.recruiterPage) || 1;
-  const userLimit = parseInt(req.query.userLimit) || 5;
+  const jobSeekerPage = parseInt(req.body.jobSeekerPage) || 1;
+  const recruiterPage = parseInt(req.body.recruiterPage) || 1;
+  const userLimit = parseInt(req.body.userLimit) || 5;
 
   const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
   const recruiterSkip = (recruiterPage - 1) * userLimit;
 
   const userId = req.body.userId;
+  const role = req.params.role; // 'jobSeeker' or 'recruiter'
+  const search = req.body.search !== undefined ? req.body.search : "";
 
   let jobSeekers;
   let recruiters;
@@ -365,12 +477,15 @@ exports.deactivateUser = async (req, res, next) => {
     totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
 
     // update user
-    const user = await User.findByIdAndUpdate(userId, { isActive: false });
+    const user = await User.findOneAndUpdate(
+      { _id: userId, role },
+      { isActive: false }
+    );
 
     if (!user) {
-      return res.render("admin/users", {
-        pageTitle: "Users",
-        path: "/users",
+      return res.render(`admin/${role}s`, {
+        pageTitle: `View ${role}s`,
+        path: `/${role}s`,
         jobSeekers,
         recruiters,
         userLimit,
@@ -378,7 +493,8 @@ exports.deactivateUser = async (req, res, next) => {
         recruiterPage,
         totalJobSeekerPages,
         totalRecruiterPages,
-        errorMessage: "User not found",
+        searchQuery: search || "",
+        errorMessage: "User not found or role mismatch",
       });
     }
 
@@ -387,13 +503,21 @@ exports.deactivateUser = async (req, res, next) => {
       httpOnly: false,
     });
 
-    return res.redirect("/admin/users");
+    if (role === "jobSeeker") {
+      return res.redirect(
+        `/admin/jobSeekers?jobSeekerPage=${jobSeekerPage}&userLimit=${userLimit}&search=${search}`
+      );
+    } else if (role === "recruiter") {
+      return res.redirect(
+        `/admin/recruiters?recruiterPage=${recruiterPage}&userLimit=${userLimit}&search=${search}`
+      );
+    }
   } catch (err) {
-    console.error("Error deactivating user:", err);
+    console.error(`Error deactivating ${role}:`, err);
 
-    return res.render("admin/users", {
-      pageTitle: "Users",
-      path: "/users",
+    return res.render(`admin/${role}s`, {
+      pageTitle: `View ${role}s`,
+      path: `/${role}s`,
       jobSeekers,
       recruiters,
       userLimit,
@@ -401,20 +525,23 @@ exports.deactivateUser = async (req, res, next) => {
       recruiterPage,
       totalJobSeekerPages,
       totalRecruiterPages,
+      searchQuery: search || "",
       errorMessage: "An error occurred while deactivating the user.",
     });
   }
 };
 
 exports.activateUser = async (req, res, next) => {
-  const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1;
-  const recruiterPage = parseInt(req.query.recruiterPage) || 1;
-  const userLimit = parseInt(req.query.userLimit) || 5;
+  const jobSeekerPage = parseInt(req.body.jobSeekerPage) || 1;
+  const recruiterPage = parseInt(req.body.recruiterPage) || 1;
+  const userLimit = parseInt(req.body.userLimit) || 5;
 
   const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
   const recruiterSkip = (recruiterPage - 1) * userLimit;
 
   const userId = req.body.userId;
+  const role = req.params.role; // 'jobSeeker' or 'recruiter'
+  const search = req.body.search || "";
 
   let jobSeekers;
   let recruiters;
@@ -437,12 +564,15 @@ exports.activateUser = async (req, res, next) => {
     totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
 
     // update user
-    const user = await User.findByIdAndUpdate(userId, { isActive: true });
+    const user = await User.findOneAndUpdate(
+      { _id: userId, role },
+      { isActive: true }
+    );
 
     if (!user) {
-      return res.render("admin/users", {
-        pageTitle: "Users",
-        path: "/users",
+      return res.render(`admin/${role}s`, {
+        pageTitle: `View ${role}s`,
+        path: `/${role}s`,
         jobSeekers,
         recruiters,
         userLimit,
@@ -450,7 +580,7 @@ exports.activateUser = async (req, res, next) => {
         recruiterPage,
         totalJobSeekerPages,
         totalRecruiterPages,
-        errorMessage: "User not found",
+        errorMessage: "User not found or role mismatch",
       });
     }
 
@@ -459,13 +589,21 @@ exports.activateUser = async (req, res, next) => {
       httpOnly: false,
     });
 
-    return res.redirect("/admin/users");
+    if (role === "jobSeeker") {
+      return res.redirect(
+        `/admin/jobSeekers?jobSeekerPage=${jobSeekerPage}&userLimit=${userLimit}&search=${search}`
+      );
+    } else if (role === "recruiter") {
+      return res.redirect(
+        `/admin/recruiters?recruiterPage=${recruiterPage}&userLimit=${userLimit}&search=${search}`
+      );
+    }
   } catch (err) {
-    console.error("Error activating user:", err);
+    console.error(`Error deactivating ${role}:`, err);
 
-    return res.render("admin/users", {
-      pageTitle: "Users",
-      path: "/users",
+    return res.render(`admin/${role}s`, {
+      pageTitle: `View ${role}s`,
+      path: `/${role}s`,
       jobSeekers,
       recruiters,
       userLimit,
@@ -479,14 +617,16 @@ exports.activateUser = async (req, res, next) => {
 };
 
 exports.deleteUser = async (req, res, next) => {
-  const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1;
-  const recruiterPage = parseInt(req.query.recruiterPage) || 1;
-  const userLimit = parseInt(req.query.userLimit) || 5;
+  const jobSeekerPage = parseInt(req.body.jobSeekerPage) || 1;
+  const recruiterPage = parseInt(req.body.recruiterPage) || 1;
+  const userLimit = parseInt(req.body.userLimit) || 5;
 
   const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
   const recruiterSkip = (recruiterPage - 1) * userLimit;
 
   const userId = req.body.userId;
+  const role = req.params.role;
+  const search = req.body.search || "";
 
   let jobSeekers;
   let recruiters;
@@ -514,9 +654,9 @@ exports.deleteUser = async (req, res, next) => {
     await Profile.findOneAndDelete({ userId: userId });
 
     if (!user) {
-      return res.render("admin/users", {
-        pageTitle: "Users",
-        path: "/users",
+      return res.render(`admin/${role}s`, {
+        pageTitle: `View ${role}s`,
+        path: `/${role}s`,
         jobSeekers,
         recruiters,
         userLimit,
@@ -533,13 +673,21 @@ exports.deleteUser = async (req, res, next) => {
       httpOnly: false,
     });
 
-    return res.redirect("/admin/users");
+    if (role === "jobSeeker") {
+      return res.redirect(
+        `/admin/jobSeekers?jobSeekerPage=${jobSeekerPage}&userLimit=${userLimit}&search=${search}`
+      );
+    } else if (role === "recruiter") {
+      return res.redirect(
+        `/admin/recruiters?recruiterPage=${recruiterPage}&userLimit=${userLimit}&search=${search}`
+      );
+    }
   } catch (err) {
     console.error("Error deleting user:", err);
 
-    return res.render("admin/users", {
-      pageTitle: "Users",
-      path: "/users",
+    return res.render(`admin/${role}s`, {
+      pageTitle: `View ${role}s`,
+      path: `/${role}s`,
       jobSeekers,
       recruiters,
       userLimit,
@@ -549,5 +697,47 @@ exports.deleteUser = async (req, res, next) => {
       totalRecruiterPages,
       errorMessage: "An error occurred while deleting the user.",
     });
+  }
+};
+
+exports.viewUserProfile = async (req, res, next) => {
+  const userId = req.params.userId;
+  try {
+    const user = await User.findById(userId);
+    const userProfile = await Profile.findById(user.profileId);
+    const savedJobsArray = await savedJobs.find({ "user.userId": user._id });
+
+    // find any applications
+    const applications = await Application.find({
+      "user.userId": user._id,
+    }).sort({ createdAt: -1 });
+
+    // find any interviews scheduled
+    const interviews = await Interview.find({
+      "user.userId": user._id,
+      status: "Scheduled",
+    });
+
+    // display profile with all data
+    if (user.role === "jobSeeker") {
+      res.render("admin/jobSeekerProfile", {
+        pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
+        path: "/jobSeekers",
+        profile: userProfile,
+        user: user,
+        savedJobs: savedJobsArray,
+        applications,
+        interviews,
+      });
+    } else if (user.role === "recruiter") {
+      res.render("admin/recruiterProfile", {
+        pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
+        path: "/recruiters",
+        profile: userProfile,
+        user: user,
+      });
+    }
+  } catch (error) {
+    next(error);
   }
 };

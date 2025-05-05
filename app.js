@@ -94,7 +94,7 @@ app.get("/", (req, res) => {
   if (req.user) {
     // Redirect based on user role
     if (req.user.role === "admin") {
-      return res.redirect("/admin/users");
+      return res.redirect("/admin/jobSeekers");
     } else if (req.user.role === "recruiter") {
       return res.redirect("/recruiter/jobPosts");
     } else if (req.user.role === "jobSeeker") {
