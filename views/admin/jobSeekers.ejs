@@ -1,0 +1,166 @@
+<%- include('../includes/main.ejs') %>
+    <link rel="stylesheet" href="/css/table.css">
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+        .itemsPerPageForm {
+            margin-top: -3.7rem;
+            margin-right: 4rem;
+        }
+        .pagination {
+            margin-top: 1rem;
+        }
+        .pagination a {
+            color: black;
+        }
+        form .search-form {
+            width: 35%;
+        }
+        form .search-form {
+            margin: 2rem auto;
+        }
+        form .search-form input {
+            height: 1.5rem;
+        }
+    </style>
+    <%- include('../includes/navigation.ejs') %>
+    
+    <form action="/admin/jobSeekers" method="GET" id="serch-form">
+        <div class="form-input search-form" style="position: relative;">
+            <input
+            type="text"
+            name="search"
+            id="search"
+            placeholder="Search job seekers by name, email or status"
+            value="<%= searchQuery %>"
+            style="padding-right: 35px;"
+            >
+            <button type="submit" style="
+            position: absolute;
+            right: 4px;
+                top: 20%;
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 1.1rem;
+                ">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>      
+    </form>
+    
+    <div class="container">
+        <%- include('../includes/flash.ejs') %>
+        
+        <!-- Job Seekers Table -->
+        <h2 class="section-title">Job Seekers</h2>
+        <% if(jobSeekers.length === 0) { %>
+            No Jobseekers found.
+        <% }else { %>
+            <table class="custom-table">
+                <thead>
+                <tr>
+                    <th>Sr. No.</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% let jobSeekerCount = (jobSeekerPage - 1) * userLimit + 1; %>
+                <% jobSeekers.forEach(user => { %>
+                    <tr>
+                        <td><%= jobSeekerCount++ %></td>
+                        <td><%= user.firstName %> <%= user.lastName %></td>
+                        <td><%= user.email %></td>
+                        <td><%= user.phone %></td>
+                        <td><%= user.isActive ? 'Active' : 'Inactive' %></td>
+                        <td>
+                            <div class="actions">
+                                <% if(user.isActive){ %>
+                                    <form action="/admin/deactivate/jobSeeker" method="POST">
+                                        <input type="hidden" name="userId" value="<%= user._id %>">
+                                        <input type="hidden" name="jobSeekerPage" value="<%= jobSeekerPage %>">
+                                        <input type="hidden" name="userLimit" value="<%= userLimit %>">
+                                        <input type="hidden" name="search" value="<%= searchQuery %>">
+                                        <button type="submit" class="deactive-btn btn">Deactivate</button>
+                                    </form>
+                                    <% } else{ %>
+                                        <form action="/admin/activate/jobSeeker" method="POST">
+                                            <input type="hidden" name="userId" value="<%= user._id %>">
+                                            <input type="hidden" name="jobSeekerPage" value="<%= jobSeekerPage %>">
+                                            <input type="hidden" name="userLimit" value="<%= userLimit %>">
+                                            <input type="hidden" name="search" value="<%= searchQuery %>">
+                                            <button type="submit" class="deactive-btn btn">Activate</button>
+                                        </form>
+                                <% } %>
+                                <form action="/admin/delete/jobSeeker" method="POST">
+                                    <input type="hidden" name="userId" value="<%= user._id %>">
+                                    <input type="hidden" name="jobSeekerPage" value="<%= jobSeekerPage %>">
+                                    <input type="hidden" name="userLimit" value="<%= userLimit %>">
+                                    <input type="hidden" name="search" value="<%= searchQuery %>">
+                                    <button type="submit" class="delete-btn btn">Delete</button>
+                                </form>
+                                <form action="/admin/viewUserProfile/<%= user._id %>" method="GET">
+                                    <button class="btn edit-btn" type="submit">View</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            
+            <!-- Pagination for Job Seekers -->
+            <% if (totalJobSeekerPages >= 1) { %>
+                <div class="pagination" id="jobSeekerPagination">
+                    <ul class="pagination-list">
+                        <% if (jobSeekerPage > 1) { %>
+                            <a href="?jobSeekerPage=<%= jobSeekerPage - 1 %>&userLimit=<%= userLimit %>&search=<%= searchQuery %>"><li>Prev</li></a>
+                        <% } %>
+                        <% if (jobSeekerPage > 2) { %>
+                            <a href="?jobSeekerPage=1&userLimit=<%= userLimit %>&search=<%= searchQuery %>"><li>1</li></a>
+                            <% } %>
+                        <span> Page <%= jobSeekerPage %> of <%= totalJobSeekerPages %> </span>
+                        <% if (jobSeekerPage < (totalJobSeekerPages - 1)) { %>
+                            <a href="?jobSeekerPage=<%= totalJobSeekerPages %>&userLimit=<%= userLimit %>&search=<%= searchQuery %>"><li><%= totalJobSeekerPages %></li></a>
+                        <% } %>
+                        <% if (jobSeekerPage < totalJobSeekerPages) { %>
+                            <a href="?jobSeekerPage=<%= jobSeekerPage + 1 %>&userLimit=<%= userLimit %>&search=<%= searchQuery %>"><li>Next</li></a>
+                        <% } %>
+                    </ul>
+                </div>
+                <!-- Items per Page Form -->
+                <div class="itemsPerPageForm">
+                    <form id="userItemsPerPageForm" method="GET" class="items-per-page-form">
+                        <div class="form-input">
+                        <label for="userLimit">Items per page:</label>
+                        <select name="userLimit" id="userLimit">
+                            <option value="5" <%= userLimit == 5 ? "selected" : "" %>>5</option>
+                            <option value="10" <%= userLimit == 10 ? "selected" : "" %>>10</option>
+                            <option value="15" <%= userLimit == 15 ? "selected" : "" %>>15</option>
+                            <option value="All" <%= userLimit == Number.MAX_SAFE_INTEGER ? "selected" : "" %>>All</option>
+                        </select>
+                        </div>
+                        <input type="hidden" name="jobSeekerPage" id="jobSeekerPage" value="<%= jobSeekerPage %>">
+                    </form>      
+                </div>
+            <% } %>  
+        <% } %>
+    </div>
+
+    <%- include('../includes/flashScript.ejs') %>
+
+    <script>
+        document.getElementById("userLimit").addEventListener("change", function () {
+            document.getElementById("jobSeekerPage").value = 1;
+            document.getElementById("userItemsPerPageForm").submit();
+        });
+    </script>
+    <script src="/js/preventBack.js"></script>
+</body>
+</html>

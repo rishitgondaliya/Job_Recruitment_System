@@ -1,0 +1,217 @@
+<%- include('../includes/main.ejs') %>
+    <link rel="stylesheet" href="/css/profile.css">
+    <style>
+      .saved-jobs form,
+      .application-detail form {
+        display: inline;
+      }
+      .saved-jobs .btn{
+        padding: 2px 6px;
+        font-size: 0.9rem;
+        margin-top: 0rem;
+        margin-left: 0.25rem;
+      }
+      .input-group{
+        justify-content: space-between;
+      }
+      form .edit-btn{
+        margin-top: 0rem;
+        background: none;
+        border: none;
+      }
+      form button:hover{
+        cursor: pointer;
+      }
+
+      .application-detail form{
+        margin-left: .5rem;
+      }
+
+      .application-detail .btn {
+        margin-top: 0;
+        font-size: 0.9rem;
+        padding: 2px 6px;
+        border: 1px solid orangered;
+        color: orangered;
+      }
+
+      .application-detail .btn:hover {
+        background-color: orangered;
+        color: white;
+      }
+      .applications{
+        margin-top: 0;
+      }
+      .application-detail li p {
+        margin-top: 0.5rem;
+        margin-left: 1rem;
+      }
+    </style>
+    <%- include('../includes/navigation.ejs') %>
+
+    <div class="profile-container">
+      <%- include('../includes/flash.ejs') %>
+      <section id="header">
+        <div style="display: flex; justify-content: space-between">
+          <div class="profile-header">
+            <div class="profile-photo">
+              <img src="<%= profile.profilePhoto || '/assets/default_profile.jpg' %>" alt="Profile Photo">
+            </div>
+            <div class="profile-name-role">
+              <h2><%= user.firstName %> <%= user.lastName %></h2>
+              <p><%= profile.profileType ? 'Job Seeker' : '' %></p>
+            </div>
+          </div>
+          <div class="logout-form">
+          </div>
+        </div>
+      </section>
+
+      <section id="about">
+        <div class="input-group">
+          <h3>About</h3>
+        </div>
+        <p><%= profile.about || "No about information provided." %></p>
+      </section>
+
+      <% if (profile.experience && profile.experience.length > 0) { %>
+        <section id="experience">
+          <div class="input-group">
+            <h3>Experience</h3>
+          </div>
+          <% 
+            let experienceList = (profile.experience && profile.experience.length > 0) 
+              ? [...profile.experience].sort((a, b) => {
+                  const dateA = new Date(a.endDate || a.startDate || 0);
+                  const dateB = new Date(b.endDate || b.startDate || 0);
+                  return dateB - dateA; // descending
+                }) 
+              : [{}]; 
+          %>
+          <% experienceList.forEach(exp => { %>
+            <div class="experience-card">
+              <h4><%= exp.position %></h4>  
+              <p><%= exp.company %></p>
+              <p>
+                <%= exp.startDate ? new Date(exp.startDate).toLocaleString('default', { month: 'short', year: 'numeric' }) : "" %> -
+                <%= exp.endDate ? new Date(exp.endDate).toLocaleString('default', { month: 'short', year: 'numeric' }) : "Present" %> -
+                <% 
+                const start = new Date(exp.startDate);
+                const end = exp.endDate ? new Date(exp.endDate) : new Date();
+
+                const diffTime = Math.abs(end - start);
+                
+                const totalDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                let remainingDays = totalDays;
+                const years = Math.floor(remainingDays / 365);
+                remainingDays = remainingDays % 365;
+                let months = Math.floor(remainingDays / 30); // approx month = 30 days
+                const days = remainingDays % 30;
+                if(days >= 15) months++
+
+                const y = years > 0 ? `${years} year${years > 1 ? 's' : ''}` : '';
+                const m = months > 0 ? `${months} month${months > 1 ? 's' : ''}` : '';
+                const duration = [y, m].filter(Boolean).join(', ') || '1 Month';
+              %>
+
+                <%= duration  %>
+              </p>
+              <p><%= exp.description %></p>
+            </div>
+          <% }) %>
+        </section>
+      <% } %>
+
+      <% if (profile.education) { %>
+        <section id="education">
+          <div class="input-group">
+            <h3>Education</h3>
+          </div>
+          <ul class="edu">
+            <% if (profile.education.college) { %>
+              <li><strong><%= profile.education.college %></strong></li>
+            <% } %>
+            
+            <% if (profile.education.degree || profile.education.branch) { %>
+              <li>
+                <%= profile.education.degree || "" %>
+                <% if (profile.education.degree && profile.education.branch) { %> - <% } %>
+                <%= profile.education.branch || "" %>
+              </li>
+            <% } %>
+            
+            <% if (profile.education.startYear || profile.education.passingYear) { %>
+              <li>
+                <%= profile.education.startYear ? new Date(profile.education.startYear).toLocaleString('default', { month: 'short', year: 'numeric' }) : "" %>
+                -
+                <%= profile.education.passingYear ? new Date(profile.education.passingYear).toLocaleString('default', { month: 'short', year: 'numeric' }) : "Present" %>
+              </li>
+            <% } %>
+            
+            <% if (profile.education.grade) { %>
+              <li><strong>Grade:</strong> <%= profile.education.grade %></li>
+            <% } %>            
+          </ul>
+        </section>
+      <% } %>
+
+      <% if (profile.skills && profile.skills.length > 0) { %>
+        <section id="skills">
+          <div class="input-group">
+            <h3>Skills</h3>
+          </div>
+          <div class="skills">
+            <% profile.skills.forEach(skill => { %>
+              <span class="skill-badge"><%= skill %></span>
+            <% }) %>
+          </div>
+        </section>
+      <% } %>
+
+      <% if (profile.resume) { %>
+        <section is="resume">
+          <div class="input-group">
+            <h3>Resume</h3>
+          </div>
+          <a href="<%= profile.resume %>" target="_blank" class="btn" style="font-size: 1rem; margin-left: .5rem">View Resume</a>
+        </section>
+      <% } %>
+
+      <% if (applications && applications.length > 0) { %>
+        <section id="applications">
+          <div class="input-group">
+            <h3>Applied Jobs</h3>
+          </div>
+          <ul class="applications">
+            <% applications.forEach(application => { %>
+              <div class="application-detail">
+                <li>
+                  <strong><%= application.jobDetail.jobTitle %></strong> - 
+                        <%= application.jobDetail.company %> - 
+                  <strong><%= application.applicationStatus %></strong>
+                </li>
+              </div>
+            <% }) %>
+          </ul>
+        </section>
+      <% } %>
+
+      <% if (savedJobs && savedJobs.length > 0) { %>
+        <section id="savedJobs">
+          <div class="input-group">
+            <h3>Saved Jobs</h3>
+          </div>
+          <ul class="saved-jobs">
+            <% savedJobs.forEach(job => { %>
+              <li>
+                <strong><%= job.jobDetail.jobTitle %></strong> - <%= job.jobDetail.company %>
+              </li>
+            <% }) %>
+          </ul>
+        </section>
+      <% } %>
+    </div>
+    <%- include('../includes/flashScript.ejs') %>
+  </body>
+</html>
