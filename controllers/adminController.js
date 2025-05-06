@@ -18,7 +18,7 @@ exports.getJobSeekers = async (req, res) => {
     const filter = { role: "jobSeeker" };
     // Pagination query parameters
     const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1; // Default to page 1 if not provided
-    let userLimit = parseInt(req.query.userLimit) || 5; // Default to 5 users per page if not provided
+    let userLimit = parseInt(req.query.userLimit) || 10; // Default to 5 users per page if not provided
     let jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
 
     // Check if the limit is set to "All"
@@ -90,7 +90,7 @@ exports.getRecruiters = async (req, res) => {
     const filter = { role: "recruiter" };
     // Pagination query parameters
     let recruiterPage = parseInt(req.query.recruiterPage) || 1; // Default to page 1 if not provided
-    let userLimit = parseInt(req.query.userLimit) || 5; // Default to 5 users per page if not provided
+    let userLimit = parseInt(req.query.userLimit) || 10; // Default to 5 users per page if not provided
 
     // Skip calculation for pagination
     let recruiterSkip = (recruiterPage - 1) * userLimit;
@@ -108,7 +108,7 @@ exports.getRecruiters = async (req, res) => {
       ];
       if (search.toLowerCase() === "active") {
         filter.$or.push({ isActive: true });
-      } else if (search.toLowerCase() === "inActive") {
+      } else if (search.toLowerCase() === "inactive") {
         filter.$or.push({ isActive: false });
       }
     }
@@ -445,55 +445,20 @@ exports.deleteCategory = async (req, res, next) => {
 };
 
 exports.deactivateUser = async (req, res, next) => {
-  const jobSeekerPage = parseInt(req.body.jobSeekerPage) || 1;
-  const recruiterPage = parseInt(req.body.recruiterPage) || 1;
-  const userLimit = parseInt(req.body.userLimit) || 5;
-
-  const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
-  const recruiterSkip = (recruiterPage - 1) * userLimit;
-
   const userId = req.body.userId;
   const role = req.params.role; // 'jobSeeker' or 'recruiter'
-  const search = req.body.search !== undefined ? req.body.search : "";
-
-  let jobSeekers;
-  let recruiters;
-  let totalJobSeekerPages;
-  let totalRecruiterPages;
-
+  let user;
   try {
-    jobSeekers = await User.find({ role: "jobSeeker" })
-      .skip(jobSeekerSkip)
-      .limit(userLimit);
-
-    recruiters = await User.find({ role: "recruiter" })
-      .skip(recruiterSkip)
-      .limit(userLimit);
-
-    const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
-    const totalRecruiters = await User.countDocuments({ role: "recruiter" });
-
-    totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
-    totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
-
     // update user
-    const user = await User.findOneAndUpdate(
+    user = await User.findOneAndUpdate(
       { _id: userId, role },
       { isActive: false }
     );
 
     if (!user) {
-      return res.render(`admin/${role}s`, {
-        pageTitle: `View ${role}s`,
+      return res.render(`admin/viewUserProfile/${userId}`, {
+        pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
         path: `/${role}s`,
-        jobSeekers,
-        recruiters,
-        userLimit,
-        jobSeekerPage,
-        recruiterPage,
-        totalJobSeekerPages,
-        totalRecruiterPages,
-        searchQuery: search || "",
         errorMessage: "User not found or role mismatch",
       });
     }
@@ -503,83 +468,34 @@ exports.deactivateUser = async (req, res, next) => {
       httpOnly: false,
     });
 
-    if (role === "jobSeeker") {
-      return res.redirect(
-        `/admin/jobSeekers?jobSeekerPage=${jobSeekerPage}&userLimit=${userLimit}&search=${search}`
-      );
-    } else if (role === "recruiter") {
-      return res.redirect(
-        `/admin/recruiters?recruiterPage=${recruiterPage}&userLimit=${userLimit}&search=${search}`
-      );
-    }
+    return res.redirect(`/admin/viewUserProfile/${userId}`);
   } catch (err) {
     console.error(`Error deactivating ${role}:`, err);
 
-    return res.render(`admin/${role}s`, {
-      pageTitle: `View ${role}s`,
+    return res.render(`admin/viewUserProfile/${userId}`, {
+      pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
       path: `/${role}s`,
-      jobSeekers,
-      recruiters,
-      userLimit,
-      jobSeekerPage,
-      recruiterPage,
-      totalJobSeekerPages,
-      totalRecruiterPages,
-      searchQuery: search || "",
       errorMessage: "An error occurred while deactivating the user.",
     });
   }
 };
 
 exports.activateUser = async (req, res, next) => {
-  const jobSeekerPage = parseInt(req.body.jobSeekerPage) || 1;
-  const recruiterPage = parseInt(req.body.recruiterPage) || 1;
-  const userLimit = parseInt(req.body.userLimit) || 5;
-
-  const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
-  const recruiterSkip = (recruiterPage - 1) * userLimit;
-
   const userId = req.body.userId;
   const role = req.params.role; // 'jobSeeker' or 'recruiter'
-  const search = req.body.search || "";
-
-  let jobSeekers;
-  let recruiters;
-  let totalJobSeekerPages;
-  let totalRecruiterPages;
+  let user;
 
   try {
-    jobSeekers = await User.find({ role: "jobSeeker" })
-      .skip(jobSeekerSkip)
-      .limit(userLimit);
-
-    recruiters = await User.find({ role: "recruiter" })
-      .skip(recruiterSkip)
-      .limit(userLimit);
-
-    const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
-    const totalRecruiters = await User.countDocuments({ role: "recruiter" });
-
-    totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
-    totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
-
     // update user
-    const user = await User.findOneAndUpdate(
+    user = await User.findOneAndUpdate(
       { _id: userId, role },
       { isActive: true }
     );
 
     if (!user) {
-      return res.render(`admin/${role}s`, {
-        pageTitle: `View ${role}s`,
+      return res.render(`admin/viewUserProfile/${userId}`, {
+        pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
         path: `/${role}s`,
-        jobSeekers,
-        recruiters,
-        userLimit,
-        jobSeekerPage,
-        recruiterPage,
-        totalJobSeekerPages,
-        totalRecruiterPages,
         errorMessage: "User not found or role mismatch",
       });
     }
@@ -589,81 +505,33 @@ exports.activateUser = async (req, res, next) => {
       httpOnly: false,
     });
 
-    if (role === "jobSeeker") {
-      return res.redirect(
-        `/admin/jobSeekers?jobSeekerPage=${jobSeekerPage}&userLimit=${userLimit}&search=${search}`
-      );
-    } else if (role === "recruiter") {
-      return res.redirect(
-        `/admin/recruiters?recruiterPage=${recruiterPage}&userLimit=${userLimit}&search=${search}`
-      );
-    }
+    return res.redirect(`/admin/viewUserProfile/${userId}`);
   } catch (err) {
     console.error(`Error deactivating ${role}:`, err);
 
-    return res.render(`admin/${role}s`, {
-      pageTitle: `View ${role}s`,
+    return res.render(`admin/viewUserProfile/${userId}`, {
+      pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
       path: `/${role}s`,
-      jobSeekers,
-      recruiters,
-      userLimit,
-      jobSeekerPage,
-      recruiterPage,
-      totalJobSeekerPages,
-      totalRecruiterPages,
       errorMessage: "An error occurred while activating the user.",
     });
   }
 };
 
 exports.deleteUser = async (req, res, next) => {
-  const jobSeekerPage = parseInt(req.body.jobSeekerPage) || 1;
-  const recruiterPage = parseInt(req.body.recruiterPage) || 1;
-  const userLimit = parseInt(req.body.userLimit) || 5;
-
-  const jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
-  const recruiterSkip = (recruiterPage - 1) * userLimit;
-
   const userId = req.body.userId;
   const role = req.params.role;
-  const search = req.body.search || "";
-
-  let jobSeekers;
-  let recruiters;
-  let totalJobSeekerPages;
-  let totalRecruiterPages;
+  let user;
 
   try {
-    jobSeekers = await User.find({ role: "jobSeeker" })
-      .skip(jobSeekerSkip)
-      .limit(userLimit);
-
-    recruiters = await User.find({ role: "recruiter" })
-      .skip(recruiterSkip)
-      .limit(userLimit);
-
-    const totalJobSeekers = await User.countDocuments({ role: "jobSeeker" });
-    const totalRecruiters = await User.countDocuments({ role: "recruiter" });
-
-    totalJobSeekerPages = Math.ceil(totalJobSeekers / userLimit);
-    totalRecruiterPages = Math.ceil(totalRecruiters / userLimit);
-
     // delete user
-    const user = await User.findByIdAndDelete(userId);
+    user = await User.findByIdAndDelete(userId);
 
     await Profile.findOneAndDelete({ userId: userId });
 
     if (!user) {
-      return res.render(`admin/${role}s`, {
-        pageTitle: `View ${role}s`,
+      return res.render(`admin/viewUserProfile/${userId}`, {
+        pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
         path: `/${role}s`,
-        jobSeekers,
-        recruiters,
-        userLimit,
-        jobSeekerPage,
-        recruiterPage,
-        totalJobSeekerPages,
-        totalRecruiterPages,
         errorMessage: "User not found",
       });
     }
@@ -674,27 +542,16 @@ exports.deleteUser = async (req, res, next) => {
     });
 
     if (role === "jobSeeker") {
-      return res.redirect(
-        `/admin/jobSeekers?jobSeekerPage=${jobSeekerPage}&userLimit=${userLimit}&search=${search}`
-      );
+      return res.redirect(`/admin/jobSeekers`);
     } else if (role === "recruiter") {
-      return res.redirect(
-        `/admin/recruiters?recruiterPage=${recruiterPage}&userLimit=${userLimit}&search=${search}`
-      );
+      return res.redirect(`/admin/recruiters`);
     }
   } catch (err) {
     console.error("Error deleting user:", err);
 
-    return res.render(`admin/${role}s`, {
-      pageTitle: `View ${role}s`,
+    return res.render(`admin/viewUserProfile/${userId}`, {
+      pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
       path: `/${role}s`,
-      jobSeekers,
-      recruiters,
-      userLimit,
-      jobSeekerPage,
-      recruiterPage,
-      totalJobSeekerPages,
-      totalRecruiterPages,
       errorMessage: "An error occurred while deleting the user.",
     });
   }
