@@ -18,8 +18,8 @@
       margin-top: 2rem;
     }
     .itemsPerPageForm {
-      margin-top: 0.5rem;
-      margin-right: 3rem;
+      margin-top: -3.7rem;
+      margin-left: 1rem;
     }
     .center .delete-btn {
       color: red;
@@ -38,19 +38,7 @@
               <button class="add-new-btn btn">New Job Post</button>
             </div>
         <% } %>
-        <div class="itemsPerPageForm">
-            <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
-                <div class="form-input">
-                    <label for="limit">Items per page:</label>
-                    <select name="limit" id="limit">
-                        <option value="3" <%= limit === 3 ? "selected" : "" %>>3</option>
-                        <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
-                        <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
-                    </select>
-                </div>
-                <input type="hidden" id="page" name="page" value="<%= currentPage %>">
-            </form>
-        </div>
+
         <div class="form-control <%= (isEditing || showForm) ? '' : 'hidden' %>" id="add-new">
             <h2 class="center"><%= isEditing ? 'Edit job post' : 'Post New Job' %></h2>
 
@@ -223,8 +211,21 @@
                         <% }); %>
                     </tbody>
                 </table>
+                <%- include('../includes/pagination.ejs') %>
+                <div class="itemsPerPageForm">
+                  <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
+                      <div class="form-input">
+                          <label for="limit">Items per page:</label>
+                          <select name="limit" id="limit">
+                              <option value="3" <%= limit === 3 ? "selected" : "" %>>3</option>
+                              <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
+                              <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
+                          </select>
+                      </div>
+                      <input type="hidden" id="page" name="page" value="<%= currentPage %>">
+                  </form>
+              </div>
             <% } %>
-            <%- include('../includes/pagination.ejs') %>
         </div>
         <script>
           document.addEventListener('DOMContentLoaded', function () {

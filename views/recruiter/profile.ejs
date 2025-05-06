@@ -35,6 +35,7 @@
             <div class="profile-name-role">
               <h2><%= user.firstName %> <%= user.lastName %></h2>
               <p><%= profile.profileType ? 'Recruiter' : '' %> - <%= profile.position %></p>
+              <p style="color: black;"><%= user.isActive ? "Active" : "Inactive " %></p>
             </div>
           </div>
           <div class="logout-form">
