@@ -7,8 +7,6 @@ const router = express.Router();
 
 router.get("/home", recruiterController.getRecruiterHome);
 
-// router.get("/addNewJob", recruiterController.getAddNewJob);
-
 router.post("/addNewJob", recruiterController.postAddNewJob);
 
 router.get("/jobPosts", recruiterController.getJobPosts);
@@ -35,6 +33,8 @@ router.post(
 router.get('/viewJobSeekers', recruiterController.viewJobSeekers)
 
 router.get('/viewApplications', recruiterController.viewApplications)
+
+router.get('/viewInterviews', recruiterController.viewInterviews)
 
 router.get('/shortlist/:applicationId', recruiterController.getShortlistUser)
 

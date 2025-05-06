@@ -1,0 +1,88 @@
+<%- include('../includes/main.ejs') %>
+    <link rel="stylesheet" href="/css/table.css">
+    <style>
+        .custom-table td .resume-btn,
+        .custom-table td .shortlist-btn {
+            border: 1px solid #007bff;
+            margin-top: 0;
+        }
+        .container{
+          margin-top: 3rem;
+        }
+        .itemsPerPageForm {
+            margin-top: -3.7rem;
+            margin-left: 1rem;
+        }
+    </style>
+    <%- include('../includes/navigation.ejs') %>
+    <%- include('../includes/flash.ejs') %>
+        <div class="container">
+            <h2 class="section-title">Interviews</h2>
+            <% if(interviews.length > 0){ %>
+                <div class="table">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Sr. No.</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Interviewer</td>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% let interviewCount = 1; %>
+                            <% interviews.forEach(interview => { %>
+                                <tr>
+                                    <td><%= interviewCount++ %></td>
+                                    <td><%= interview.user.name %></td>
+                                    <td><%= interview.user.email %></td>
+                                    <td><%= interview.status %></td>
+                                    <td><%= user.firstName + ' ' + user.lastName %></td>
+                                    <td><%= interview.interviewDate.toLocaleDateString() %></td>
+                                    <td>
+                                        <% if(interview.result === 'Selected'){ %>
+                                            Selected
+                                        <% } else if(interview.result === 'Not selected'){ %>
+                                            Not Selected
+                                        <% } else { %>
+                                            <form action="/recruiter/select/<%= interview.applicationId %>" method="GET">
+                                                <button type="submit" class="btn shortlist-btn">Result</button>
+                                            </form>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                    <%- include('../includes/pagination.ejs') %> 
+                    <div class="itemsPerPageForm">
+                        <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
+                            <div class="form-input">
+                                <label for="interviewLimit">Items per page:</label>
+                                <select name="interviewLimit" id="interviewLimit">
+                                    <option value="5" <%= interviewLimit === 5 ? "selected" : "" %>>5</option>
+                                    <option value="10" <%= interviewLimit === 10 ? "selected" : "" %>>10</option>
+                                    <option value="15" <%= interviewLimit === 15 ? "selected" : "" %>>15</option>
+                                    <option value="All" <%= interviewLimit === Number.MAX_SAFE_INTEGER ? "selected" : "" %>>All</option>
+                                </select>
+                            </div>
+                            <!-- Keep the current pages to reset to 1 -->
+                            <input type="hidden" name="interviewPage" value="1">
+                        </form>
+                    </div>
+                </div>
+            <% } else { %>
+                <p style="font-size: 1.25rem;">No Interviews found.</p>
+            <% } %>
+        </div>
+        <%- include('../includes/flashScript.ejs') %>
+        <script>
+            const form = document.getElementById("itemsPerPageForm");
+            document.getElementById("interviewLimit").addEventListener("change", () => form.submit());
+        </script>          
+        <script src="/js/preventBack.js"></script>
+    </body>
+</html>

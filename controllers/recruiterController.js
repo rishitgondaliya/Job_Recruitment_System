@@ -789,44 +789,50 @@ exports.postEditProfile = async (req, res, next) => {
 
 exports.viewJobSeekers = async (req, res, next) => {
   try {
-    const { experience, skills } = req.query;
+    const { experience, skills, search } = req.query;
 
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
+    let limit = parseInt(req.query.limit) || 10;
+    let skip = (page - 1) * limit;
 
-    const targetExperience = experience ? parseInt(experience) * 12 : null;
-    const skillsArray = skills ? skills.split(",").map((s) => s.trim()) : [];
+    if (req.query.limit === "All") {
+      skip = 0;
+      limit = Number.MAX_SAFE_INTEGER;
+    }
 
-    // base filter
-    const filter = { role: "jobSeeker" };
+    // Always fetch all job seekers and their profiles
+    let jobSeekers = await User.find({ role: "jobSeeker" }).populate(
+      "profileId"
+    );
 
-    // Get all job seekers with profiles
-    let jobSeekers = await User.find(filter).populate("profileId");
+    // Filter in-memory based on search
+    if (search) {
+      const lowerSearch = search.toLowerCase();
 
-    // Apply filtering in memory (because experience and skills are in profileId)
-    jobSeekers = jobSeekers.filter((jobSeeker) => {
-      const profile = jobSeeker.profileId;
-      if (!profile) return false;
+      jobSeekers = jobSeekers.filter((jobSeeker) => {
+        const profile = jobSeeker.profileId;
+        if (!profile) return false;
 
-      const matchExperience = targetExperience
-        ? profile.totalExperience >= targetExperience
-        : true;
+        const skillsMatch = profile.skills?.some((skill) =>
+          skill.toLowerCase().includes(lowerSearch)
+        );
 
-      const matchSkills = skillsArray.length
-        ? skillsArray.some((skill) =>
-            profile.skills
-              ?.map((s) => s.toLowerCase())
-              .includes(skill.toLowerCase())
-          )
-        : true;
+        const experienceMatch = profile.totalExperience
+          ?.toString()
+          .includes(search);
 
-      return matchExperience && matchSkills;
-    });
+        const nameOrEmailMatch =
+          jobSeeker.firstName?.toLowerCase().includes(lowerSearch) ||
+          jobSeeker.lastName?.toLowerCase().includes(lowerSearch) ||
+          jobSeeker.email?.toLowerCase().includes(lowerSearch);
+
+        return skillsMatch || experienceMatch || nameOrEmailMatch;
+      });
+    }
 
     // Query job seekers with filters, pagination, and population of profileId
     const totalJobSeekers = jobSeekers.length;
-    const totalPages = Math.ceil(totalJobSeekers / limit);
+    const totalPages = limit === "All" ? 1 : Math.ceil(totalJobSeekers / limit);
     const paginatedJobSeekers = jobSeekers.slice(skip, skip + limit);
 
     if (paginatedJobSeekers.length === 0) {
@@ -838,6 +844,7 @@ exports.viewJobSeekers = async (req, res, next) => {
         currentPage: page,
         limit,
         totalPages,
+        searchQuery: search || "",
         experience: req.query.experience || "",
         skills: req.query.skills || "",
       });
@@ -850,6 +857,7 @@ exports.viewJobSeekers = async (req, res, next) => {
       currentPage: page,
       limit,
       totalPages,
+      searchQuery: search || "",
       experience: req.query.experience || "",
       skills: req.query.skills || "",
     });
@@ -861,12 +869,13 @@ exports.viewJobSeekers = async (req, res, next) => {
 
 exports.viewApplications = async (req, res, next) => {
   const appPage = parseInt(req.query.applicationPage) || 1;
-  const appLimit = parseInt(req.query.applicationLimit) || 5;
-  const appSkip = (appPage - 1) * appLimit;
+  let appLimit = parseInt(req.query.applicationLimit) || 5;
+  let appSkip = (appPage - 1) * appLimit;
 
-  const interviewPage = parseInt(req.query.interviewPage) || 1;
-  const interviewLimit = parseInt(req.query.interviewLimit) || 5;
-  const interviewSkip = (interviewPage - 1) * interviewLimit;
+  if (req.query.applicationLimit === "All") {
+    appSkip = 0;
+    appLimit = Number.MAX_SAFE_INTEGER;
+  }
 
   try {
     const totalApplications = await Application.countDocuments({
@@ -880,10 +889,39 @@ exports.viewApplications = async (req, res, next) => {
     })
       .skip(appSkip)
       .limit(appLimit)
-      .populate("user");
+      .populate("user")
+      .sort({createdAt: -1});
 
-    const totalApplicationPage = Math.ceil(totalApplications / appLimit);
+    const totalApplicationPage =
+      appLimit === "All" ? 1 : Math.ceil(totalApplications / appLimit);
 
+    res.render("recruiter/viewApplications", {
+      pageTitle: "Applications",
+      path: "/viewApplications",
+      applications,
+      currentPage: appPage,
+      limit: appLimit,
+      appLimit,
+      totalPages: totalApplicationPage,
+      user: req.user,
+    });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+
+exports.viewInterviews = async (req, res, next) => {
+  const interviewPage = parseInt(req.query.interviewPage) || 1;
+  let interviewLimit = parseInt(req.query.interviewLimit) || 5;
+  let interviewSkip = (interviewPage - 1) * interviewLimit;
+
+  if (req.query.interviewLimit === "All") {
+    interviewSkip = 0;
+    interviewLimit = Number.MAX_SAFE_INTEGER;
+  }
+
+  try {
     const totalInterviews = await Interview.countDocuments({
       recruiterId: req.user._id,
     });
@@ -895,7 +933,10 @@ exports.viewApplications = async (req, res, next) => {
       .limit(interviewLimit)
       .populate("user");
 
-    const totalInterviewPage = Math.ceil(totalInterviews / interviewLimit);
+    const totalInterviewPage =
+      interviewLimit === "All"
+        ? 1
+        : Math.ceil(totalInterviews / interviewLimit);
 
     // display scheduled interviews on top
     interviews.sort((a, b) => {
@@ -903,17 +944,14 @@ exports.viewApplications = async (req, res, next) => {
       return order[a.status] - order[b.status];
     });
 
-    res.render("recruiter/viewApplications", {
-      pageTitle: "Applications",
-      path: "/viewApplications",
-      applications,
+    res.render("recruiter/viewInterviews", {
+      pageTitle: "Interviews",
+      path: "/viewInterviews",
       interviews,
-      appPage,
-      appLimit,
-      totalApplicationPage,
-      interviewPage,
+      currentPage: interviewPage,
+      limit: interviewLimit,
       interviewLimit,
-      totalInterviewPage,
+      totalPages: totalInterviewPage,
       user: req.user,
     });
   } catch (err) {
@@ -1035,15 +1073,15 @@ exports.postInterviewResult = async (req, res, next) => {
     }
 
     await jobPost.save({ validateBeforeSave: false });
-    await interview.save();
-    await application.save();
+    await interview.save({ validateBeforeSave: false });
+    await application.save({ validateBeforeSave: false });
 
     res.cookie("successMessage", `Candidate ${action}ed successfully`, {
       maxAge: 3000,
       httpOnly: false,
     });
 
-    res.redirect("/recruiter/viewApplications");
+    res.redirect("/recruiter/viewInterviews");
   } catch (err) {
     console.log(err);
     next(err);

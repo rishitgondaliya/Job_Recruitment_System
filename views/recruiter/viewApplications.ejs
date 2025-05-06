@@ -6,49 +6,20 @@
             border: 1px solid #007bff;
             margin-top: 0;
         }
-        .table {
-            margin-bottom: 4rem;
+        .container{
+          margin-top: 3rem;
         }
         .itemsPerPageForm {
-            margin-top: 1rem;
-            margin-right: 2rem;
-        }
-        .pagination{
-            margin-top: -2rem;
+            margin-top: -3.7rem;
+            margin-left: 1rem;
         }
     </style>
     <%- include('../includes/navigation.ejs') %>
     <%- include('../includes/flash.ejs') %>
-      <div class="itemsPerPageForm">
-        <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
-          <div class="form-input">
-            <label for="applicationLimit">Applications per page:</label>
-            <select name="applicationLimit" id="applicationLimit">
-              <option value="1" <%= appLimit === 1 ? "selected" : "" %>>1</option>
-              <option value="3" <%= appLimit === 3 ? "selected" : "" %>>3</option>
-              <option value="5" <%= appLimit === 5 ? "selected" : "" %>>5</option>
-            </select>
-          </div>
-      
-          <div class="form-input">
-            <label for="interviewLimit">Interviews per page:</label>
-            <select name="interviewLimit" id="interviewLimit">
-              <option value="1" <%= interviewLimit === 1 ? "selected" : "" %>>1</option>
-              <option value="3" <%= interviewLimit === 3 ? "selected" : "" %>>3</option>
-              <option value="5" <%= interviewLimit === 5 ? "selected" : "" %>>5</option>
-            </select>
-          </div>
-      
-          <!-- Keep the current pages to reset to 1 -->
-          <input type="hidden" name="applicationPage" value="1">
-          <input type="hidden" name="interviewPage" value="1">
-        </form>
-      </div>
-      
         <div class="container">
-            <div class="table">
-                <h2 class="section-title">Applications</h2>
-                <% if(applications.length > 0){ %>
+            <h2 class="section-title">Applications</h2>
+            <% if(applications.length > 0){ %>
+                <div class="table">
                     <table class="custom-table">
                         <thead>
                             <tr>
@@ -84,127 +55,32 @@
                             <% }); %>
                         </tbody>
                     </table>
-                <% } else { %>
-                    <p style="font-size: 1.25rem;">No applications found.</p>
-                <% } %>
-            </div>
-            <div class="pagination">
-                <% if (totalApplicationPage > 1) { %>
-                    <ul class="pagination-list">
-                      <% if (appPage > 1) { %>
-                        <a href="?applicationPage=<%= appPage - 1 %>&applicationLimit=<%= appLimit %>&interviewPage=<%= interviewPage %>&interviewLimit=<%= interviewLimit %>">
-                          <li>Prev</li>
-                        </a>
-                      <% } %>
-                  
-                      <% if (appPage !== 1) { %>
-                        <a href="?applicationPage=1&applicationLimit=<%= appLimit %>&interviewPage=<%= interviewPage %>&interviewLimit=<%= interviewLimit %>">
-                          <li>1</li>
-                        </a>
-                      <% } %>
-                  
-                      <span> Page <%= appPage %> of <%= totalApplicationPage %> </span>
-                  
-                      <% if (appPage !== totalApplicationPage) { %>
-                        <a href="?applicationPage=<%= totalApplicationPage %>&applicationLimit=<%= appLimit %>&interviewPage=<%= interviewPage %>&interviewLimit=<%= interviewLimit %>">
-                          <li><%= totalApplicationPage %></li>
-                        </a>
-                      <% } %>
-                  
-                      <% if (appPage < totalApplicationPage) { %>
-                        <a href="?applicationPage=<%= appPage + 1 %>&applicationLimit=<%= appLimit %>&interviewPage=<%= interviewPage %>&interviewLimit=<%= interviewLimit %>">
-                          <li>Next</li>
-                        </a>
-                      <% } %>
-                    </ul>
-                  <% } %>                  
-            </div> 
-            <div class="table">
-                <h2 class="section-title">Interviews</h2>
-                <% if(interviews.length > 0) { %>
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>Sr. No.</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Status</th>
-                                <th>Interviewer</td>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% let interviewCount = 1; %>
-                            <% interviews.forEach(interview => { %>
-                                <tr>
-                                    <td><%= interviewCount++ %></td>
-                                    <td><%= interview.user.name %></td>
-                                    <td><%= interview.user.email %></td>
-                                    <td><%= interview.status %></td>
-                                    <td><%= user.firstName + ' ' + user.lastName %></td>
-                                    <td><%= interview.interviewDate.toLocaleDateString() %></td>
-                                    <td>
-                                        <% if(interview.result === 'Selected'){ %>
-                                            Selected
-                                        <% } else if(interview.result === 'Not selected'){ %>
-                                            Not Selected
-                                        <% } else { %>
-                                            <form action="/recruiter/select/<%= interview.applicationId %>" method="GET">
-                                              <% if(interview.interviewDate !== new Date()){ %>
-                                                <button type="submit" class="btn shortlist-btn" disabled>Result</button>
-                                              <% } else{ %>
-                                                <button type="submit" class="btn shortlist-btn">Result</button>
-                                              <% } %>
-                                            </form>
-                                        <% } %>
-                                    </td>
-                                </tr>
-                            <% }); %>
-                        </tbody>
-                    </table>
-                <% }else { %>
-                    <p style="font-size: 1.25rem;">No interviews scheduled.</p>
-                <% } %>
-            </div>
-            <div class="pagination" id="interviewPagination">
-                <% if (totalInterviewPage > 1) { %>
-                    <ul class="pagination-list">
-                      <% if (interviewPage > 1) { %>
-                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=<%= interviewPage - 1 %>&interviewLimit=<%= interviewLimit %>#interviewPagination">
-                          <li>Prev</li>
-                        </a>
-                      <% } %>
-                  
-                      <% if (interviewPage !== 1) { %>
-                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=1&interviewLimit=<%= interviewLimit %>#interviewPagination">
-                          <li>1</li>
-                        </a>
-                      <% } %>
-                  
-                      <span> Page <%= interviewPage %> of <%= totalInterviewPage %> </span>
-                  
-                      <% if (interviewPage !== totalInterviewPage) { %>
-                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=<%= totalInterviewPage %>&interviewLimit=<%= interviewLimit %>#interviewPagination">
-                          <li><%= totalInterviewPage %></li>
-                        </a>
-                      <% } %>
-                  
-                      <% if (interviewPage < totalInterviewPage) { %>
-                        <a href="?applicationPage=<%= appPage %>&applicationLimit=<%= appLimit %>&interviewPage=<%= interviewPage + 1 %>&interviewLimit=<%= interviewLimit %>#interviewPagination">
-                          <li>Next</li>
-                        </a>
-                      <% } %>
-                    </ul>
-                  <% } %>                  
-            </div> 
+                    <%- include('../includes/pagination.ejs') %>
+                    <div class="itemsPerPageForm">
+                        <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
+                            <div class="form-input">
+                                <label for="applicationLimit">Items per page:</label>
+                                <select name="applicationLimit" id="applicationLimit">
+                                    <option value="5" <%= appLimit === 5 ? "selected" : "" %>>5</option>
+                                    <option value="10" <%= appLimit === 10 ? "selected" : "" %>>10</option>
+                                    <option value="15" <%= appLimit === 15 ? "selected" : "" %>>15</option>
+                                    <option value="All" <%= appLimit === Number.MAX_SAFE_INTEGER ? "selected" : "" %>>All</option>
+                                </select>
+                            </div>
+                            <!-- Keep the current pages to reset to 1 -->
+                            <input type="hidden" name="applicationPage" value="1">
+                        </form>
+                    </div>
+                </div>
+            <% } else { %>
+                <p style="font-size: 1.25rem;">No applications found.</p>
+            <% } %>
         </div>
         <%- include('../includes/flashScript.ejs') %>
         <script>
             const form = document.getElementById("itemsPerPageForm");
             document.getElementById("applicationLimit").addEventListener("change", () => form.submit());
-            document.getElementById("interviewLimit").addEventListener("change", () => form.submit());
-          </script>          
+        </script>          
         <script src="/js/preventBack.js"></script>
     </body>
 </html>
