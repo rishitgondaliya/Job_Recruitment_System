@@ -5,27 +5,17 @@
         width: max-content;
     }
     .itemsPerPageForm {
-      margin-top: 1rem;
-      margin-right: 2rem;
+      margin-top: -1rem;
+      text-align: center;
     }
     .container{
-        margin-top: -2rem;
+        margin-top: 3rem;
+    }
+    .container .page-title {
+        margin-bottom: 2rem;
     }
 </style>
-      <%- include('../includes/navigation.ejs') %>
-        <div class="itemsPerPageForm">
-            <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
-                <div class="form-input">
-                    <label for="limit">Items per page:</label>
-                    <select name="limit" id="limit">
-                        <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
-                        <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
-                        <option value="20" <%= limit === 20 ? "selected" : "" %>>20</option>
-                    </select>
-                </div>
-                <input type="hidden" id="page" name="page" value="<%= currentPage %>">
-            </form>
-        </div>    
+      <%- include('../includes/navigation.ejs') %>  
         <div class="container">
             <h1 class="page-title">Job Categories</h1>
               
@@ -51,6 +41,20 @@
                 </tbody>
             </table>
             <%- include('../includes/pagination.ejs') %>  
+            <div class="itemsPerPageForm">
+                <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
+                    <div class="form-input">
+                        <label for="limit">Items per page:</label>
+                        <select name="limit" id="limit">
+                            <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
+                            <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
+                            <option value="15" <%= limit === 15 ? "selected" : "" %>>15</option>
+                            <option value="All" <%= limit === Number.MAX_SAFE_INTEGER ? "selected" : "" %>>All</option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="page" name="page" value="<%= currentPage %>">
+                </form>
+            </div>  
             <% } %>      
         </div>
         <%- include('../includes/flashScript.ejs') %>

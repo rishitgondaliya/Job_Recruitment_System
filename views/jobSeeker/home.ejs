@@ -1,36 +1,62 @@
 <%- include('../includes/main.ejs') %>
 <link rel="stylesheet" href="/css/table.css">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+/>
 <style>
     .custom-table th:nth-child(4), .custom-table td:nth-child(4),
     .custom-table th:nth-child(6), .custom-table td:nth-child(6) { 
         text-align: center;
     }
     .itemsPerPageForm {
-        margin-top: 1rem;
-        margin-right: 2rem;
+        margin-top: -3.7rem;
+        margin-left: 1rem;
     }
     .container{
-        margin-top: -2rem;
+        margin-top: 3rem;
+    }
+    form .search-form {
+        width: 25rem;
+      }
+    form .search-form {
+        margin: 0 auto 3rem;
+    }
+    form .search-form input {
+        height: 1.5rem;
+    }
+    .container {
+        min-width: 15rem;
     }
 </style>
 <%- include('../includes/navigation.ejs') %>
-    <div class="itemsPerPageForm">
-        <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
-            <div class="form-input">
-                <label for="limit">Items per page:</label>
-                <select name="limit" id="limit">
-                    <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
-                    <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
-                    <option value="20" <%= limit === 20 ? "selected" : "" %>>20</option>
-                </select>
-            </div>
-            <input type="hidden" id="page" name="page" value="<%= currentPage %>">
-        </form>
-    </div>    
-  
     <div class="container">
         <%- include('../includes/flash.ejs') %>
 
+        <form action="/jobSeeker/home" method="get" id="serch-form">
+            <div class="form-input search-form" style="position: relative;">
+              <input
+                type="text"
+                name="search"
+                id="search"
+                placeholder="Search jobs by title or company"
+                value="<%= searchQuery %>"
+                style="padding-right: 35px;"
+              >
+              <button type="submit" style="
+                position: absolute;
+                right: 4px;
+                top: 20%;
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 1.1rem;
+              ">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>      
+          </form>
+        
         <h2 class="section-title">Featured Jobs</h2>
         <% if(featuredJobs.length == 0){ %>
             <h4>There is no featured jobs to show.</h4>
@@ -66,14 +92,30 @@
                     <% }); %>
                 </tbody>
             </table>
+            <%- include('../includes/pagination.ejs') %>
+            <div class="itemsPerPageForm">
+                <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
+                    <div class="form-input">
+                        <label for="limit">Items per page:</label>
+                        <select name="limit" id="limit">
+                            <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
+                            <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
+                            <option value="15" <%= limit === 15 ? "selected" : "" %>>15</option>
+                            <option value="All" <%= limit === Number.MAX_SAFE_INTEGER ? "selected" : "" %>>All</option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="page" name="page" value="<%= currentPage %>">
+                    <input type="hidden" id="searchQuery" name="search" value="<%= searchQuery %>">
+                </form>
+            </div> 
         <% } %>
-        <%- include('../includes/pagination.ejs') %>
     </div>
     <%- include('../includes/flashScript.ejs') %>
     <script>
         document.getElementById("limit").addEventListener("change", function () {
-          document.getElementById("page").value = 1; // Reset page
-          document.getElementById("itemsPerPageForm").submit(); // Submit form
+            document.getElementById("page").value = 1; // Reset page
+            document.getElementById("searchQuery").value = document.getElementById("search").value;
+            document.getElementById("itemsPerPageForm").submit(); // Submit form
         });
     </script>
     <script src="/js/preventBack.js"></script>

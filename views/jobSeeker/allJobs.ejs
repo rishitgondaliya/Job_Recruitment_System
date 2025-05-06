@@ -13,7 +13,7 @@
       width: 25%;
     }
     form .search-form {
-      margin: -4rem auto 3rem;
+      margin: 0 auto 3rem;
     }
     form .search-form input {
       height: 1.5rem;
@@ -35,10 +35,13 @@
     .locType {
       display: inline;
     }
-    .itemsPerPageForm{
-      text-align: right;
-      margin-top: 0.5rem;
+    .itemsPerPageForm form {
+      margin-top: -3.8rem;
+      margin-left: .5rem;
     }
+    .container {
+      min-width: 15rem;
+  }
 </style>
 <%- include('../includes/navigation.ejs') %>
 
@@ -50,20 +53,7 @@
         </div>
       <% } else { %>
         <button id="toggleFilter" class="btn apply-filter">Filter Jobs</button>
-      <% } %>
-      <div class="itemsPerPageForm">
-        <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
-            <div class="form-input">
-                <label for="limit">Items per page:</label>
-                <select name="limit" id="limit">
-                    <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
-                    <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
-                    <option value="20" <%= limit === 20 ? "selected" : "" %>>20</option>
-                </select>
-            </div>
-            <input type="hidden" id="page" name="page" value="<%= currentPage %>">
-        </form>
-      </div>  
+      <% } %> 
     </div>
 
     <form action="/jobSeeker/allJobs" method="get" id="serch-form">
@@ -178,8 +168,23 @@
                     <% }); %>
                 </tbody>
             </table>
+            <%- include('../includes/pagination.ejs') %>
+            <div class="itemsPerPageForm">
+              <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
+                  <div class="form-input">
+                      <label for="limit">Items per page:</label>
+                      <select name="limit" id="limit">
+                          <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
+                          <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
+                          <option value="15" <%= limit === 15 ? "selected" : "" %>>15</option>
+                          <option value="All" <%= limit === Number.MAX_SAFE_INTEGER ? "selected" : "" %>>All</option>
+                      </select>
+                  </div>
+                  <input type="hidden" id="searchQuery" name="search" value="<%= searchQuery %>">
+                  <input type="hidden" id="page" name="page" value="<%= currentPage %>">
+              </form>
+            </div> 
         <% } %>
-        <%- include('../includes/pagination.ejs') %>
     </div>
     <%- include('../includes/flashScript.ejs') %>
     <script>
@@ -199,6 +204,7 @@
 
       document.getElementById("limit").addEventListener("change", function () {
         document.getElementById("page").value = 1; // Reset page
+        document.getElementById("searchQuery").value = document.getElementById("search").value;
         document.getElementById("itemsPerPageForm").submit(); // Submit form
       });
     </script>

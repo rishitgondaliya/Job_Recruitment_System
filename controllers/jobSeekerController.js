@@ -10,25 +10,41 @@ const Interview = require("../models/interview");
 const Review = require("../models/review");
 
 exports.getJobSeekerHome = async (req, res, next) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5; // jobs per page
-  const skip = (page - 1) * limit;
+  let page = parseInt(req.query.page) || 1;
+  let limit = parseInt(req.query.limit) || 10; // jobs per page
+  let skip = (page - 1) * limit;
+  const search = req.query.search || ''
+
+  if (req.query.limit === "All") {
+    skip = 0;
+    limit = Number.MAX_SAFE_INTEGER;
+  }
 
   try {
+    const filter = {}
+    if (search) {
+      filter.$or = [
+        { "jobDetail.jobTitle": { $regex: search, $options: "i" } },
+        { company: { $regex: search, $options: "i" } },
+      ];
+    }
     const totalFeaturedJobs = await jobListing.countDocuments({
+      ...filter,
       "jobDetail.isFeatured.status": "Yes",
       "jobDetail.isFeatured.endDate": { $gte: new Date() },
     });
 
     const featuredJobs = await jobListing
       .find({
+        ...filter,
         "jobDetail.isFeatured.status": "Yes",
         "jobDetail.isFeatured.endDate": { $gte: new Date() },
       })
       .skip(skip)
       .limit(limit);
 
-    const totalPages = Math.ceil(totalFeaturedJobs / limit);
+    const totalPages =
+      limit === "All" ? 1 : Math.ceil(totalFeaturedJobs / limit);
 
     res.render("jobSeeker/home", {
       pageTitle: "Home | Job Seeker",
@@ -37,17 +53,23 @@ exports.getJobSeekerHome = async (req, res, next) => {
       currentPage: page,
       limit,
       totalPages,
+      searchQuery: search || ''
     });
   } catch (error) {
-    console.log("error",error);
+    console.log("error", error);
     next(error);
   }
 };
 
 exports.getJobCategories = async (req, res, next) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5; // jobs per page
-  const skip = (page - 1) * limit;
+  let page = parseInt(req.query.page) || 1;
+  let limit = parseInt(req.query.limit) || 10; // jobs per page
+  let skip = (page - 1) * limit;
+
+  if (req.query.limit === "All") {
+    skip = 0;
+    limit = Number.MAX_SAFE_INTEGER;
+  }
 
   try {
     const totalCategories = await Category.countDocuments();
@@ -58,7 +80,7 @@ exports.getJobCategories = async (req, res, next) => {
       .skip(skip)
       .limit(limit);
 
-    const totalPages = Math.ceil(totalCategories / limit);
+    const totalPages = limit === "All" ? 1 : Math.ceil(totalCategories / limit);
 
     res.render("jobSeeker/jobCategories", {
       pageTitle: "Job Categories",
@@ -75,9 +97,14 @@ exports.getJobCategories = async (req, res, next) => {
 };
 
 exports.getAllJobs = async (req, res, next) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5;
-  const skip = (page - 1) * limit;
+  let page = parseInt(req.query.page) || 1;
+  let limit = parseInt(req.query.limit) || 10;
+  let skip = (page - 1) * limit;
+
+  if (req.query.limit === "All") {
+    skip = 0;
+    limit = Number.MAX_SAFE_INTEGER;
+  }
 
   try {
     const { category, locationType, experience, salary, search } = req.query;
@@ -103,7 +130,7 @@ exports.getAllJobs = async (req, res, next) => {
       .select("jobDetail.jobId");
 
     const totalJobs = await jobListing.countDocuments(filter);
-    const totalPages = Math.ceil(totalJobs / limit);
+    const totalPages = limit === "All" ? 1 : Math.ceil(totalJobs / limit);
 
     const jobPosts = await jobListing
       .find(filter)
