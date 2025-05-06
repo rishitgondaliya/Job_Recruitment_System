@@ -1,118 +1,138 @@
 <%- include('../includes/main.ejs') %>
     <link rel="stylesheet" href="/css/table.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
     <style>
-        .toggleFilter {
-            text-align: right;
-            margin-right: 3rem;
-          }
-      
-          .toggleFilter .btn {
-            font-size: 1rem;
-          }
-          .itemsPerPageForm {
-            margin-top: 1rem;
-            margin-right: 3rem;
-          }
+        .itemsPerPageForm {
+          margin-top: -3.7rem;
+          margin-left: 1rem;
+        }
+        form .search-form {
+          min-width: 25rem;
+          width: 40%;
+        }
+        form .search-form {
+          margin: 0 auto 3rem;
+        }
+        form .search-form input {
+          height: 1.5rem;
+        }
+        .container {
+          margin-top: 3rem;
+        }
+        .custom-table {
+          min-width: 40rem;
+        }
     </style>
     <%- include('../includes/navigation.ejs') %>
-    <div class="toggleFilter">
-      <button id="toggleFilter" class="btn">Filter Job Seekers</button>
-    </div>
-    <div class="itemsPerPageForm">
-      <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
-          <div class="form-input">
-              <label for="limit">Items per page:</label>
-              <select name="limit" id="limit">
-                  <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
-                  <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
-                  <option value="20" <%= limit === 20 ? "selected" : "" %>>20</option>
-              </select>
-          </div>
-          <input type="hidden" id="page" name="page" value="<%= currentPage %>">
-      </form>
-    </div>
-
-        <div class="container">
-            <%- include('../includes/flash.ejs') %>
-              <!-- Filter Form -->
-            <form id="filterForm" action="/recruiter/viewJobSeekers" method="GET" class="filter-form form-control" style="display: none;">          
-                <div class="form-input">
-                    <label for="experience">Experience (years):</label>
-                    <input type="number" name="experience" id="experience" min="0" value="<%= experience %>">
-                </div>
-        
-                <div class="form-input">
-                    <label for="skills">Skills:</label>
-                    <input type="text" name="skills" id="skills" value="<%= skills %>">
-                </div>
-            
-                <div class="center">
-                    <button type="submit" class="btn">Apply Filters</button>
-                </div>
+        <div class="container">                
+            <form action="/recruiter/viewJobSeekers" method="GET" id="serch-form">
+                  <div class="form-input search-form" style="position: relative;">
+                    <input
+                    type="text"
+                    name="search"
+                  id="search"
+                  placeholder="Search job seekers by name, email skills or experience"
+                  value="<%= searchQuery %>"
+                  style="padding-right: 35px;"
+                  >
+                  <button type="submit" style="
+                  position: absolute;
+                  right: 4px;
+                  top: 20%;
+                  background: none;
+                  border: none;
+                  cursor: pointer;
+                  font-size: 1.1rem;
+                  ">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>      
             </form>
-
+            
+            <%- include('../includes/flash.ejs') %>
             <!-- Job Seekers Table -->
             <h2 class="section-title">Job Seekers</h2>
-            <table class="custom-table">
-                <thead>
-                    <tr>
-                        <th>Sr. No.</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Skills</th>
-                        <th>Experience</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% let jobSeekerCount = 1; %>
-                    <% jobSeekers.forEach(jobSeeker => { %>
+            <% if(jobSeekers.length === 0){ %>
+                No job seekers found.
+            <% }else{ %>
+                <table class="custom-table">
+                    <thead>
                         <tr>
-                            <td><%= jobSeekerCount++ %></td>
-                            <td><%= jobSeeker.firstName %> <%= jobSeeker.lastName %></td>
-                            <td><%= jobSeeker.email %></td>
-                            <td><%= jobSeeker.profileId.skills?.join(', ') %></td>
-                            <td>
-                                <% 
-                                    const totalExp = jobSeeker.profileId.totalExperience || 0;
-                                    let years = Math.floor(totalExp / 12);
-                                    let months = totalExp % 12;
-                                    if(months >= 6) {
-                                        years++;
-                                        months = 0
-                                    }
-                                %>
-                              
-                              <% if (years) { %>
-                                <%= years %> Year<%= years > 1 ? 's+' : '' %>
-                              <% } else if (months < 6) { %>
-                                <%= months %> Month<%= months > 1 ? 's' : '' %>
-                              <% } %>
-                            </td>
+                            <th>Sr. No.</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Skills</th>
+                            <th>Experience</th>
                         </tr>
-                    <% }); %>
-                </tbody>
-            </table>
-            <%- include('../includes/pagination.ejs') %>
+                    </thead>
+                    <tbody>
+                        <% let jobSeekerCount = 1; %>
+                        <% jobSeekers.forEach(jobSeeker => { %>
+                            <tr>
+                                <td><%= jobSeekerCount++ %></td>
+                                <td><%= jobSeeker.firstName %> <%= jobSeeker.lastName %></td>
+                                <td><%= jobSeeker.email %></td>
+                                <td><%= jobSeeker.profileId.skills?.join(', ') %></td>
+                                <td>
+                                    <% 
+                                        const totalExp = jobSeeker.profileId.totalExperience || 0;
+                                        let years = Math.floor(totalExp / 12);
+                                        let months = totalExp % 12;
+                                        if(months >= 6) {
+                                            years++;
+                                            months = 0
+                                        }
+                                    %>
+                                  
+                                    <% if (years) { %>
+                                        <%= years %> Year<%= years > 1 ? 's+' : '' %>
+                                    <% } else if (months < 6) { %>
+                                        <%= months %> Month<%= months > 1 ? 's' : '' %>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+              </table>
+              <%- include('../includes/pagination.ejs') %>
+              <div class="itemsPerPageForm">
+                <form id="itemsPerPageForm" method="GET" class="items-per-page-form">
+                    <div class="form-input">
+                        <label for="limit">Items per page:</label>
+                        <select name="limit" id="limit">
+                            <option value="5" <%= limit === 5 ? "selected" : "" %>>5</option>
+                            <option value="10" <%= limit === 10 ? "selected" : "" %>>10</option>
+                            <option value="15" <%= limit === 15 ? "selected" : "" %>>15</option>
+                            <option value="All" <%= limit === Number.MAX_SAFE_INTEGER ? "selected" : "" %>>All</option>
+                        </select>
+                    </div>
+                    <input type="hidden" name="search" id="searchQuery" value="<%= searchQuery %>">
+                      <input type="hidden" name="experience" id="expQuery" value="<%= experience %>">
+                      <input type="hidden" name="skills" id="skillsQuery" value="<%= skills %>">
+                      <input type="hidden" id="page" name="page" value="<%= currentPage %>">
+                </form>
+              </div>
+          <% } %>
         </div>
         <%- include('../includes/flashScript.ejs') %>
         <script>
-            const toggleBtn = document.getElementById("toggleFilter");
-            const filterForm = document.getElementById("filterForm");
+          document.getElementById("limit").addEventListener("change", function () {
+              document.getElementById("page").value = 1; // reset to page 1
           
-            toggleBtn.addEventListener("click", () => {
-              filterForm.style.display = filterForm.style.display === "none" ? "block" : "none";
-            });
+              // If search/experience/skills inputs exist on the main form, update hidden fields
+              const searchInput = document.getElementById("search");
+              if (searchInput) document.getElementById("searchQuery").value = searchInput.value;
           
-            // hide form after submission
-            filterForm.addEventListener("submit", () => {
-              setTimeout(() => {
-                filterForm.style.display = "none";
-              }, 100);
-            });
-
-            document.getElementById("limit").addEventListener("change", function () {
-              document.getElementById("page").value = 1; // Reset page
-              document.getElementById("itemsPerPageForm").submit(); // Submit form
+              const experienceInput = document.getElementById("experience");
+              if (experienceInput) document.getElementById("expQuery").value = experienceInput.value;
+          
+              const skillsInput = document.getElementById("skills");
+              if (skillsInput) document.getElementById("skillsQuery").value = skillsInput.value;
+          
+              document.getElementById("itemsPerPageForm").submit();
             });
         </script>
         <script src="/js/preventBack.js"></script>
