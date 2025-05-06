@@ -164,8 +164,8 @@
     margin-top: 0.5rem;
     font-size: 1.05rem;
   }
-  .itemsPerPageForm{
-    text-align: right;
+  .pagination-list li {
+    color: black;
   }
   .itemsPerPageForm .form-input{
     display: inline-block;

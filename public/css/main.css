@@ -57,6 +57,9 @@ body {
   width: 50%;
 }
 
+form input:hover{
+  border-color: #007bff;
+}
 /* button */
 
 .btn {
