@@ -13,18 +13,32 @@
       .input-group{
         justify-content: space-between;
       }
-      form .edit-btn{
-        margin-top: 0rem;
+      .menu-btn{
         background: none;
-        background-color: aliceblue;
         border: none;
-        border-radius: 50%;
-        font-size: 1.5rem;
-        text-align: center;
       }
-      form button:hover{
+      button:hover{
         cursor: pointer;
       }
+      .modal {
+        display: none;
+        position: absolute;
+        left: 60%;
+        top: 25%;
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        z-index: 1000;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      }
+      .modal-content {
+        padding: 10px;
+        width: max-content;
+      } 
+      .modal-content button{
+        font-size: 1rem;
+        margin-top: 0.5rem;
+      }     
     </style>
     <%- include('../includes/navigation.ejs') %>
 
@@ -39,14 +53,33 @@
             <div class="profile-name-role">
               <h2><%= user.firstName %> <%= user.lastName %></h2>
               <p><%= profile.profileType ? 'Recruiter' : '' %> - <%= profile.position %></p>
+              <p style="color: black;"><%= user.isActive ? "Active" : "Inactive " %></p>
             </div>
           </div>
-          <div>
-            <form action="/recruiter/editProfile" method="GET">
-              <input type="hidden" name="profileId" value="<%= profile._id %>">
-              <button type="submit" class="edit-btn">...</button>
-            </form>
-          </div>
+          <div style="position: relative; display: inline-block;">
+            <button type="button" class="menu-btn">
+              <img src="/assets/menu-btn.png" alt="">
+            </button>
+            <div class="modal">
+              <div class="modal-content">
+                <% if(user.isActive){ %>
+                    <form action="/admin/deactivate/recruiter" method="POST">
+                        <input type="hidden" name="userId" value="<%= user._id %>">
+                        <button type="submit" class="deactive-btn btn">Deactivate</button>
+                    </form>
+                <% } else{ %>
+                    <form action="/admin/activate/recruiter" method="POST">
+                        <input type="hidden" name="userId" value="<%= user._id %>">
+                        <button type="submit" class="deactive-btn btn">Activate</button>
+                    </form>
+                <% } %>
+                <form action="/admin/delete/recruiter" method="POST">
+                    <input type="hidden" name="userId" value="<%= user._id %>">
+                    <button type="submit" class="delete-btn btn">Delete</button>
+                </form>
+              </div>
+            </div>
+          </div>          
         </div>
       </section>
 
@@ -166,5 +199,21 @@
       <% } %>
     </div>
     <%- include('../includes/flashScript.ejs') %>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const menuBtn = document.querySelector('.menu-btn');
+        const modal = document.querySelector('.modal');
+    
+        menuBtn.addEventListener('click', (e) => {
+          e.stopPropagation(); // Prevent window click from immediately closing it
+          modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+        });
+    
+        // Hide when clicking outside
+        window.addEventListener('click', () => {
+          modal.style.display = 'none';
+        });
+      });
+    </script>    
   </body>
 </html>
