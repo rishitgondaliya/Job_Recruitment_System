@@ -313,7 +313,6 @@ exports.getEditProfile = async (req, res, next) => {
   const user = req.user;
   try {
     const userProfile = await Profile.findById(user.profileId);
-    // console.log("userProfile",userProfile)
     res.render("jobSeeker/editProfile", {
       pageTitle: "Edit Profile",
       path: "/profile",
