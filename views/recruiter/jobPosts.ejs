@@ -10,12 +10,7 @@
     .add-job-btn {
         text-align: right;
         margin-right: 3rem;
-    }
-    .hidden {
-        display: none;
-    }
-    #add-new{
-      margin-top: 2rem;
+        margin-top: 2rem;
     }
     .itemsPerPageForm {
       margin-top: -3.7rem;
@@ -33,130 +28,9 @@
 <%- include('../includes/navigation.ejs') %>
 
         <%- include('../includes/flash.ejs') %>
-        <% if(!showForm){ %>
-            <div class="add-job-btn">
-              <button class="add-new-btn btn">New Job Post</button>
-            </div>
-        <% } %>
-
-        <div class="form-control <%= (isEditing || showForm) ? '' : 'hidden' %>" id="add-new">
-            <h2 class="center"><%= isEditing ? 'Edit job post' : 'Post New Job' %></h2>
-
-            <form action="<%= isEditing ? '/recruiter/editJobPost' : '/recruiter/addNewJob' %>" method="POST" novalidate>
-                <div class="input-group">
-                    <div class="form-input" style="width: 45%;">
-                        <label for="cName">Category:</label>
-                        <select name="categoryName" id="cName">
-                            <option>Select Category</option>
-                            <% categories.forEach(cat => { %>
-                                <option value="<%= cat.name %>" <%= (isEditing ? jobPost?.category : formData?.categoryName) === cat.name ? 'selected' : '' %>><%= cat.name %></option>
-                                <% }) %>
-                            </select>
-                            <% if (errors?.categoryName) { %><p class="input-error"><%= errors.categoryName %></p><% } %>
-                        </div>
-                        <div class="form-input" style="width: 45%;">
-                            <label for="jName">Job Title:</label>
-                            <input type="text" id="jName" name="jobTitle" value="<%= isEditing ? jobPost?.jobDetail?.jobTitle : formData?.jobTitle || '' %>">
-                            <% if (errors?.["jobDetail.jobTitle"]) { %><p class="input-error"><%= errors["jobDetail.jobTitle"] %></p><% } %>
-                        </div>
-                    </div>
-              
-                <div class="form-input">
-                  <label for="desc">Description:</label>
-                  <input type="text" id="desc" name="description" value="<%= isEditing ? jobPost?.jobDetail?.description : formData?.description || '' %>">
-                  <% if (errors?.["jobDetail.description"]) { %><p class="input-error"><%= errors["jobDetail.description"] %></p><% } %>
-                </div>
-              
-                <div class="form-input">
-                  <label for="req">Requirements:</label>
-                  <input type="text" id="req" name="requirements" value="<%= isEditing ? jobPost?.jobDetail?.requirements : formData?.requirements || '' %>">
-                  <% if (errors?.["jobDetail.requirements"]) { %><p class="input-error"><%= errors["jobDetail.requirements"] %></p><% } %>
-                </div>
-              
-                <div class="input-group">
-                  <div class="form-input" style="width: 45%;">
-                    <label for="locType">Location Type:</label>
-                    <select name="locType" id="locType">
-                      <option value="">Location Type</option>
-                      <% ['Remote', 'On-Site', 'Hybrid'].forEach(type => { %>
-                        <option value="<%= type %>" <%= (isEditing ? jobPost?.jobDetail?.locationType : formData?.locType) === type ? 'selected' : '' %>><%= type %></option>
-                      <% }) %>
-                    </select>
-                    <% if (errors?.["jobDetail.locationType"]) { %><p class="input-error"><%= errors["jobDetail.locationType"] %></p><% } %>
-                  </div>
-                  <div class="form-input" style="width: 45%;">
-                    <label for="loc">Location:</label>
-                    <input type="text" name="location" id="loc" value="<%= isEditing ? jobPost?.jobDetail?.location : formData?.location || '' %>">
-                  </div>
-                </div>
-              
-                <div class="input-group">
-                  <div class="form-input" style="width: 45%;">
-                    <label for="experience">Experience:</label>
-                    <input type="number" name="experience" id="experience" step="1" min="0" value="<%= isEditing ? jobPost?.jobDetail?.experience : formData?.experience || '' %>">
-                    <% if (errors?.["jobDetail.experience"]) { %><p class="input-error"><%= errors["jobDetail.experience"] %></p><% } %>
-                  </div>
-                  <div class="form-input" style="width: 45%;">
-                    <label for="vacancy">Vacancy:</label>
-                    <input type="number" name="vacancy" id="vacancy" min="1" value="<%= isEditing ? jobPost?.jobDetail?.vacancy : formData?.vacancy || '' %>">
-                    <% if (errors?.["jobDetail.vacancy"]) { %><p class="input-error"><%= errors["jobDetail.vacancy"] %></p><% } %>
-                  </div>
-                </div>
-              
-                <div class="input-group">
-                  <div class="form-input" style="width: 45%;">
-                    <label for="salary">Salary:</label>
-                    <input type="number" name="salary" id="salary" step="1000" min="1000" value="<%= isEditing ? jobPost?.jobDetail?.salary : formData?.salary || '' %>">
-                    <% if (errors?.["jobDetail.salary"]) { %><p class="input-error"><%= errors["jobDetail.salary"] %></p><% } %>
-                  </div>
-                  <div class="form-input" style="width: 45%;">
-                    <label for="status">Is Featured?</label>
-                    <select name="status" id="isFeatured">
-                      <option value="No" <%= (isEditing ? jobPost?.jobDetail?.isFeatured?.status : formData?.status) === 'No' ? 'selected' : '' %>>No</option>
-                      <option value="Yes" <%= (isEditing ? jobPost?.jobDetail?.isFeatured?.status : formData?.status) === 'Yes' ? 'selected' : '' %>>Yes</option>
-                    </select>
-                    <% if (errors?.["jobDetail.isFeatured.status"]) { %><p class="input-error"><%= errors["jobDetail.isFeatured.status"] %></p><% } %>
-                  </div>
-                </div>
-              
-                <div class="input-group" id="featuredDates" style="display: none;">
-                  <div class="form-input" style="width: 45%;">
-                    <label for="startDate">Start Date:</label>
-                    <input 
-                      type="date" 
-                      name="startDate" 
-                      id="startDate" 
-                      value="<%= isEditing && jobPost?.jobDetail?.isFeatured?.startDate ? jobPost.jobDetail.isFeatured.startDate.toISOString().split('T')[0] : (formData?.startDate || '') %>">
-                    <% if (errors?.["jobDetail.isFeatured.startDate"]) { %>
-                      <p class="input-error"><%= errors["jobDetail.isFeatured.startDate"] %></p>
-                    <% } %>
-                  </div>
-                
-                  <div class="form-input" style="width: 45%;">
-                    <label for="endDate">End Date:</label>
-                    <input 
-                      type="date" 
-                      name="endDate" 
-                      id="endDate" 
-                      value="<%= isEditing && jobPost?.jobDetail?.isFeatured?.endDate ? jobPost.jobDetail.isFeatured.endDate.toISOString().split('T')[0] : (formData?.endDate || '') %>">
-                    <% if (errors?.["jobDetail.isFeatured.endDate"]) { %>
-                      <p class="input-error"><%= errors["jobDetail.isFeatured.endDate"] %></p>
-                    <% } %>
-                  </div>
-                </div>                
-              
-                <% if (isEditing) { %>
-                  <input type="hidden" name="jobPostId" value="<%= jobPost?._id %>">
-                <% } %>
-              
-                <div class="center">
-                  <button class="btn" type="submit">
-                    <%= isEditing ? 'Update Job' : 'Add Job' %>
-                  </button> 
-                  <a href="/recruiter/jobPosts" class="delete-btn btn">Cancel</a>
-                </div>
-              </form>
-              
+        
+        <div class="add-job-btn">
+          <a href="/recruiter/addNewJob" class="add-new-btn btn">Post New Job</a>
         </div>
 
         <div class="container">
@@ -226,42 +100,7 @@
                   </form>
               </div>
             <% } %>
-        </div>
-        <script>
-          document.addEventListener('DOMContentLoaded', function () {
-            const isFeaturedSelect = document.getElementById('isFeatured');
-            const featuredDatesDiv = document.getElementById('featuredDates');
-            const addNewBtn = document.querySelector('.add-new-btn');
-            const addNewDiv = document.getElementById('add-new');
-            const limitSelect = document.getElementById("limit");
-            const pageInput = document.getElementById("page");
-            const itemsPerPageForm = document.getElementById("itemsPerPageForm");
-        
-            // Featured Dates toggle
-            function toggleFeaturedDates() {
-              if (isFeaturedSelect.value === 'Yes') {
-                featuredDatesDiv.style.display = 'flex';
-              } else {
-                featuredDatesDiv.style.display = 'none';
-              }
-            }
-        
-            toggleFeaturedDates(); // run on load
-            isFeaturedSelect.addEventListener('change', toggleFeaturedDates);
-        
-            // Add New Toggle
-            addNewBtn.addEventListener('click', () => {
-              addNewDiv.style.display = (addNewDiv.style.display === 'none' || addNewDiv.style.display === '') ? 'block' : 'none';
-              addNewBtn.style.display = 'none';
-            });
-        
-            // Pagination Limit Change
-            limitSelect.addEventListener("change", function () {
-              pageInput.value = 1; // Reset page
-              itemsPerPageForm.submit(); // Submit form
-            });
-          });
-        </script>        
+        </div>       
         <%- include('../includes/flashScript.ejs') %>
         <script src="/js/preventBack.js"></script>
     </body>

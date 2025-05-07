@@ -16,28 +16,27 @@ exports.getRecruiterHome = (req, res, next) => {
   });
 };
 
+exports.getAddNewJob = async (req, res, next) => {
+  try {
+    res.render("recruiter/editJobPost", {
+      pageTitle: "Add New Job",
+      path: "/jobPosts",
+      categories: await Category.find(),
+      isEditing: false,
+      errors: {},
+      formData: {},
+      showForm: true,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.postAddNewJob = async (req, res, next) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5; // jobs per page
-  const skip = (page - 1) * limit;
   let categories = {};
   let errors = {};
-  let jobListings;
-  let totalPages;
 
   try {
-    const totalJobPosts = await jobListing.countDocuments({
-      recruiterId: req.user._id,
-    });
-
-    jobListings = await jobListing
-      .find({ recruiterId: req.user._id })
-      .sort({ updatedAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    totalPages = Math.ceil(totalJobPosts / limit);
-
     const {
       jobTitle,
       categoryName,
@@ -63,16 +62,12 @@ exports.postAddNewJob = async (req, res, next) => {
 
     // If category is not found
     if (!category) {
-      return res.render("recruiter/jobPosts", {
+      return res.render("recruiter/editJobPost", {
         pageTitle: "Add new job",
-        path: "/addNewJob",
+        path: "/jobPosts",
         errors: { categoryName: "Please select category." },
         formData: req.body,
         categories,
-        jobListings,
-        currentPage: page,
-        limit,
-        totalPages,
         isEditing: false,
         showForm: true,
       });
@@ -94,16 +89,12 @@ exports.postAddNewJob = async (req, res, next) => {
 
     // stop early if any error
     if (Object.keys(errors).length > 0) {
-      return res.render("recruiter/jobPosts", {
+      return res.render("recruiter/editJobPost", {
         pageTitle: "Add new job",
-        path: "/addNewJob",
+        path: "/jobPosts",
         errors,
         formData: req.body,
         categories,
-        jobListings,
-        currentPage: page,
-        limit,
-        totalPages,
         isEditing: false,
         showForm: true,
       });
@@ -158,23 +149,19 @@ exports.postAddNewJob = async (req, res, next) => {
         errors[field] = err.errors[field].message;
       }
     } else {
-      console.log("Unexpected error:", err);
+      // console.log("Unexpected error:", err);
       errorMessage = "Something went wrong, please try again.";
     }
     console.log("errors", errors);
 
     // render with errors
-    return res.render("recruiter/jobPosts", {
+    return res.render("recruiter/editJobPost", {
       pageTitle: "Add new job",
-      path: "/addNewJob",
+      path: "/jobPosts",
       errors,
       errorMessage,
       formData: req.body,
       categories,
-      jobListings,
-      currentPage: page,
-      limit,
-      totalPages,
       isEditing: false,
       showForm: true,
     });
@@ -186,7 +173,6 @@ exports.getJobPosts = async (req, res) => {
   const limit = parseInt(req.query.limit) || 5; // jobs per page
   const skip = (page - 1) * limit;
   let jobListings;
-  let categories;
   let totalPages;
 
   try {
@@ -201,20 +187,14 @@ exports.getJobPosts = async (req, res) => {
       .limit(limit);
 
     totalPages = Math.ceil(totalJobPosts / limit);
-    categories = await Category.find().select("name");
 
     return res.render("recruiter/jobPosts", {
       pageTitle: "Job Posts",
       path: "/jobPosts",
       jobListings,
-      categories,
       currentPage: page,
       limit,
       totalPages,
-      errors: {},
-      formData: {},
-      isEditing: false,
-      showForm: false,
     });
   } catch (err) {
     console.error("Error fetching jobPosts:", err);
@@ -227,14 +207,9 @@ exports.getJobPosts = async (req, res) => {
       pageTitle: "Job Posts",
       path: "/jobPosts",
       jobListings,
-      categories,
       currentpage: page,
       limit,
       totalPages,
-      errors: {},
-      formData: {},
-      isEditing: false,
-      showForm: false,
     });
   }
 };
@@ -269,7 +244,6 @@ exports.deleteJobPost = async (req, res, next) => {
         currentPage: page,
         limit,
         totalPages,
-        errors: {},
         errorMessage: "Job post not found.",
       });
     }
@@ -295,48 +269,28 @@ exports.deleteJobPost = async (req, res, next) => {
       currentPage: page,
       limit,
       totalPages,
-      errors: {},
       errorMessage: "An error occurred while deleting the job post.",
     });
   }
 };
 
 exports.getEditJobPost = async (req, res, next) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5; // jobs per page
-  const skip = (page - 1) * limit;
-  let jobListings;
   let categories;
   let totalPages;
 
   try {
-    const totalJobPosts = await jobListing.countDocuments({
-      recruiterId: req.user._id,
-    });
-
-    jobListings = await jobListing
-      .find({ recruiterId: req.user._id })
-      .sort({ updatedAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    totalPages = Math.ceil(totalJobPosts / limit);
     categories = await Category.find().select("name");
 
     const jobPostId = req.params.jobPostId;
     const jobPost = await jobListing.findById(jobPostId);
 
     if (!jobPost) {
-      return res.status(404).render("recruiter/jobPosts", {
+      return res.status(404).render("recruiter/editJobPost", {
         pageTitle: "Job Posts",
         path: "/jobPosts",
-        jobListings,
         categories,
-        currentPage: page,
-        limit,
-        totalPages,
         isEditing: false,
-        showForm: false,
+        showForm: true,
         errors: {},
         jobPost,
         formData: {},
@@ -344,16 +298,12 @@ exports.getEditJobPost = async (req, res, next) => {
       });
     }
 
-    return res.render("recruiter/jobPosts", {
+    return res.render("recruiter/editJobPost", {
       pageTitle: "Edit Job Post",
       path: "/jobPosts",
       jobPost,
       errors: {},
       categories,
-      jobListings,
-      currentPage: page,
-      limit,
-      totalPages,
       formData: {},
       isEditing: true,
       showForm: true,
@@ -361,14 +311,10 @@ exports.getEditJobPost = async (req, res, next) => {
   } catch (err) {
     console.error("Error getting edit job post:", err);
 
-    return res.status(500).render("recruiter/jobPosts", {
+    return res.status(500).render("recruiter/editJobPost", {
       pageTitle: "Job Posts",
       path: "/jobPosts",
-      jobListings,
       categories,
-      currentPage: page,
-      limit,
-      totalPages,
       isEditing: true,
       showForm: true,
       errors: {},
@@ -380,27 +326,11 @@ exports.getEditJobPost = async (req, res, next) => {
 
 exports.postEditJobPost = async (req, res, next) => {
   let errors = {};
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5; // jobs per page
-  const skip = (page - 1) * limit;
   const jobPostId = req.body.jobPostId;
   let jobPost;
-  let jobListings;
   let categories;
-  let totalPages;
 
   try {
-    const totalJobPosts = await jobListing.countDocuments({
-      recruiterId: req.user._id,
-    });
-
-    jobListings = await jobListing
-      .find({ recruiterId: req.user._id })
-      .sort({ updatedAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    totalPages = Math.ceil(totalJobPosts / limit);
     categories = await Category.find().select("name");
 
     if (req.body.status === "Yes") {
@@ -408,9 +338,6 @@ exports.postEditJobPost = async (req, res, next) => {
         errors["jobDetail.isFeatured.startDate"] = "Start date is required!";
       } else if (!req.body.endDate) {
         errors["jobDetail.isFeatured.endDate"] = "End date is required!";
-      } else if (new Date(req.body.startDate) < new Date()) {
-        errors["jobDetail.isFeatured.startDate"] =
-          "start date must be future date";
       } else if (new Date(req.body.endDate) <= new Date(req.body.startDate)) {
         errors["jobDetail.isFeatured.endDate"] =
           "End date must be after start date";
@@ -421,15 +348,11 @@ exports.postEditJobPost = async (req, res, next) => {
     if (Object.keys(errors).length > 0) {
       jobPost = await jobListing.findById(jobPostId);
 
-      return res.status(422).render("recruiter/jobPosts", {
+      return res.status(422).render("recruiter/editJobPost", {
         pageTitle: "Edit job post",
         path: "/jobPosts",
         jobPost: jobPost,
         categories,
-        jobListings,
-        currentPage: page,
-        limit,
-        totalPages,
         isEditing: true,
         showForm: true,
         errors,
@@ -467,14 +390,10 @@ exports.postEditJobPost = async (req, res, next) => {
     // find existing job post
     jobPost = await jobListing.findById(jobPostId);
     if (!jobPost) {
-      return res.status(404).render("recruiter/jobPosts", {
+      return res.status(404).render("recruiter/editJobPost", {
         pageTitle: "Job Posts",
         path: "/jobPosts",
-        jobListings,
         categories,
-        currentPage: page,
-        limit,
-        totalPages,
         isEditing: false,
         showForm: true,
         formData: req.body,
@@ -508,17 +427,11 @@ exports.postEditJobPost = async (req, res, next) => {
         errors[field] = error.errors[field].message;
       }
 
-      console.log("errors:", errors);
-
-      return res.status(422).render("recruiter/jobPosts", {
+      return res.status(422).render("recruiter/editJobPost", {
         pageTitle: "Edit job post",
         path: "/jobPosts",
         jobPost: jobPost,
         categories,
-        jobListings,
-        currentPage: page,
-        limit,
-        totalPages,
         isEditing: true,
         showForm: true,
         formData: req.body,
@@ -526,16 +439,12 @@ exports.postEditJobPost = async (req, res, next) => {
       });
     }
 
-    return res.status(500).render("recruiter/jobPosts", {
+    return res.status(500).render("recruiter/editJobPost", {
       pageTitle: "Job Posts",
       path: "/jobPosts",
-      jobListings,
       categories,
-      currentPage: page,
-      limit,
-      totalPages,
       isEditing: false,
-      showForm: false,
+      showForm: true,
       formData: req.body,
       errorMessage: "An error occurred while updating the job post.",
       errors: {},
@@ -789,10 +698,10 @@ exports.postEditProfile = async (req, res, next) => {
 
 exports.viewJobSeekers = async (req, res, next) => {
   try {
-    const { experience, skills, search } = req.query;
+    const { search } = req.query;
 
     const page = parseInt(req.query.page) || 1;
-    let limit = parseInt(req.query.limit) || 10;
+    let limit = parseInt(req.query.limit) || 5;
     let skip = (page - 1) * limit;
 
     if (req.query.limit === "All") {
@@ -890,7 +799,7 @@ exports.viewApplications = async (req, res, next) => {
       .skip(appSkip)
       .limit(appLimit)
       .populate("user")
-      .sort({createdAt: -1});
+      .sort({ createdAt: -1 });
 
     const totalApplicationPage =
       appLimit === "All" ? 1 : Math.ceil(totalApplications / appLimit);
@@ -931,7 +840,8 @@ exports.viewInterviews = async (req, res, next) => {
     })
       .skip(interviewSkip)
       .limit(interviewLimit)
-      .populate("user");
+      .populate("user")
+      .sort({ createdAt: -1 });
 
     const totalInterviewPage =
       interviewLimit === "All"
