@@ -13,12 +13,12 @@ exports.getAdminHome = (req, res, next) => {
 };
 
 exports.getJobSeekers = async (req, res) => {
-  const { search } = req.query;
+  const { search, status } = req.query;
   try {
     const filter = { role: "jobSeeker" };
     // Pagination query parameters
     const jobSeekerPage = parseInt(req.query.jobSeekerPage) || 1; // Default to page 1 if not provided
-    let userLimit = parseInt(req.query.userLimit) || 10; // Default to 5 users per page if not provided
+    let userLimit = parseInt(req.query.userLimit) || 5; // Default to 5 users per page if not provided
     let jobSeekerSkip = (jobSeekerPage - 1) * userLimit;
 
     // Check if the limit is set to "All"
@@ -35,10 +35,13 @@ exports.getJobSeekers = async (req, res) => {
         { lastName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
       ];
-      if (search.toLowerCase() === "active") {
-        filter.$or.push({ isActive: true }); // Search for active users
-      } else if (search.toLowerCase() === "inactive") {
-        filter.$or.push({ isActive: false }); // Search for inactive users
+    }
+
+    if (status) {
+      if (status === "active") {
+        filter.isActive = true; // status for active users
+      } else if (status === "inactive") {
+        filter.isActive = false; // status for inactive users
       }
     }
 
@@ -65,6 +68,7 @@ exports.getJobSeekers = async (req, res) => {
       jobSeekerPage,
       totalJobSeekerPages,
       searchQuery: search || "",
+      status: status ? status : ''
     });
   } catch (err) {
     // Log error and render the page with error message
@@ -79,18 +83,19 @@ exports.getJobSeekers = async (req, res) => {
       jobSeekerPage: req.query.jobSeekerPage || 1,
       totalJobSeekerPages: 0,
       searchQuery: search || "",
+      status: status ? status : '',
       errorMessage: "Cannot fetch job seekers, please try again",
     });
   }
 };
 
 exports.getRecruiters = async (req, res) => {
-  const { search } = req.query;
+  const { search, status } = req.query;
   try {
     const filter = { role: "recruiter" };
     // Pagination query parameters
     let recruiterPage = parseInt(req.query.recruiterPage) || 1; // Default to page 1 if not provided
-    let userLimit = parseInt(req.query.userLimit) || 10; // Default to 5 users per page if not provided
+    let userLimit = parseInt(req.query.userLimit) || 5; // Default to 5 users per page if not provided
 
     // Skip calculation for pagination
     let recruiterSkip = (recruiterPage - 1) * userLimit;
@@ -106,10 +111,13 @@ exports.getRecruiters = async (req, res) => {
         { lastName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
       ];
-      if (search.toLowerCase() === "active") {
-        filter.$or.push({ isActive: true });
-      } else if (search.toLowerCase() === "inactive") {
-        filter.$or.push({ isActive: false });
+    }
+    
+    if(status){
+      if (status.toLowerCase() === "active") {
+        filter.isActive = true;
+      } else if (status.toLowerCase() === "inactive") {
+        filter.isActive = false;
       }
     }
 
@@ -134,6 +142,7 @@ exports.getRecruiters = async (req, res) => {
       recruiterPage,
       totalRecruiterPages,
       searchQuery: search || "",
+      status: status ? status.toLowerCase() : ''
     });
   } catch (err) {
     // Log error and render the page with error message
@@ -148,6 +157,7 @@ exports.getRecruiters = async (req, res) => {
       recruiterPage: req.query.recruiterPage || 1,
       totalRecruiterPages: 0,
       searchQuery: search || "",
+      status: status ? status.toLowerCase() : '',
       errorMessage: "Cannot fetch recruiters, please try again",
     });
   }
@@ -444,75 +454,38 @@ exports.deleteCategory = async (req, res, next) => {
   }
 };
 
-exports.deactivateUser = async (req, res, next) => {
-  const userId = req.body.userId;
+exports.toggleUserStatus = async (req, res, next) => {
+  const {userId, isActive} = req.body;
   const role = req.params.role; // 'jobSeeker' or 'recruiter'
   let user;
   try {
     // update user
     user = await User.findOneAndUpdate(
       { _id: userId, role },
-      { isActive: false }
+      { isActive: isActive }
     );
 
     if (!user) {
-      return res.render(`admin/viewUserProfile/${userId}`, {
-        pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
+      return res.render(`admin/${role}s`, {
+        pageTitle: `${role}s`,
         path: `/${role}s`,
         errorMessage: "User not found or role mismatch",
       });
     }
 
-    res.cookie("successMessage", "User deactivated successfully!", {
+    res.cookie("successMessage", `User has been ${isActive === 'true' ? 'activated' : 'deactivated'} successfully.`, {
       maxAge: 3000,
       httpOnly: false,
     });
 
-    return res.redirect(`/admin/viewUserProfile/${userId}`);
+    return res.redirect(`/admin/${role}s`);
   } catch (err) {
     console.error(`Error deactivating ${role}:`, err);
 
-    return res.render(`admin/viewUserProfile/${userId}`, {
-      pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
+    return res.render(`admin/${role}s`, {
+      pageTitle: `${role}s`,
       path: `/${role}s`,
-      errorMessage: "An error occurred while deactivating the user.",
-    });
-  }
-};
-
-exports.activateUser = async (req, res, next) => {
-  const userId = req.body.userId;
-  const role = req.params.role; // 'jobSeeker' or 'recruiter'
-  let user;
-
-  try {
-    // update user
-    user = await User.findOneAndUpdate(
-      { _id: userId, role },
-      { isActive: true }
-    );
-
-    if (!user) {
-      return res.render(`admin/viewUserProfile/${userId}`, {
-        pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
-        path: `/${role}s`,
-        errorMessage: "User not found or role mismatch",
-      });
-    }
-
-    res.cookie("successMessage", "User activated successfully!", {
-      maxAge: 3000,
-      httpOnly: false,
-    });
-
-    return res.redirect(`/admin/viewUserProfile/${userId}`);
-  } catch (err) {
-    console.error(`Error deactivating ${role}:`, err);
-
-    return res.render(`admin/viewUserProfile/${userId}`, {
-      pageTitle: `View Profile | ${user.firstName} ${user.lastName}`,
-      path: `/${role}s`,
-      errorMessage: "An error occurred while activating the user.",
+      errorMessage: `An error occurred while ${isActive ? 'activating' : 'deactivating'} the user.`,
     });
   }
 };

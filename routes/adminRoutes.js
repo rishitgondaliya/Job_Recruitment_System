@@ -22,9 +22,7 @@ router.post("/editCategory/:categoryId", adminController.postEditCategory);
 
 router.post("/deleteCategory", adminController.deleteCategory);
 
-router.post("/deactivate/:role", adminController.deactivateUser);
-
-router.post("/activate/:role", adminController.activateUser);
+router.post("/toggleUserStatus/:role", adminController.toggleUserStatus);
 
 router.post("/delete/:role", adminController.deleteUser);
 
