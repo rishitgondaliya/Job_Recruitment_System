@@ -7,6 +7,8 @@ const router = express.Router();
 
 router.get("/home", recruiterController.getRecruiterHome);
 
+router.get('/addNewJob', recruiterController.getAddNewJob)
+
 router.post("/addNewJob", recruiterController.postAddNewJob);
 
 router.get("/jobPosts", recruiterController.getJobPosts);
