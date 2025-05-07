@@ -5,6 +5,10 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
     <style>
+        .custom-table th td:nth-child(5),
+        .custom-table tr td:nth-child(5) {
+            text-align: center;
+        }
         .itemsPerPageForm {
             margin-top: -3.7rem;
             margin-right: 3rem;
@@ -16,43 +20,105 @@
         .pagination a {
             color: black;
         }
-        form .search-form {
-            width: 35%;
+        .search-bar {
+            display: flex;
+            flex-wrap: nowrap;
+            margin: 2rem auto 1rem;
+            justify-content: space-around;
+            align-items: center;
         }
         form .search-form {
-            margin: 2rem auto;
+            width: 25rem;
         }
-        form .search-form input {
-            height: 1.5rem;
+        .search-bar .viewAll select,
+        .itemsPerPageForm form select {
+            padding: 0.25rem;
+        }
+        .search-bar .status {
+            display: block;
+            margin-left: 1rem;
+        }
+        /* Toggle switch style */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0;
+            right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            top: 2px;
+            left: 3px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #54ce58;
+        }
+        input:checked + .slider:before {
+            transform: translateX(18px);
         }
     </style>
     <%- include('../includes/navigation.ejs') %>
     
-    <form action="/admin/jobSeekers" method="GET" id="serch-form">
-        <div class="form-input search-form" style="position: relative;">
-            <input
-            type="text"
-            name="search"
-            id="search"
-            placeholder="Search job seekers by name, email or status"
-            value="<%= searchQuery %>"
-            style="padding-right: 35px;"
-            >
-            <button type="submit" style="
-            position: absolute;
-            right: 4px;
-                top: 20%;
-                background: none;
-                border: none;
-                cursor: pointer;
-                font-size: 1.1rem;
-                ">
-                <i class="fas fa-search"></i>
-            </button>
-        </div>      
-    </form>
-    
     <div class="container">
+        <div class="search-bar">
+            <form action="/admin/jobSeekers" method="GET" id="serch-form">
+                <div class="form-input search-form" style="position: relative;">
+                    <input
+                        type="text"
+                        name="search"
+                        id="search"
+                        placeholder="Search job seekers by name or email..."
+                        value="<%= searchQuery %>"
+                        style="padding-right: 35px;"
+                    >
+                    <button type="submit" style="
+                        position: absolute;
+                        right: 2px;
+                        top: 15%;
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        ">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>      
+            </form>
+        
+            <form action="/admin/jobSeekers" method="GET" id="statusForm">
+                <div class="form-input status">
+                    <label for="status">Status:</label>
+                    <select name="status" id="status">
+                        <option value="All" <%= status === 'all' ? 'selected' : '' %>>All</option>
+                        <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+                        <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                    </select>
+                </div>
+                <input type="hidden" name="search" id="searchQuery" value="<%= searchQuery %>">
+            </form>
+        </div>
+
         <%- include('../includes/flash.ejs') %>
         
         <!-- Job Seekers Table -->
@@ -79,7 +145,20 @@
                         <td><%= user.firstName %> <%= user.lastName %></td>
                         <td><%= user.email %></td>
                         <td><%= user.phone %></td>
-                        <td><%= user.isActive ? 'Active' : 'Inactive' %></td>
+                        <td>
+                            <form method="POST" action="/admin/toggleUserStatus/<%= user.role %>" class="status-form">
+                                <input type="hidden" name="userId" value="<%= user._id %>">
+                                <input type="hidden" name="isActive" value="<%= !user.isActive %>">
+                                <label class="switch">
+                                    <input
+                                        type="checkbox"
+                                        <%= user.isActive ? 'checked' : '' %>
+                                        onchange="this.closest('form').submit()"
+                                    >
+                                    <span class="slider round"></span>
+                                </label>
+                            </form>                              
+                        </td>                          
                         <td>
                             <div class="actions">
                                 <form action="/admin/viewUserProfile/<%= user._id %>" method="GET">
@@ -97,17 +176,17 @@
                 <div class="pagination" id="jobSeekerPagination">
                     <ul class="pagination-list">
                         <% if (jobSeekerPage > 1) { %>
-                            <a href="?jobSeekerPage=<%= jobSeekerPage - 1 %>&userLimit=<%= userLimit %>&search=<%= searchQuery %>"><li>Prev</li></a>
+                            <a href="?jobSeekerPage=<%= jobSeekerPage - 1 %>&userLimit=<%= userLimit %>&search=<%= searchQuery %>&status=<%= status %>"><li>Prev</li></a>
                         <% } %>
                         <% if (jobSeekerPage > 2) { %>
-                            <a href="?jobSeekerPage=1&userLimit=<%= userLimit %>&search=<%= searchQuery %>"><li>1</li></a>
+                            <a href="?jobSeekerPage=1&userLimit=<%= userLimit %>&search=<%= searchQuery %>&status=<%= status %>"><li>1</li></a>
                             <% } %>
                         <span> Page <%= jobSeekerPage %> of <%= totalJobSeekerPages %> </span>
                         <% if (jobSeekerPage < (totalJobSeekerPages - 1)) { %>
-                            <a href="?jobSeekerPage=<%= totalJobSeekerPages %>&userLimit=<%= userLimit %>&search=<%= searchQuery %>"><li><%= totalJobSeekerPages %></li></a>
+                            <a href="?jobSeekerPage=<%= totalJobSeekerPages %>&userLimit=<%= userLimit %>&search=<%= searchQuery %>&status=<%= status %>"><li><%= totalJobSeekerPages %></li></a>
                         <% } %>
                         <% if (jobSeekerPage < totalJobSeekerPages) { %>
-                            <a href="?jobSeekerPage=<%= jobSeekerPage + 1 %>&userLimit=<%= userLimit %>&search=<%= searchQuery %>"><li>Next</li></a>
+                            <a href="?jobSeekerPage=<%= jobSeekerPage + 1 %>&userLimit=<%= userLimit %>&search=<%= searchQuery %>&status=<%= status %>"><li>Next</li></a>
                         <% } %>
                     </ul>
                 </div>
@@ -115,16 +194,17 @@
                 <div class="itemsPerPageForm">
                     <form id="userItemsPerPageForm" method="GET" class="items-per-page-form">
                         <div class="form-input">
-                        <label for="userLimit">Items per page:</label>
-                        <select name="userLimit" id="userLimit">
-                            <option value="5" <%= userLimit == 5 ? "selected" : "" %>>5</option>
-                            <option value="10" <%= userLimit == 10 ? "selected" : "" %>>10</option>
-                            <option value="15" <%= userLimit == 15 ? "selected" : "" %>>15</option>
-                            <option value="All" <%= userLimit == Number.MAX_SAFE_INTEGER ? "selected" : "" %>>All</option>
-                        </select>
+                            <label for="userLimit">Items per page:</label>
+                            <select name="userLimit" id="userLimit">
+                                <option value="5" <%= userLimit == 5 ? "selected" : "" %>>5</option>
+                                <option value="10" <%= userLimit == 10 ? "selected" : "" %>>10</option>
+                                <option value="15" <%= userLimit == 15 ? "selected" : "" %>>15</option>
+                                <option value="All" <%= userLimit == Number.MAX_SAFE_INTEGER ? "selected" : "" %>>All</option>
+                            </select>
                         </div>
                         <input type="hidden" name="jobSeekerPage" id="jobSeekerPage" value="<%= jobSeekerPage %>">
                         <input type="hidden" name="search" id="searchQuery" value="<%= searchQuery %>">
+                        <input type="hidden" name="status" id="statusQuery" value="<%= status %>">
                     </form>      
                 </div>
             <% } %>  
@@ -137,8 +217,16 @@
         document.getElementById("userLimit").addEventListener("change", function () {
             document.getElementById("jobSeekerPage").value = 1;
             document.getElementById('searchQuery').value = document.getElementById('search').value;
+            document.getElementById('statusQuery').value = document.getElementById('status').value
             document.getElementById("userItemsPerPageForm").submit();
         });
+
+        document.getElementById('status').addEventListener("change", function() {
+            document.getElementById("jobSeekerPage").value = 1;
+            document.getElementById('searchQuery').value = document.getElementById('search').value;
+            document.getElementById('statusQuery').value = document.getElementById('status').value
+            document.getElementById('statusForm').submit()
+        })
     </script>
     <script src="/js/preventBack.js"></script>
 </body>

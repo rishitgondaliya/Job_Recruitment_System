@@ -62,17 +62,6 @@
             </button>
             <div class="modal">
               <div class="modal-content">
-                <% if(user.isActive){ %>
-                    <form action="/admin/deactivate/recruiter" method="POST">
-                        <input type="hidden" name="userId" value="<%= user._id %>">
-                        <button type="submit" class="deactive-btn btn">Deactivate</button>
-                    </form>
-                <% } else{ %>
-                    <form action="/admin/activate/recruiter" method="POST">
-                        <input type="hidden" name="userId" value="<%= user._id %>">
-                        <button type="submit" class="deactive-btn btn">Activate</button>
-                    </form>
-                <% } %>
                 <form action="/admin/delete/recruiter" method="POST">
                     <input type="hidden" name="userId" value="<%= user._id %>">
                     <button type="submit" class="delete-btn btn">Delete</button>
